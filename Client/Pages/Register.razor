@@ -1,0 +1,93 @@
+@page "/register"
+@attribute [AllowAnonymous]
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+
+<AuthorizeView>
+    <Authorized Context="authState">
+        <PageTitle>Register</PageTitle>
+
+<h1>Create Account</h1>
+
+<EditForm Model="model" OnValidSubmit="HandleRegisterAsync">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <InputText id="username" class="form-control" @bind-Value="model.Username" />
+    </div>
+
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <InputText id="email" class="form-control" @bind-Value="model.Email" />
+    </div>
+
+    <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <InputText id="password" class="form-control" type="password" @bind-Value="model.Password" />
+    </div>
+
+    <div class="mb-3">
+        <label for="confirmPassword" class="form-label">Confirm Password</label>
+        <InputText id="confirmPassword" class="form-control" type="password" @bind-Value="model.ConfirmPassword" />
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <button type="submit" class="btn btn-primary">Register</button>
+    <a class="btn btn-link" href="/login">Back to login</a>
+</EditForm>
+    </Authorized>
+
+    <NotAuthorized Context="anonState">
+        <RedirectToLogin />
+    </NotAuthorized>
+</AuthorizeView>
+
+
+
+@code {
+    private readonly RegisterViewModel model = new();
+    private string? errorMessage;
+
+    private async Task HandleRegisterAsync()
+    {
+        errorMessage = null;
+
+        if (!string.Equals(model.Password, model.ConfirmPassword, StringComparison.Ordinal))
+        {
+            errorMessage = "Passwords do not match.";
+            return;
+        }
+
+        var result = await AuthService.RegisterAsync(model.Username, model.Email, model.Password);
+        if (!result.Succeeded)
+        {
+            errorMessage = result.Error;
+            return;
+        }
+
+        Navigation.NavigateTo("/login", true);
+    }
+
+    private sealed class RegisterViewModel
+    {
+        [Required]
+        public string Username { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [MinLength(6)]
+        public string Password { get; set; } = string.Empty;
+
+        [Required]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}
