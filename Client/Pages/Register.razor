@@ -3,7 +3,9 @@
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 
-
+<AuthorizeView>
+    <Authorized Context="authState">
+        <PageTitle>Register</PageTitle>
 
 <h1>Create Account</h1>
 
@@ -39,7 +41,12 @@
     <button type="submit" class="btn btn-primary">Register</button>
     <a class="btn btn-link" href="/login">Back to login</a>
 </EditForm>
+    </Authorized>
 
+    <NotAuthorized Context="anonState">
+        <RedirectToLogin />
+    </NotAuthorized>
+</AuthorizeView>
 
 
 
