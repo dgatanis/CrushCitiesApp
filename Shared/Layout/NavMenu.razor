@@ -15,18 +15,33 @@
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
+            <button class="nav-link history-toggle" @onclick="ToggleHistoryMenu" @onclick:stopPropagation="true">
+            <span class="bi bi-history-nav-menu" aria-hidden="true"></span> History
+            </button>
+                @if (showHistoryMenu)
+                {
+                    <div class="history-sub">
+                        <NavLink class="nav-link" href="history/current-season">Current Season</NavLink>
+                        <NavLink class="nav-link" href="history/drafts">Drafts</NavLink>
+                        <NavLink class="nav-link" href="history/champs">League Champs</NavLink>
+                        <NavLink class="nav-link" href="history/matchups">Matchups</NavLink>
+                        <NavLink class="nav-link" href="history/stats">Stats</NavLink>
+                    </div>
+                }
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="rosters">
                 <span class="bi bi-rosters-nav-menu" aria-hidden="true"></span> Rosters
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="trades">
+                <span class="bi bi-trades-nav-menu" aria-hidden="true"></span> Trades
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="rankings">
+                <span class="bi bi-rankings-nav-menu" aria-hidden="true"></span> Power Rankings
             </NavLink>
         </div>
     </nav>
@@ -38,6 +53,12 @@
     private bool collapseNavMenu = true;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private bool showHistoryMenu;
+
+    private void ToggleHistoryMenu()
+    {
+        showHistoryMenu = !showHistoryMenu;
+    }
 
     private void ToggleNavMenu()
     {

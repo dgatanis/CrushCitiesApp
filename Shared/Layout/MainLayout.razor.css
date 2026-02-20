@@ -46,6 +46,16 @@ main {
     margin: unset;
 }
 
+.sidebar {
+    background-image: linear-gradient(180deg, var(--sidebar-top) 0%, var(--sidebar-bottom) 70%);
+}
+
+::deep h1 {
+  font-family: "F1";
+  font-size: 2rem;
+  color: #333;
+}
+
 @font-face {
   font-family: "F1";
   src: url("/_content/Shared/Fonts/Lato-Black.ttf") format('truetype');

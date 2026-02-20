@@ -113,3 +113,8 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+:root {
+    --sidebar-top: #16021a;
+    --sidebar-bottom: #331301;
+}
