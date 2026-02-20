@@ -53,7 +53,8 @@ public class AuthService(
         }
         catch (HttpRequestException)
         {
-            return (false, "Cannot reach API. Ensure Server is running on https://localhost:7016.");
+            var apiUrl = httpClient.BaseAddress?.ToString() ?? "(not configured)";
+            return (false, $"Cannot reach API at {apiUrl}. Verify the deployed API URL and CORS settings.");
         }
     }
 

@@ -17,7 +17,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddHttpClient("ServerAPI", client =>
 {
-    var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7016";
+    var configuredApiBaseUrl = builder.Configuration["ApiBaseUrl"];
+    var apiBaseUrl = string.IsNullOrWhiteSpace(configuredApiBaseUrl)
+        ? builder.HostEnvironment.BaseAddress
+        : configuredApiBaseUrl;
     client.BaseAddress = new Uri(apiBaseUrl);
 })
 .AddHttpMessageHandler<AuthHeaderHandler>();
