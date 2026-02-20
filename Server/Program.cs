@@ -30,6 +30,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.User.RequireUniqueEmail = true;
 })
     .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddScoped<IdentitySeeder>();
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var signingKey = jwtSettings["Key"] ?? throw new InvalidOperationException("Jwt:Key is required.");
@@ -91,6 +92,8 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     dbContext.Database.Migrate();
+    var seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
+    await seeder.SeedAsync();
 }
 
 // Configure the HTTP request pipeline.
