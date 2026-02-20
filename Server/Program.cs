@@ -1,9 +1,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -17,17 +19,26 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
-    options.Password.RequireDigit = false;
-    options.Password.RequireLowercase = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 6;
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 12;
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.AllowedForNewUsers = true;
     options.User.RequireUniqueEmail = true;
 })
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var signingKey = jwtSettings["Key"] ?? throw new InvalidOperationException("Jwt:Key is required.");
+if (signingKey.Contains("ReplaceThisWith", StringComparison.OrdinalIgnoreCase) ||
+    signingKey.StartsWith("__SET_", StringComparison.OrdinalIgnoreCase) ||
+    signingKey.Length < 32)
+{
+    throw new InvalidOperationException("Jwt:Key must be a strong secret (at least 32 characters) from environment or user-secrets.");
+}
 var signingKeyBytes = Encoding.UTF8.GetBytes(signingKey);
 
 builder.Services.AddAuthentication(options =>
@@ -50,6 +61,17 @@ builder.Services.AddAuthentication(options =>
     };
 });
 builder.Services.AddAuthorization();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("auth", policy =>
+    {
+        policy.PermitLimit = 10;
+        policy.Window = TimeSpan.FromMinutes(1);
+        policy.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        policy.QueueLimit = 0;
+    });
+});
 
 var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"]?.Split(";") ?? Array.Empty<string>();
 
@@ -76,10 +98,15 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+else
+{
+    app.UseHsts();
+}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -105,11 +132,13 @@ app.MapPost("/auth/register", async (
 
     return Results.Ok();
 })
-.AllowAnonymous();
+.AllowAnonymous()
+.RequireRateLimiting("auth");
 
 app.MapPost("/auth/login", async (
     LoginRequest request,
-    UserManager<IdentityUser> userManager) =>
+    UserManager<IdentityUser> userManager,
+    SignInManager<IdentityUser> signInManager) =>
 {
     var user = await userManager.FindByNameAsync(request.Username);
     if (user is null)
@@ -117,8 +146,8 @@ app.MapPost("/auth/login", async (
         return Results.Unauthorized();
     }
 
-    var passwordValid = await userManager.CheckPasswordAsync(user, request.Password);
-    if (!passwordValid)
+    var signInResult = await signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
+    if (!signInResult.Succeeded)
     {
         return Results.Unauthorized();
     }
@@ -147,7 +176,8 @@ app.MapPost("/auth/login", async (
 
     return Results.Ok(new LoginResponse(tokenHandler.WriteToken(token)));
 })
-.AllowAnonymous();
+.AllowAnonymous()
+.RequireRateLimiting("auth");
 
 var summaries = new[]
 {
