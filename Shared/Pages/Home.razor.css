@@ -1,0 +1,21 @@
+.brand-title{
+    font-family: "F1";
+    font-size: 2rem;
+    color: #444444;
+}
+
+.welcome-text{
+    font-family: "F2";
+    margin-top: 1rem;
+    width: 70%;
+    text-align: center;
+}
+
+.welcome-container, .brand-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+}
