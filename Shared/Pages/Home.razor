@@ -1,4 +1,8 @@
 @page "/"
+@using Shared.Models
+@using Shared.Services
+@inject RosterState RosterState 
+@inject ISleeperAPI SleeperApi
 
 <PageTitle>Home</PageTitle>
 
@@ -8,7 +12,7 @@
 
 <div class="welcome-container">
     <p class="welcome-text">
-        Welcome to the Crush Cities dynasty fantasy football league, founded in the summer of 2020. 
+        Welcome to the @Brand.ToString().Replace("FFL", "") dynasty fantasy football league, founded in the summer of 2020. 
         This league is comprised of 10 members who dream of bringing home a jersey of their choice, each and every year. 
         However, some owners' dreams are just that, dreams. At the conclusion of the season, the champion is given the 
         opportunity to select our new destination to draft rookies that will almost certainly become future waiver additions 
@@ -16,10 +20,10 @@
     </p>
 </div>  
 
-
 @code {
     [CascadingParameter(Name = "AppBrand")]
     public string? AppBrand { get; set; }
 
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
+
 }

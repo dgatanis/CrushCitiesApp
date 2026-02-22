@@ -8,3 +8,41 @@
         </Found>
     </Router>
 </CascadingValue>
+
+@code {
+    [Inject] private Shared.Services.ISleeperAPI SleeperApi { get; set; } = default!;
+
+    private bool _startedPlayersWarmup;
+
+    /// <summary>
+    /// Pre-warm the players cache on app startup to improve perceived performance on pages that require player data.
+    /// </summary>
+    /// <param name="firstRender"></param>
+    /// <returns></returns>
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_startedPlayersWarmup)
+        {
+            _startedPlayersWarmup = true;
+            _ = WarmPlayersCacheAsync();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Gets the full NFL player data from the Sleeper API
+    /// </summary>
+    /// <returns></returns>
+    private async Task WarmPlayersCacheAsync()
+    {
+        try
+        {
+            await SleeperApi.GetNFLPlayerDataAsync();
+        }
+        catch
+        {
+            // Ignore warmup failures; pages can retry and force refresh if needed.
+        }
+    }
+}

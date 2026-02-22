@@ -1,3 +1,4 @@
+@using Shared.Services
 <CascadingValue Name="AppBrand" Value="@("Public FFL")">
     <Router AppAssembly="@typeof(App).Assembly"
             AdditionalAssemblies="new[] { typeof(Shared.Pages.Home).Assembly }"
@@ -8,3 +9,44 @@
         </Found>
     </Router>
 </CascadingValue>
+
+@code {
+    [Inject] private Shared.Services.ISleeperAPI SleeperApi { get; set; } = default!;
+    [Inject] private Shared.Services.RosterState RosterState { get; set; } = default!;
+    private bool _startedPlayersWarmup;
+
+    /// <summary>
+    /// Pre-warm the players cache on app startup to improve perceived performance on pages that require player data.
+    /// </summary>
+    /// <param name="firstRender"></param>
+    /// <returns></returns>
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_startedPlayersWarmup)
+        {
+            _startedPlayersWarmup = true;
+            _ = WarmPlayersCacheAsync();
+        }
+        if(!RosterState.IsLoaded){
+            RosterState.SetRosters("1186493407559684096");
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Gets the full NFL player data from the Sleeper API
+    /// </summary>
+    /// <returns></returns>
+    private async Task WarmPlayersCacheAsync()
+    {
+        try
+        {
+            await SleeperApi.GetNFLPlayerDataAsync();
+        }
+        catch
+        {
+            // Ignore warmup failures; pages can retry and force refresh if needed.
+        }
+    }
+}
