@@ -7,9 +7,17 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://api.sleeper.app/v1/") });
-builder.Services.AddScoped<ISleeperAPI, SleeperAPI>();
+builder.Services.AddHttpClient<ISleeperAPI, SleeperAPI>(client =>
+{
+    client.BaseAddress = new Uri("https://api.sleeper.app/v1/");
+});
 builder.Services.AddScoped<RosterState>();
 builder.Services.AddScoped<PlayerState>();
+builder.Services.AddScoped<LeagueState>();
+builder.Services.AddScoped<UserState>();
 
-await builder.Build().RunAsync();
+var host = builder.Build();
+var playerState = host.Services.GetRequiredService<PlayerState>();
+await playerState.SetPlayers(forceRefresh: true);
+
+await host.RunAsync();

@@ -1,5 +1,26 @@
 @page "/rosters"
+@using Shared.Models
+@using Shared.Services
+@inject RosterState RosterState
 
-<PageTitle>Rosters</PageTitle>
+@if (!RosterState.IsLoaded)
+{
+    <p>Loading rosters...</p>
+}
+else
+{
+    @foreach (var roster in RosterState.Rosters)
+    {
+        <p>Owner: @roster.OwnerId</p>
+    }
+}
 
-<h1>Rosters</h1>
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        if (!RosterState.IsLoaded)
+        {
+            await RosterState.SetRosters("1186493407559684096", true);
+        }
+    }
+}

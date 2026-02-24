@@ -2,20 +2,16 @@ using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class RosterState
+public sealed class RosterState(ISleeperAPI sleeperApi)
 {
-    private readonly ISleeperAPI _sleeperApi;
+    private readonly ISleeperAPI _sleeperApi = sleeperApi;
 
-    public RosterState(ISleeperAPI sleeperApi)
-    {
-        _sleeperApi = sleeperApi;
-    }
     public List<RostersModel>? Rosters { get; private set; }
     public bool IsLoaded => Rosters is not null && Rosters.Count > 0;
 
     public async Task SetRosters(string league_id, bool forceRefresh = false)
     {
-        if (!IsLoaded && !forceRefresh)
+        if (!IsLoaded || forceRefresh)
         {
             var rosters = await _sleeperApi.GetRostersForLeagueAsync(league_id);
             if (rosters is {Count: > 0})
@@ -25,6 +21,9 @@ public sealed class RosterState
         }
     }
     
-    public RostersModel? GetById(int roster_id) => 
+    public RostersModel? GetByRosterId(int roster_id) => 
         Rosters?.FirstOrDefault(r => r.RosterId == roster_id);
+
+    public RostersModel? GetByUserId(string user_id) => 
+        Rosters?.FirstOrDefault(r => r.OwnerId == user_id);
 }

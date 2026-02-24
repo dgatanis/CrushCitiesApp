@@ -17,7 +17,7 @@ public sealed class PlayerLiteModel
     public string? Lastname { get; set; }
 
     [JsonPropertyName("age")]
-    public int Age { get; set; }
+    public int? Age { get; set; }
 
     [JsonPropertyName("team")]
     public string? Team { get; set; }

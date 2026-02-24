@@ -8,28 +8,16 @@ namespace Shared.Services;
 public interface ISleeperAPI
 {
     Task<LeagueModel?> GetLeagueAsync(string leagueId);
-    Task<Dictionary<string, PlayerLiteModel>?> GetNFLPlayerDataAsync(bool forceRefresh = false);
-    Task<PlayerLiteModel?> GetNFLPlayerByIdAsync(string playerId, bool forceRefresh = false);
-    Task ClearNFLPlayersCacheAsync();
+    Task<Dictionary<string, PlayerLiteModel>?> GetNFLPlayerDataAsync();
+    Task<NFLStateModel?> GetNFLState();
+    Task<List<LeagueModel?>?> GetLeagueBySeason(string season);
     Task<List<RostersModel>?> GetRostersForLeagueAsync(string leagueId);
-    Task<UsersModel?> GetUsersForLeagueAsync(string leagueId);
+    Task<List<UsersModel>?> GetUsersForLeagueAsync(string leagueId);
 }
 
-public sealed class SleeperAPI : ISleeperAPI
+public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
 {
-    private const string NflPlayersCacheKey = "sleeper:nfl:players-lite:v1";
-    private static readonly TimeSpan NflPlayersCacheTtl = TimeSpan.FromHours(6);
-
-    private readonly HttpClient _http;
-    private readonly IJSRuntime _js;
-    private Dictionary<string, PlayerLiteModel>? _memoryPlayers;
-    private DateTimeOffset _memoryFetchedAtUtc;
-
-    public SleeperAPI(HttpClient http, IJSRuntime js)
-    {
-        _http = http;
-        _js = js;
-    }
+    private readonly HttpClient _http = http;
 
 
     /// <summary>
@@ -47,7 +35,7 @@ public sealed class SleeperAPI : ISleeperAPI
     /// <param name="leagueId"></param>
     /// <returns></returns>
     public Task<List<RostersModel>?> GetRostersForLeagueAsync(string leagueId) =>
-        _http.GetFromJsonAsync<List<RostersModel>>($"league/{leagueId}/rosters");
+         _http.GetFromJsonAsync<List<RostersModel>>($"league/{leagueId}/rosters");
 
 
     /// <summary>
@@ -55,8 +43,8 @@ public sealed class SleeperAPI : ISleeperAPI
     /// </summary>
     /// <param name="leagueId"></param>
     /// <returns></returns>
-    public Task<UsersModel?> GetUsersForLeagueAsync(string leagueId) =>
-        _http.GetFromJsonAsync<UsersModel>($"league/{leagueId}/users");
+    public Task<List<UsersModel>?> GetUsersForLeagueAsync(string leagueId) =>
+        _http.GetFromJsonAsync<List<UsersModel>>($"league/{leagueId}/users");
 
 
     /// <summary>
@@ -64,123 +52,27 @@ public sealed class SleeperAPI : ISleeperAPI
     /// </summary>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task<Dictionary<string, PlayerLiteModel>?> GetNFLPlayerDataAsync(bool forceRefresh = false)
+    public async Task<Dictionary<string, PlayerLiteModel>?> GetNFLPlayerDataAsync()
     {
-        if (!forceRefresh &&
-            _memoryPlayers is not null &&
-            _memoryFetchedAtUtc > DateTimeOffset.UtcNow - NflPlayersCacheTtl)
-        {
-            return _memoryPlayers;
-        }
-
-        if (!forceRefresh)
-        {
-            var cachedJson = await _js.InvokeAsync<string?>("localStorage.getItem", NflPlayersCacheKey);
-            if (!string.IsNullOrWhiteSpace(cachedJson))
-            {
-                var cached = JsonSerializer.Deserialize<PlayersCacheModel>(cachedJson);
-                if (cached is not null &&
-                    cached.Data is not null &&
-                    cached.FetchedAtUtc > DateTimeOffset.UtcNow - NflPlayersCacheTtl)
-                {
-                    _memoryPlayers = cached.Data;
-                    _memoryFetchedAtUtc = cached.FetchedAtUtc;
-                    return cached.Data;
-                }
-            }
-        }
-
-        var fullData = await _http.GetFromJsonAsync<Dictionary<string, PlayersModel>>("players/nfl");
-        if (fullData is null)
-        {
-            return null;
-        }
-
-        var liteData = fullData.ToDictionary(
-            kvp => kvp.Key,
-            kvp => new PlayerLiteModel
-            {
-                PlayerId = kvp.Value.PlayerId,
-                Position = kvp.Value.Position,
-                Firstname = kvp.Value.FirstName,
-                Lastname = kvp.Value.LastName,
-                Age = 0,
-                Team = kvp.Value.PlayerId,
-                Number = null,
-                Height = null,
-                Weight = null,
-                YearsExp = null,
-                RotowireId = null,
-                College = null,
-                SearchRank = null,
-                InjuryStatus = null,
-                InjuryBodyPart = null
-            });
-
-        var payload = new PlayersCacheModel
-        {
-            FetchedAtUtc = DateTimeOffset.UtcNow,
-            Data = liteData
-        };
-
-        _memoryPlayers = liteData;
-        _memoryFetchedAtUtc = payload.FetchedAtUtc;
-
-        try
-        {
-            await _js.InvokeVoidAsync("localStorage.setItem", NflPlayersCacheKey, JsonSerializer.Serialize(payload));
-        }
-        catch (JSException)
-        {
-            // localStorage quota can be exceeded for large payloads.
-        }
-
-        return liteData;
+        return await _http.GetFromJsonAsync<Dictionary<string, PlayerLiteModel>>("players/nfl");
     }
 
+
     /// <summary>
-    /// Gets the full NFL player data from the Sleeper API, then returns the specific player matching the provided ID. 
-    /// This method is optimized to utilize cached data when available to minimize API calls and improve performance.
+    /// Gets the state of the nfl season
     /// </summary>
-    /// <param name="playerId"></param>
-    /// <param name="forceRefresh"></param>
+    /// <param name="leagueId"></param>
     /// <returns></returns>
-    public async Task<PlayerLiteModel?> GetNFLPlayerByIdAsync(string playerId, bool forceRefresh = false)
-    {
-        var players = await GetNFLPlayerDataAsync(forceRefresh);
-        if (players is null)
-        {
-            return null;
-        }
-
-        return players.TryGetValue(playerId, out var player) ? player : null;
-    }
+    public Task<NFLStateModel?> GetNFLState() =>
+        _http.GetFromJsonAsync<NFLStateModel>($"state/nfl");
 
 
     /// <summary>
-    /// Clears the cached NFL player data from both memory and localStorage. This can be used to force a refresh on the next data retrieval.
+    /// Get the league by season for my user id.
     /// </summary>
+    /// <param name="leagueId"></param>
     /// <returns></returns>
-    public Task ClearNFLPlayersCacheAsync() =>
-        ClearCacheInternalAsync();
-
-    /// <summary>
-    /// Clears the cached NFL player data from both memory and localStorage. This can be used to force a refresh on the next data retrieval.
-    /// </summary>
-    /// <returns></returns>
-    private async Task ClearCacheInternalAsync()
-    {
-        _memoryPlayers = null;
-        _memoryFetchedAtUtc = default;
-        await _js.InvokeVoidAsync("localStorage.removeItem", NflPlayersCacheKey);
-    }
-
-    /// <summary>
-    /// Internal model used for caching the NFL player data in localStorage, including a timestamp for cache invalidation logic.
-    /// </summary>
-    private sealed class PlayersCacheModel
-    {
-        public DateTimeOffset FetchedAtUtc { get; set; }
-        public Dictionary<string, PlayerLiteModel>? Data { get; set; }
-    }
+    public Task<List<LeagueModel?>?> GetLeagueBySeason(string season) =>
+        _http.GetFromJsonAsync<List<LeagueModel?>?>($"user/467550885086490624/leagues/nfl/{season}");
+ 
 }

@@ -2,6 +2,7 @@
 @using Shared.Models
 @using Shared.Services
 @inject RosterState RosterState 
+@inject PlayerState PlayerState
 @inject ISleeperAPI SleeperApi
 
 <PageTitle>Home</PageTitle>
@@ -19,11 +20,39 @@
         for someone else. Luck? Skill? Who cares. The only thing that matters is: Don't. Finish. Last.
     </p>
 </div>  
+<div>
+    <button class="btn btn-primary" @onclick="Test">Test</button>
+</div>
+
+@if (_testing is not null)
+{
+    <p>Player @(_testing.PlayerId): @(_testing.Firstname) @(_testing.Lastname) (@_testing.Position)</p>
+}
+else if (_didTest)
+{
+    <p>No player found for ID 1254.</p>
+}
+
+
+
 
 @code {
     [CascadingParameter(Name = "AppBrand")]
     public string? AppBrand { get; set; }
 
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
+    private PlayerLiteModel? _testing = null;
+    private bool _didTest = false;
 
+    private async Task Test()
+    {
+        if (!PlayerState.IsLoaded)
+        {
+            await PlayerState.SetPlayers();
+        }
+
+        PlayerLiteModel? x = PlayerState.GetById("12534");
+        _testing = x;
+        _didTest = true;
+    }
 }
