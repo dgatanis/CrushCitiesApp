@@ -24,6 +24,13 @@ public sealed class RostersModel
 
     [JsonPropertyName("league_id")]
     public string? LeagueId { get; set; }
+
+    [JsonPropertyName("taxi")]
+    public List<string>? Taxi { get; set; }
+
+    [JsonPropertyName("metadata")]
+    public Dictionary<string, string>? Metadata { get; set; }
+
 }
 
 public sealed class RosterSettingsModel

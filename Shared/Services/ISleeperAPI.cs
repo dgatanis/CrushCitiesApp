@@ -50,7 +50,6 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// <summary>
     /// Gets the full NFL player data from the Sleeper API.
     /// </summary>
-    /// <param name="forceRefresh"></param>
     /// <returns></returns>
     public async Task<Dictionary<string, PlayerLiteModel>?> GetNFLPlayerDataAsync()
     {
@@ -61,7 +60,6 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// <summary>
     /// Gets the state of the nfl season
     /// </summary>
-    /// <param name="leagueId"></param>
     /// <returns></returns>
     public Task<NFLStateModel?> GetNFLState() =>
         _http.GetFromJsonAsync<NFLStateModel>($"state/nfl");
@@ -70,7 +68,7 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// <summary>
     /// Get the league by season for my user id.
     /// </summary>
-    /// <param name="leagueId"></param>
+    /// <param name="season"></param>
     /// <returns></returns>
     public Task<List<LeagueModel?>?> GetLeagueBySeason(string season) =>
         _http.GetFromJsonAsync<List<LeagueModel?>?>($"user/467550885086490624/leagues/nfl/{season}");

@@ -10,10 +10,10 @@ public sealed class PlayerLiteModel
     [JsonPropertyName("position")]
     public string? Position { get; set; }
 
-    [JsonPropertyName("firstname")]
+    [JsonPropertyName("first_name")]
     public string? Firstname { get; set; }
 
-    [JsonPropertyName("lastname")]
+    [JsonPropertyName("last_name")]
     public string? Lastname { get; set; }
 
     [JsonPropertyName("age")]

@@ -1,26 +1,151 @@
 @page "/rosters"
 @using Shared.Models
 @using Shared.Services
+@inject UserState UserState
 @inject RosterState RosterState
+@inject PlayerState PlayerState
 
-@if (!RosterState.IsLoaded)
+<div class="rosters-page-container">
+@foreach (var roster in _rosters!)
 {
-    <p>Loading rosters...</p>
+    <div class="roster-container">
+    
+        @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
+        {
+            <div class="owner-info">
+                <img class="owner-avatar" src=@UserState.GetOwnerAvatarImage(roster.OwnerId).Result>
+                <span class="team-name">@UserState.GetTeamNameByUserId(roster.OwnerId).Result</span>
+            </div>
+        }
+        <div class="accordion" id="@($"accordionStarters{roster.RosterId}")">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseStarters{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseStarters{roster.RosterId}")">
+                    Starters
+                </button>
+                </h2>
+                <div id=@($"collapseStarters{roster.RosterId}") class="accordion-collapse collapse show" data-bs-parent="@($"#accordionStarters{roster.RosterId}")">
+                <div class="accordion-body">
+                    @foreach(var starter in roster.Starters!)
+                    {
+                        var player = PlayerState.GetById(starter).Result;
+                        <div class="player-container" style="background-color:@(player?.Position is not null ? $"var(--{player?.Position.ToUpper()}-faded)" : "grey")">
+                            
+                            <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)"></div>
+                            @if(Brand != "Public FFL") {
+                                <div class="player-nickname">@RosterState.GetPlayerNickname(player?.PlayerId ?? string.Empty, roster.RosterId.ToString()).Result</div>
+                            }
+                            <div class="player-name-container">
+                                <div class="player-name">@player?.Firstname @player?.Lastname</div>
+                                <img class="player-team-logo" src=@($"{@PlayerState.GetPlayerTeamImage(player?.Team ?? string.Empty).Result}")>
+                            </div>
+                            <div class="player-details">
+                                <span class="player-number">#@player?.Number</span>
+                                <span class="player-age">Age:@player?.Age</span>  
+                                <span class="player-height">@GetHeightString(player?.Height)</span>  
+                                <span class="player-weight">@player?.Weight lbs</span>  
+                            </div>
+                        </div>
+                    }
+                </div>
+                </div>
+            </div>
+        </div>
+        <div class="accordion" id="@($"accordionBench{roster.RosterId}")">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseBench{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseBench{roster.RosterId}")">
+                    Bench
+                </button>
+                </h2>
+                <div id=@($"collapseBench{roster.RosterId}") class="accordion-collapse collapse" data-bs-parent="@($"#accordionBench{roster.RosterId}")">
+                <div class="accordion-body">
+                    @foreach(var bench in roster.Players!)
+                    {
+                        if(!roster.Starters!.Contains(bench))
+                        {
+                            var player = PlayerState.GetById(bench).Result;
+                        <div class="player-container" style="background-color:#80808057">
+                            
+                            <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)"></div>
+                            @if(Brand != "Public FFL") {
+                                <div class="player-nickname">@RosterState.GetPlayerNickname(player?.PlayerId ?? string.Empty, roster.RosterId.ToString()).Result</div>
+                            }
+                            <div class="player-name-container">
+                                <div class="player-name">@player?.Firstname @player?.Lastname</div>
+                                <img class="player-team-logo" src=@($"{@PlayerState.GetPlayerTeamImage(player?.Team ?? string.Empty).Result}")>
+                            </div>
+                            <div class="player-details">
+                                <span class="player-number">#@player?.Number</span>
+                                <span class="player-age">Age:@player?.Age</span>  
+                                <span class="player-height">@GetHeightString(player?.Height)</span>  
+                                <span class="player-weight">@player?.Weight lbs</span>  
+                            </div>
+                        </div>
+                        }
+                    }
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion" id="@($"accordionTaxi{roster.RosterId}")">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseTaxi{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseTaxi{roster.RosterId}")">
+                    Taxi
+                </button>
+                </h2>
+                <div id=@($"collapseTaxi{roster.RosterId}") class="accordion-collapse collapse" data-bs-parent="@($"#accordionTaxi{roster.RosterId}")">
+                <div class="accordion-body">
+                    @foreach(var taxi in roster.Taxi!)
+                    {
+                        var player = PlayerState.GetById(taxi).Result;
+                        <div class="player-container" style="background-color:#80808057">
+                            
+                            <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)"></div>
+                            @if(Brand != "Public FFL") {
+                                <div class="player-nickname">@RosterState.GetPlayerNickname(player?.PlayerId ?? string.Empty, roster.RosterId.ToString()).Result</div>
+                            }
+                            <div class="player-name-container">
+                                <div class="player-name">@player?.Firstname @player?.Lastname</div>
+                                <img class="player-team-logo" src=@($"{@PlayerState.GetPlayerTeamImage(player?.Team ?? string.Empty).Result}")>
+                            </div>
+                            <div class="player-details">
+                                <span class="player-number">#@player?.Number</span>
+                                <span class="player-age">Age:@player?.Age</span>  
+                                <span class="player-height">@GetHeightString(player?.Height)</span>  
+                                <span class="player-weight">@player?.Weight lbs</span>  
+                            </div>
+                        </div>
+                    }
+                </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
 }
-else
-{
-    @foreach (var roster in RosterState.Rosters)
-    {
-        <p>Owner: @roster.OwnerId</p>
-    }
-}
+</div>
 
 @code {
+    private List<RostersModel>? _rosters = new List<RostersModel>();
+    
+    [CascadingParameter(Name = "AppBrand")]
+    public string? AppBrand { get; set; }
+
+    private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
+
     protected override async Task OnInitializedAsync()
     {
-        if (!RosterState.IsLoaded)
-        {
-            await RosterState.SetRosters("1186493407559684096", true);
-        }
+        _rosters = RosterState.Rosters;
+    }
+
+    private string GetHeightString(string? heightInInches)
+    {
+        if (heightInInches == null) return "N/A";
+        int feet = int.Parse(heightInInches) / 12;
+        int inches = int.Parse(heightInInches) % 12;
+        return $"{feet}'{inches}\"";
     }
 }

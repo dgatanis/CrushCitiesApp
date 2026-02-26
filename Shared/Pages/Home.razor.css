@@ -13,3 +13,21 @@
     height: 100%;
     width: 100%;
 }
+
+.teams-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+}
+
+.team-name {
+    font-family: "F1";
+    display: block;
+}
+
+button.btn.btn-outline-secondary {
+    width: 70%;
+    margin: auto;
+    margin-top: 1rem;
+    height: -webkit-fill-available;
+}

@@ -5,7 +5,6 @@ namespace Shared.Services;
 public sealed class LeagueState(ISleeperAPI sleeperApi)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
-
     public LeagueModel? League { get; private set; }
     public bool IsLoaded => League is not null;
 
@@ -34,5 +33,16 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
             }
         }
         return null;
+    }
+
+    private async Task EnsureLoadedAsync(bool forceRefresh = false)
+    {
+        if (IsLoaded && !forceRefresh) return;
+        var leagueId = await GetCurrentLeagueId();
+        if (string.IsNullOrWhiteSpace(leagueId))
+        {
+            throw new InvalidOperationException("Current league id is not available.");
+        }
+        await SetLeague(leagueId, true);
     }
 }

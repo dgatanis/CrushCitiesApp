@@ -4,10 +4,11 @@ using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
+public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, LeagueState leagueState)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly IJSRuntime _js = js;
+    private readonly LeagueState _leagueState = leagueState;
     private const string NflPlayersCacheKey = "sleeper:nfl:players-lite:v1";
     public Dictionary<string, PlayerLiteModel>? Players { get; private set; }
     public bool IsLoaded => Players is not null;
@@ -153,8 +154,18 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
         return null;
     }
 
-    public PlayerLiteModel? GetById(string playerId) =>
+    public async Task<PlayerLiteModel?> GetById(string playerId) =>
         GetByPlayerId(playerId);
+
+    public static async Task<string> GetPlayerTeamImage(string teamAbbr)
+    {
+        if (string.IsNullOrWhiteSpace(teamAbbr)) return string.Empty;
+        if (teamAbbr != "FA") // Free agents don't have a team image
+        {
+            return $"https://sleepercdn.com/images/team_logos/nfl/{teamAbbr.ToLower()}.png";
+        }
+        return "/images/question-mark.png"; // Placeholder image for free agents
+    }
 
     /// <summary>
     /// Internal model used for caching the NFL player data in localStorage, including a timestamp for cache invalidation logic.

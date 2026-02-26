@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 namespace Shared.Models;
 
 // API response shape is a dictionary keyed by player_id, e.g. "6744": { ...player fields... }
+// This is the full player model from the Sleeper API, but we use a lighter version to improve performance
 public sealed class PlayersModel
 {
     [JsonPropertyName("swish_id")]
@@ -33,7 +34,7 @@ public sealed class PlayersModel
     [JsonPropertyName("depth_chart_order")]
     public int? DepthChartOrder { get; set; }
 
-    [JsonPropertyName("team_abbr")]
+    [JsonPropertyName("team")]
     public string? TeamAbbr { get; set; }
 
     [JsonPropertyName("birth_state")]
