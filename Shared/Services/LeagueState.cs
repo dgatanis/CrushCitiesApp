@@ -1,4 +1,5 @@
 using Shared.Models;
+using System.Net;
 
 namespace Shared.Services;
 
@@ -28,11 +29,27 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
             var leagues = await _sleeperApi.GetLeagueBySeason(nflState.LeagueSeason);
             if (leagues is not null)
             {
-                var league_id = leagues.FirstOrDefault(l => l?.Name.Trim() == "Crush Cities")?.LeagueId ?? null;
+                var league_id = leagues.FirstOrDefault(l => l?.Name?.Trim() == "Crush Cities")?.LeagueId ?? null;
                 return league_id;
             }
         }
         return null;
+    }
+
+    public async Task<string?> GetPreviousLeagueId(string league_id)
+    {
+        if (string.IsNullOrWhiteSpace(league_id)) return null;
+        try
+        {
+            var league = await _sleeperApi.GetLeagueAsync(league_id);
+            if (league is null) return null;
+            return league.PreviousLeagueId;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+        
     }
 
     private async Task EnsureLoadedAsync(bool forceRefresh = false)

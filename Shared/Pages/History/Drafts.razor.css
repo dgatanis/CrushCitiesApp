@@ -1,0 +1,44 @@
+.pick-container {
+    height: 8rem;
+    background: transparent;
+    border-radius: 1rem;
+    border: 4px solid black;
+    min-width: 12rem;
+    max-width: 12rem;
+    position: relative;
+    display: grid;
+    grid-template-columns: auto auto auto;
+    grid-template-rows: auto auto auto auto;
+}
+
+.draft-container {
+    overflow: scroll;
+    overflow-y: hidden;
+    width: fit-content;
+    margin: auto;
+    border-radius: 1rem;
+    box-shadow: 0 0rem 0.2rem #5a5a5a94;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.draft-season-container {
+    font-family: 'F3';
+    font-size: 2rem;
+}
+
+.owner-avatar-xsmall {
+    opacity: .75;
+    margin: auto;
+    grid-row: 1;
+    grid-column: 2;
+}
+
+.draft-table {
+    border-spacing: 4px 4px;
+    border-collapse: separate;
+}
+
+.row-item {
+    background-color: transparent;
+}

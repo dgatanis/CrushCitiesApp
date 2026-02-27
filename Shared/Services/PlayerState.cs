@@ -124,7 +124,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, LeagueSta
         }
     }
 
-    public PlayerLiteModel? GetByPlayerId(string playerId)
+    private PlayerLiteModel? GetById(string playerId)
     {
         if (_memoryPlayers is not null &&
             _memoryExpiration > DateTimeOffset.UtcNow &&
@@ -154,12 +154,12 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, LeagueSta
         return null;
     }
 
-    public async Task<PlayerLiteModel?> GetById(string playerId) =>
-        GetByPlayerId(playerId);
+    public async Task<PlayerLiteModel?> GetByPlayerId(string playerId) =>
+        GetById(playerId);
 
     public static async Task<string> GetPlayerTeamImage(string teamAbbr)
     {
-        if (string.IsNullOrWhiteSpace(teamAbbr)) return string.Empty;
+        if (string.IsNullOrWhiteSpace(teamAbbr)) return "/images/question-mark.png";
         if (teamAbbr != "FA") // Free agents don't have a team image
         {
             return $"https://sleepercdn.com/images/team_logos/nfl/{teamAbbr.ToLower()}.png";

@@ -8,6 +8,7 @@
 <div class="rosters-page-container">
 @foreach (var roster in _rosters!)
 {
+    _counter = 0;
     <div class="roster-container">
     
         @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
@@ -28,13 +29,17 @@
                 <div class="accordion-body">
                     @foreach(var starter in roster.Starters!)
                     {
-                        var player = PlayerState.GetById(starter).Result;
+                        _counter++;
+                        var player = PlayerState.GetByPlayerId(starter).Result;
                         <div class="player-container" style="background-color:@(player?.Position is not null ? $"var(--{player?.Position.ToUpper()}-faded)" : "grey")">
-                            
-                            <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)"></div>
-                            @if(Brand != "Public FFL") {
-                                <div class="player-nickname">@RosterState.GetPlayerNickname(player?.PlayerId ?? string.Empty, roster.RosterId.ToString()).Result</div>
-                            }
+                            <div class="position-container">
+                                <div class="player-position">
+                                    @(_counter == 7 || _counter == 8 ? "FLEX": _counter == 9 ? "SF": player?.Position)
+                                </div>
+                            </div> 
+                            <div class="player-image-container">
+                                <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)"></div>
+                            </div>
                             <div class="player-name-container">
                                 <div class="player-name">@player?.Firstname @player?.Lastname</div>
                                 <img class="player-team-logo" src=@($"{@PlayerState.GetPlayerTeamImage(player?.Team ?? string.Empty).Result}")>
@@ -45,6 +50,12 @@
                                 <span class="player-height">@GetHeightString(player?.Height)</span>  
                                 <span class="player-weight">@player?.Weight lbs</span>  
                             </div>
+                            @if(Brand != "Public FFL") {
+                                <div class="player-nickname">@RosterState.GetPlayerNickname(player?.PlayerId ?? string.Empty, roster.RosterId.ToString()).Result</div>
+                            }
+                            <a title="View Player on Rotowire" target="_blank" href=@($"https://www.rotowire.com/football/player/{player?.Firstname?.ToLower()}-{player?.Lastname?.ToLower()}-{player?.RotowireId}")>
+                                <span class="bi-search-icon"></span>
+                            </a>
                         </div>
                     }
                 </div>
@@ -64,24 +75,33 @@
                     {
                         if(!roster.Starters!.Contains(bench))
                         {
-                            var player = PlayerState.GetById(bench).Result;
-                        <div class="player-container" style="background-color:#80808057">
-                            
-                            <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)"></div>
-                            @if(Brand != "Public FFL") {
-                                <div class="player-nickname">@RosterState.GetPlayerNickname(player?.PlayerId ?? string.Empty, roster.RosterId.ToString()).Result</div>
-                            }
-                            <div class="player-name-container">
-                                <div class="player-name">@player?.Firstname @player?.Lastname</div>
-                                <img class="player-team-logo" src=@($"{@PlayerState.GetPlayerTeamImage(player?.Team ?? string.Empty).Result}")>
+                            var player = PlayerState.GetByPlayerId(bench).Result;
+                            <div class="player-container" style="background-color:#80808057">
+                                <div class="position-container">
+                                    <div class="player-position">
+                                        @player?.Position
+                                    </div>
+                                </div> 
+                                <div class="player-image-container">
+                                    <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)"></div>
+                                </div>
+                                <div class="player-name-container">
+                                    <div class="player-name">@player?.Firstname @player?.Lastname</div>
+                                    <img class="player-team-logo" src=@($"{@PlayerState.GetPlayerTeamImage(player?.Team ?? string.Empty).Result}")>
+                                </div>
+                                <div class="player-details">
+                                    <span class="player-number">#@player?.Number</span>
+                                    <span class="player-age">Age:@player?.Age</span>  
+                                    <span class="player-height">@GetHeightString(player?.Height)</span>  
+                                    <span class="player-weight">@player?.Weight lbs</span>  
+                                </div>
+                                @if(Brand != "Public FFL") {
+                                    <div class="player-nickname">@RosterState.GetPlayerNickname(player?.PlayerId ?? string.Empty, roster.RosterId.ToString()).Result</div>
+                                }
+                                <a title="View Player on Rotowire" target="_blank" href=@($"https://www.rotowire.com/football/player/{player?.Firstname?.ToLower()}-{player?.Lastname?.ToLower()}-{player?.RotowireId}")>
+                                    <span class="bi-search-icon"></span>
+                                </a>
                             </div>
-                            <div class="player-details">
-                                <span class="player-number">#@player?.Number</span>
-                                <span class="player-age">Age:@player?.Age</span>  
-                                <span class="player-height">@GetHeightString(player?.Height)</span>  
-                                <span class="player-weight">@player?.Weight lbs</span>  
-                            </div>
-                        </div>
                         }
                     }
                 </div>
@@ -100,13 +120,16 @@
                 <div class="accordion-body">
                     @foreach(var taxi in roster.Taxi!)
                     {
-                        var player = PlayerState.GetById(taxi).Result;
-                        <div class="player-container" style="background-color:#80808057">
-                            
-                            <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)"></div>
-                            @if(Brand != "Public FFL") {
-                                <div class="player-nickname">@RosterState.GetPlayerNickname(player?.PlayerId ?? string.Empty, roster.RosterId.ToString()).Result</div>
-                            }
+                        var player = PlayerState.GetByPlayerId(taxi).Result;
+                        <div class="player-container" style="background-color:#80808057;">
+                            <div class="position-container">
+                                <div class="player-position">
+                                    @player?.Position
+                                </div>
+                            </div> 
+                            <div class="player-image-container">
+                                <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)"></div>
+                            </div>
                             <div class="player-name-container">
                                 <div class="player-name">@player?.Firstname @player?.Lastname</div>
                                 <img class="player-team-logo" src=@($"{@PlayerState.GetPlayerTeamImage(player?.Team ?? string.Empty).Result}")>
@@ -117,6 +140,12 @@
                                 <span class="player-height">@GetHeightString(player?.Height)</span>  
                                 <span class="player-weight">@player?.Weight lbs</span>  
                             </div>
+                            @if(Brand != "Public FFL") {
+                                <div class="player-nickname">@RosterState.GetPlayerNickname(player?.PlayerId ?? string.Empty, roster.RosterId.ToString()).Result</div>
+                            }
+                            <a title="View Player on Rotowire" target="_blank" href=@($"https://www.rotowire.com/football/player/{player?.Firstname?.ToLower()}-{player?.Lastname?.ToLower()}-{player?.RotowireId}")>
+                                <span class="bi-search-icon"></span>
+                            </a>
                         </div>
                     }
                 </div>
@@ -130,11 +159,10 @@
 
 @code {
     private List<RostersModel>? _rosters = new List<RostersModel>();
-    
     [CascadingParameter(Name = "AppBrand")]
     public string? AppBrand { get; set; }
-
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
+    private int _counter = 0;
 
     protected override async Task OnInitializedAsync()
     {

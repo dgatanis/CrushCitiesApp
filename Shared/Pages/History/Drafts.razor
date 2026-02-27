@@ -1,18 +1,183 @@
 @page "/history/drafts"
+@using Microsoft.VisualBasic
+@using Shared.Models
+@using Shared.Services
+@inject LeagueState LeagueState
+@inject DraftState DraftState
+@inject PlayerState PlayerState
+@inject RosterState RosterState
+@inject UserState UserState
 
 <PageTitle>Drafts</PageTitle>
 
 <h1>Drafts</h1>
 
-<p role="status">Current count: @currentCount</p>
-
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+@if (!string.IsNullOrWhiteSpace(_error))
+{
+    <p role="alert">@_error</p>
+}
+else if (_isLoading)
+{
+    <p role="status">Loading draft history...</p>
+}
+else if (_draftHistory.Count == 0)
+{
+    <p role="status">No draft history found.</p>
+}
+else
+{
+    <div class="draft-grid-container">
+    @foreach (var draft in _draftHistory)
+    {
+        
+        @if (_draftPicks.Where(p => p.DraftId == draft.DraftId).Any())
+        {
+            <div class="draft-season-container container text-center">   
+                <div class="draft-season">@draft.Season Season</div>
+            </div>
+            <div class="draft-container container text-center">
+            <table class="table draft-table">
+                <thead>
+                <tr>
+                @foreach(var team in draft.DraftOrder?.OrderBy(x => x.Key).ToList() ?? [])
+                {
+                    <th scope="col" class="row-item">
+                            <div>
+                                <img class="owner-avatar" src=@($"{UserState.GetOwnerAvatarImage(team.Value).Result}") />
+                                <div>@UserState.GetTeamNameByUserId(team.Value).Result</div>
+                            </div>
+                    </th>
+                }
+                </tr>
+                </thead>
+                <tbody>
+                @foreach(var row in _draftPicks.Where(p => p.DraftId == draft.DraftId).Chunk(10).ToList()) // 10 picks rer round
+                {
+                    <tr>
+                    @foreach(var pick in row) 
+                    {
+                        @if(pick is not null)
+                        {
+                            var pickedPlayer = PlayerState.GetByPlayerId(pick?.PlayerId!).Result;
+                            <td scope="row" class="row-item">
+                                <div class="pick-container" style=@($"background-color:var(--{pick?.Metadata?.Position?.ToUpper()});")>
+                                    <div class="selection-label">@GetSelectionLabel(pick, draft)</div>
+                                    @if (!string.Equals(pick?.OriginalPickOwner, pick?.PickedBy, StringComparison.Ordinal))
+                                    {
+                                        <img class="owner-avatar-xsmall" src=@($"{UserState.GetOwnerAvatarImage(pick?.PickedBy!).Result}") />
+                                    }
+                                    <div class="player-position">@pickedPlayer?.Position</div>
+                                    <div class="player-nickname">
+                                        @(Brand == "Public FFL"
+                                            ? ""
+                                            : RosterState.GetPlayerNickname(
+                                                pick?.PlayerId,
+                                                RosterState.GetByUserId(pick?.PickedBy).Result?.RosterId.ToString() ?? ""
+                                            ).Result)
+                                    </div>
+                                    <div>
+                                        <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(pick?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)" ></div>
+                                        <img class="player-team-logo" src=@($"{PlayerState.GetPlayerTeamImage(pick?.Metadata?.Team!).Result}") />
+                                    </div>
+                                    <div class="player-name">@pickedPlayer?.Firstname @pickedPlayer?.Lastname</div>
+                                    <div class="player-name">@pickedPlayer?.College</div>
+                                </div>
+                            </td>
+                        }
+                    }
+                    </tr>
+                }
+                </tbody>
+            </table>
+            </div>
+        }
+    }
+    </div>
+}
 
 @code {
-    private int currentCount = 0;
+    private readonly List<DraftPickSeasonSummary> _draftHistory = [];
+    private readonly List<DraftPicksModel> _draftPicks = [];
+    [CascadingParameter(Name = "AppBrand")]
+    public string? AppBrand { get; set; }
+    private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
 
-    private void IncrementCount()
+    private bool _isLoading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
     {
-        currentCount++;
+        await LoadDraftHistory();
+    }
+
+    private async Task LoadDraftHistory()
+    {
+        _isLoading = true;
+        _error = null;
+        _draftHistory.Clear();
+        _draftPicks.Clear();
+        try
+        {
+            var visitedLeagueIds = new HashSet<string>();
+            var leagueId = await LeagueState.GetCurrentLeagueId();
+
+            while (!string.IsNullOrWhiteSpace(leagueId) && visitedLeagueIds.Add(leagueId))
+            {
+                await DraftState.SetDraftData(leagueId, forceRefresh: true);
+
+                var draft = DraftState.Draft;
+                if (draft is not null)
+                {
+                    // Create a key-value pair of draft slot to original owner to store on the pick
+                    var slotToOwner = draft.DraftOrder?.ToDictionary(kvp => 
+                                                                    kvp.Value, kvp => kvp.Key)
+                                                                    ?? new Dictionary<int, string>();
+                    
+                    _draftHistory.Add(new DraftPickSeasonSummary
+                    {
+                        Season = draft.Season,
+                        LeagueId = leagueId,
+                        DraftId = draft.DraftId,
+                        DraftOrder = slotToOwner
+                    });
+                    foreach (var pick in DraftState.DraftPicks ?? [])
+                    {
+                        pick.OriginalPickOwner = slotToOwner.TryGetValue(pick.DraftSlot, out var ownerId)? 
+                                                 ownerId : null;                        
+                        
+                        _draftPicks.Add(pick);
+                    }
+                }
+                leagueId = await LeagueState.GetPreviousLeagueId(leagueId); // Loop backwards to get all past drafts until null
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private sealed class DraftPickSeasonSummary
+    {
+        public string? Season { get; init; }
+        public string? LeagueId { get; init; }
+        public string? DraftId { get; init; }
+
+        public Dictionary<int, string>? DraftOrder { get; set; }
+    }
+
+    private static string GetSelectionLabel(DraftPicksModel pick, DraftPickSeasonSummary draft)
+    {
+        var teams = draft.DraftOrder?.Count ?? 10;
+        if (teams <= 0)
+        {
+            teams = 10;
+        }
+        var pickInRound = ((pick.PickNo - 1) % teams) + 1;
+        return $"{pick.Round}.{pickInRound:D2}";
     }
 }

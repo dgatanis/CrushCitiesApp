@@ -36,13 +36,13 @@ public sealed class RosterState(ISleeperAPI sleeperApi, LeagueState leagueState)
         return Rosters?.FirstOrDefault(r => r.OwnerId == user_id);
     }
 
-    public async Task<string?> GetPlayerNickname(string player_id, string roster_id)
+    public async Task<string> GetPlayerNickname(string player_id, string roster_id)
     {
-        if (string.IsNullOrWhiteSpace(player_id) || string.IsNullOrWhiteSpace(roster_id)) return null;
+        if (string.IsNullOrWhiteSpace(player_id) || string.IsNullOrWhiteSpace(roster_id)) return "";
         await EnsureLoadedAsync();
-        var nickname = Rosters.FirstOrDefault(r => r.RosterId.ToString() == roster_id)?.Metadata?.TryGetValue($"p_nick_{player_id}", out var nicknameValue) == true
+        var nickname = Rosters?.FirstOrDefault(r => r.RosterId.ToString() == roster_id)?.Metadata?.TryGetValue($"p_nick_{player_id}", out var nicknameValue) == true
             ? nicknameValue
-            : null;
+            : "";
         return nickname;
     }
         

@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Net;
 using Microsoft.JSInterop;
 using Shared.Models;
 
@@ -13,6 +14,8 @@ public interface ISleeperAPI
     Task<List<LeagueModel?>?> GetLeagueBySeason(string season);
     Task<List<RostersModel>?> GetRostersForLeagueAsync(string leagueId);
     Task<List<UsersModel>?> GetUsersForLeagueAsync(string leagueId);
+    Task<List<DraftsModel>?> GetDraftsForLeague(string league_id);
+    Task<List<DraftPicksModel?>?> GetDraftPicksForDraft(string draft_id);
 }
 
 public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
@@ -72,5 +75,39 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// <returns></returns>
     public Task<List<LeagueModel?>?> GetLeagueBySeason(string season) =>
         _http.GetFromJsonAsync<List<LeagueModel?>?>($"user/467550885086490624/leagues/nfl/{season}");
+
+    /// <summary>
+    /// Gets the draft details for a given league
+    /// </summary>
+    /// <param name="league_id"></param>
+    /// <returns></returns>
+    public async Task<List<DraftsModel>?> GetDraftsForLeague(string league_id)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<DraftsModel>?>($"league/{league_id}/drafts");
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// Gets the draft picks for a given draft 
+    /// </summary>
+    /// <param name="draft_id"></param>
+    /// <returns></returns>
+    public async Task<List<DraftPicksModel?>?> GetDraftPicksForDraft(string draft_id)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<DraftPicksModel?>?>($"draft/{draft_id}/picks");
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return [];
+        }
+    }
  
 }

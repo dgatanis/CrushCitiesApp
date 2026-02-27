@@ -36,9 +36,9 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
         return Users?.FirstOrDefault(r => r.UserId == user_id)?.Metadata?.TeamName;
     }
 
-    public async Task<string?> GetOwnerAvatarImage(string user_id) 
+    public async Task<string> GetOwnerAvatarImage(string user_id) 
     {
-        if (string.IsNullOrWhiteSpace(user_id)) return null;
+        if (string.IsNullOrWhiteSpace(user_id)) return "/images/question-mark.png";
         await EnsureLoadedAsync();
         if(Users?.FirstOrDefault(r => r.UserId == user_id)?.Metadata?.Avatar is not null)
         {
