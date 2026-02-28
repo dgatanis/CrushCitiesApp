@@ -16,6 +16,7 @@ builder.Services.AddScoped<PlayerState>();
 builder.Services.AddScoped<LeagueState>();
 builder.Services.AddScoped<UserState>();
 builder.Services.AddScoped<DraftState>();
+builder.Services.AddScoped<MatchupState>();
 
 var host = builder.Build();
 //Set initial state for models 

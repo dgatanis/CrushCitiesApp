@@ -10,8 +10,6 @@
 
 <PageTitle>Drafts</PageTitle>
 
-<h1>Drafts</h1>
-
 @if (!string.IsNullOrWhiteSpace(_error))
 {
     <p role="alert">@_error</p>
@@ -64,23 +62,24 @@ else
                                     <div class="selection-label">@GetSelectionLabel(pick, draft)</div>
                                     @if (!string.Equals(pick?.OriginalPickOwner, pick?.PickedBy, StringComparison.Ordinal))
                                     {
-                                        <img class="owner-avatar-xsmall" src=@($"{UserState.GetOwnerAvatarImage(pick?.PickedBy!).Result}") />
+                                        <img class="owner-avatar-xsmall" title=@($"Selected by {UserState.GetTeamNameByUserId(pick?.PickedBy!).Result}") src=@($"{UserState.GetOwnerAvatarImage(pick?.PickedBy!).Result}") />
                                     }
                                     <div class="player-position">@pickedPlayer?.Position</div>
+                                    <div class="player-name">@pickedPlayer?.Firstname @pickedPlayer?.Lastname</div>
+                                    <div class="player-image-container">
+                                        <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(pick?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)" >
+                                            <img class="player-team-logo" src=@($"{PlayerState.GetPlayerTeamImage(pick?.Metadata?.Team!).Result}") />
+                                        </div>
+                                    </div>
+                                    <div class="player-college">@pickedPlayer?.College</div>
                                     <div class="player-nickname">
                                         @(Brand == "Public FFL"
                                             ? ""
                                             : RosterState.GetPlayerNickname(
-                                                pick?.PlayerId,
-                                                RosterState.GetByUserId(pick?.PickedBy).Result?.RosterId.ToString() ?? ""
+                                                pick?.PlayerId!,
+                                                RosterState.GetByUserId(pick?.PickedBy!).Result?.RosterId.ToString() ?? ""
                                             ).Result)
                                     </div>
-                                    <div>
-                                        <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(pick?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)" ></div>
-                                        <img class="player-team-logo" src=@($"{PlayerState.GetPlayerTeamImage(pick?.Metadata?.Team!).Result}") />
-                                    </div>
-                                    <div class="player-name">@pickedPlayer?.Firstname @pickedPlayer?.Lastname</div>
-                                    <div class="player-name">@pickedPlayer?.College</div>
                                 </div>
                             </td>
                         }

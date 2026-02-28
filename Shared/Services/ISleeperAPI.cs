@@ -8,14 +8,15 @@ namespace Shared.Services;
 
 public interface ISleeperAPI
 {
-    Task<LeagueModel?> GetLeagueAsync(string leagueId);
+    Task<LeagueModel> GetLeagueAsync(string leagueId);
     Task<Dictionary<string, PlayerLiteModel>?> GetNFLPlayerDataAsync();
     Task<NFLStateModel?> GetNFLState();
-    Task<List<LeagueModel?>?> GetLeagueBySeason(string season);
-    Task<List<RostersModel>?> GetRostersForLeagueAsync(string leagueId);
-    Task<List<UsersModel>?> GetUsersForLeagueAsync(string leagueId);
-    Task<List<DraftsModel>?> GetDraftsForLeague(string league_id);
-    Task<List<DraftPicksModel?>?> GetDraftPicksForDraft(string draft_id);
+    Task<List<LeagueModel>> GetLeagueBySeason(string season);
+    Task<List<RostersModel>> GetRostersForLeagueAsync(string leagueId);
+    Task<List<UsersModel>> GetUsersForLeagueAsync(string leagueId);
+    Task<List<DraftsModel>> GetDraftsForLeague(string league_id);
+    Task<List<DraftPicksModel>> GetDraftPicksForDraft(string draft_id);
+    Task<List<MatchupModel>> GetMatchupsForWeek(string league_id, string week);
 }
 
 public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
@@ -28,17 +29,25 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// </summary>
     /// <param name="leagueId"></param>
     /// <returns></returns>
-    public Task<LeagueModel?> GetLeagueAsync(string leagueId) =>
-        _http.GetFromJsonAsync<LeagueModel>($"league/{leagueId}");
+    public async Task<LeagueModel> GetLeagueAsync(string leagueId)
+    {
+        if (string.IsNullOrWhiteSpace(leagueId)) return new LeagueModel();
+        return await _http.GetFromJsonAsync<LeagueModel>($"league/{leagueId}") ?? new LeagueModel();;
 
+    }
+        
 
     /// <summary>
     /// Gets the rosters for a given league from the Sleeper API
     /// </summary>
     /// <param name="leagueId"></param>
     /// <returns></returns>
-    public Task<List<RostersModel>?> GetRostersForLeagueAsync(string leagueId) =>
-         _http.GetFromJsonAsync<List<RostersModel>>($"league/{leagueId}/rosters");
+    public async Task<List<RostersModel>> GetRostersForLeagueAsync(string leagueId)
+    {
+        if (string.IsNullOrWhiteSpace(leagueId)) return new List<RostersModel>();
+        return await _http.GetFromJsonAsync<List<RostersModel>>($"league/{leagueId}/rosters") ?? [];
+    }
+         
 
 
     /// <summary>
@@ -46,8 +55,12 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// </summary>
     /// <param name="leagueId"></param>
     /// <returns></returns>
-    public Task<List<UsersModel>?> GetUsersForLeagueAsync(string leagueId) =>
-        _http.GetFromJsonAsync<List<UsersModel>>($"league/{leagueId}/users");
+    public async Task<List<UsersModel>> GetUsersForLeagueAsync(string leagueId)
+    {
+        if (string.IsNullOrWhiteSpace(leagueId)) return new List<UsersModel>();
+        return await _http.GetFromJsonAsync<List<UsersModel>>($"league/{leagueId}/users") ?? [];
+    }
+        
 
 
     /// <summary>
@@ -73,19 +86,24 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// </summary>
     /// <param name="season"></param>
     /// <returns></returns>
-    public Task<List<LeagueModel?>?> GetLeagueBySeason(string season) =>
-        _http.GetFromJsonAsync<List<LeagueModel?>?>($"user/467550885086490624/leagues/nfl/{season}");
+    public async Task<List<LeagueModel>> GetLeagueBySeason(string season)
+    {
+        if (string.IsNullOrWhiteSpace(season)) return new List<LeagueModel>();
+        return await _http.GetFromJsonAsync<List<LeagueModel>>($"user/467550885086490624/leagues/nfl/{season}") ?? [];
+    }
+        
 
     /// <summary>
     /// Gets the draft details for a given league
     /// </summary>
     /// <param name="league_id"></param>
     /// <returns></returns>
-    public async Task<List<DraftsModel>?> GetDraftsForLeague(string league_id)
+    public async Task<List<DraftsModel>> GetDraftsForLeague(string league_id)
     {
         try
         {
-            return await _http.GetFromJsonAsync<List<DraftsModel>?>($"league/{league_id}/drafts");
+            if (string.IsNullOrWhiteSpace(league_id)) return new List<DraftsModel>();
+            return await _http.GetFromJsonAsync<List<DraftsModel>>($"league/{league_id}/drafts") ?? [];
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
@@ -98,16 +116,28 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// </summary>
     /// <param name="draft_id"></param>
     /// <returns></returns>
-    public async Task<List<DraftPicksModel?>?> GetDraftPicksForDraft(string draft_id)
+    public async Task<List<DraftPicksModel>> GetDraftPicksForDraft(string draft_id)
     {
         try
         {
-            return await _http.GetFromJsonAsync<List<DraftPicksModel?>?>($"draft/{draft_id}/picks");
+            if (string.IsNullOrWhiteSpace(draft_id)) return new List<DraftPicksModel>();
+            return await _http.GetFromJsonAsync<List<DraftPicksModel>>($"draft/{draft_id}/picks") ?? [];
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             return [];
         }
     }
- 
+
+    /// <summary>
+    /// Get Matchups for the given week
+    /// </summary>
+    /// <param name="league_id"></param><param name="week"></param>
+    /// <returns></returns>
+    public async Task<List<MatchupModel>> GetMatchupsForWeek(string league_id, string week)
+    {
+        if (string.IsNullOrWhiteSpace(league_id) || string.IsNullOrWhiteSpace(week)) return [];
+        return await _http.GetFromJsonAsync<List<MatchupModel>>($"league/{league_id}/matchups/{week}") ?? [];
+    }
+        
 }

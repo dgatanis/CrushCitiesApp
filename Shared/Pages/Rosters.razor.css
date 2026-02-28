@@ -54,7 +54,6 @@
 
 .player-image {
     position: unset;
-    background-color: #73737340;
 }
 
 .player-image-container {
@@ -97,4 +96,23 @@
     right: .5rem;
     top: 45%;
     position: absolute;
+}
+
+.accordion-button {
+    background-color: var(--sidebar-top);
+    color: #dcdcdc;
+}
+
+.accordion-button.collapsed {
+    background-color: var(--sidebar-top);
+    color: #dcdcdc;
+}
+
+.accordion-button:not(.collapsed) {
+    background: var(--sidebar-bottom);
+}
+
+.accordion-button {
+    display: grid;
+    text-align: center;
 }

@@ -43,7 +43,8 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
         {
             var league = await _sleeperApi.GetLeagueAsync(league_id);
             if (league is null) return null;
-            return league.PreviousLeagueId;
+            var prev = league.PreviousLeagueId;
+            return string.IsNullOrWhiteSpace(prev) || prev == "0" ? null : prev;
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {

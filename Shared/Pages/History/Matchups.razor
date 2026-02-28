@@ -1,18 +1,63 @@
 @page "/history/matchups"
+@using Shared.Models
+@using Shared.Services
+@inject MatchupState MatchupState
+@inject LeagueState LeagueState
 
 <PageTitle>Matchups</PageTitle>
 
 <h1>Matchups</h1>
 
-<p role="status">Current count: @currentCount</p>
-
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+@if (_isLoading)
+{
+    <div>Loading Matchups...</div>
+}
+else if (_matchups.Count == 0)
+{
+    <div>No Matchups Found</div>
+}
+else
+{
+    @foreach (var matchup in _matchups)
+    {
+        <div>@matchup.Points Matchup @matchup.MatchupId</div>
+    }
+}
 
 @code {
-    private int currentCount = 0;
-
-    private void IncrementCount()
+    private List<MatchupModel> _matchups = [];
+    private bool _isLoading = true;
+    protected override async Task OnInitializedAsync()
     {
-        currentCount++;
+        await LoadMatchupsAsync();
     }
+
+    private async Task LoadMatchupsAsync() 
+    {
+        var leagueId = await LeagueState.GetCurrentLeagueId();
+        var allMatchups = new List<MatchupModel>();
+        while (!string.IsNullOrWhiteSpace(leagueId))
+        {
+            
+            await LeagueState.SetLeague(leagueId, forceRefresh: true);
+
+            if(LeagueState.IsLoaded)
+            {
+                for (var i =0; i < LeagueState.League?.Settings?.LastScoredLeg; i++) 
+                {
+                    await MatchupState.SetMatchups(LeagueState.League.LeagueId!, i.ToString());
+
+                    if(MatchupState.IsLoaded && MatchupState.Matchups is not null)
+                    {
+                        allMatchups.AddRange(MatchupState.Matchups);
+                    }
+                }
+            }
+
+            leagueId = await LeagueState.GetPreviousLeagueId(leagueId);
+        }
+        _matchups = allMatchups;
+        _isLoading= false;
+    }
+
 }
