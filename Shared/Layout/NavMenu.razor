@@ -1,67 +1,53 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+<nav class="navbar navbar-expand-lg navbar-dark top-navbar">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">@Brand</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+        <NavLink class="navbar-brand" href="/" Match="NavLinkMatch.All" style="margin-right: 1.5rem;">
+            <img src="favicon.png" class="brand-icon" alt="Brand Icon" />
+            @Brand
+        </NavLink>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-    </div>
-</div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        History
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" href="history/current-season">Current Season</NavLink></li>
+                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" href="history/drafts">Drafts</NavLink></li>
+                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" href="history/champs">League Champs</NavLink></li>
+                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" href="history/matchups">Matchups</NavLink></li>
+                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" href="history/stats">Stats</NavLink></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="rosters">Rosters</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="trades">Trades</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="rankings">Power Rankings</NavLink>
+                </li>
+            </ul>
+
+            @if (ChildContent is not null)
+            {
+                <div class="d-flex align-items-center gap-2">
+                    @ChildContent
+                </div>
+            }
         </div>
-        <div class="nav-item px-3">
-            <button class="nav-link history-toggle" @onclick="ToggleHistoryMenu" @onclick:stopPropagation="true">
-            <span class="bi bi-history-nav-menu" aria-hidden="true"></span> History
-            </button>
-                @if (showHistoryMenu)
-                {
-                    <div class="history-sub">
-                        <NavLink class="nav-link" href="history/current-season">Current Season</NavLink>
-                        <NavLink class="nav-link" href="history/drafts">Drafts</NavLink>
-                        <NavLink class="nav-link" href="history/champs">League Champs</NavLink>
-                        <NavLink class="nav-link" href="history/matchups">Matchups</NavLink>
-                        <NavLink class="nav-link" href="history/stats">Stats</NavLink>
-                    </div>
-                }
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="rosters">
-                <span class="bi bi-rosters-nav-menu" aria-hidden="true"></span> Rosters
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="trades">
-                <span class="bi bi-trades-nav-menu" aria-hidden="true"></span> Trades
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="rankings">
-                <span class="bi bi-rankings-nav-menu" aria-hidden="true"></span> Power Rankings
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    </div>
+</nav>
 
 @code {
     [Parameter] public string Brand { get; set; } = "FFL";
-
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-    private bool showHistoryMenu;
-
-    private void ToggleHistoryMenu()
-    {
-        showHistoryMenu = !showHistoryMenu;
-    }
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 }

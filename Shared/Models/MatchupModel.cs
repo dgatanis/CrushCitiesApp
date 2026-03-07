@@ -17,7 +17,7 @@ public sealed class MatchupModel
     public double? CustomPoints { get; set; }
 
     [JsonPropertyName("matchup_id")]
-    public int MatchupId { get; set; }
+    public int? MatchupId { get; set; }
 
     [JsonPropertyName("starters")]
     public List<string>? Starters { get; set; }
@@ -27,5 +27,9 @@ public sealed class MatchupModel
 
     [JsonPropertyName("players_points")]
     public Dictionary<string, double>? PlayersPoints { get; set; }
+
+    public string? Season { get; set; }
+
+    public string? Week { get; set; }
     
 }

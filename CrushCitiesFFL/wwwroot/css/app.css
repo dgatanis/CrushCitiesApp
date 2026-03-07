@@ -115,8 +115,10 @@ code {
 }
 
 :root {
-    --sidebar-top: #16021a;
-    --sidebar-bottom: #331301;
+    --primary-site-color: #050018;
+    --secondary-site-color: #331300;
+    --secondary-site-alt1: #1f0b15;
+    --secondary-site-alt2: #2A0F13;
     --QB: #ff2a6d;
     --RB: #00ceb8;
     --WR: #58a7ff;
@@ -126,6 +128,18 @@ code {
     --WR-faded: #58a6ff47;
     --TE-faded: #ffae5847;
     --border-gray: #616161;
+    --faded-background: #9595954a;
+    --bg: #dcdcdc;
+    --text: #131313;
+    --light-text: #4b4b4b;
+    --top-row: #f7f7f7;
+}
+
+:root[data-theme="dark"] {
+  --bg: #030011;
+  --text: #f3f3f3;
+  --light-text: #717171;
+  --top-row: #d0d0d042;
 }
 
 .owner-avatar {
@@ -153,4 +167,67 @@ code {
 .player-team-logo {
     height: 20px;
     width: 20px;
+}
+
+.accordion-button {
+    background-color: var(--secondary-site-alt2);
+    color: #dcdcdc;
+}
+
+.accordion-button.collapsed {
+    background-color: var(--secondary-site-alt2);
+    color: #dcdcdc;
+}
+
+.accordion-button:not(.collapsed) {
+    background: var(--secondary-site-alt1);
+    color: #dcdcdc;
+    box-shadow: none !important;
+}
+
+.accordion-button {
+    display: grid;
+    text-align: center;
+}
+
+.accordion-item {
+    border-color: #0b0b0b;
+    box-shadow: 0 0 .2rem 0 whitesmoke;
+}
+
+main { 
+    background: var(--bg) !important; 
+    color: var(--text) !important; 
+}
+
+.top-row.px-4 {
+    background-color: var(--top-row) !important;
+    border-bottom: none !important;
+    position: relative !important;
+}
+
+.top-row.ps-3.navbar.navbar-dark {
+    background-image: linear-gradient(180deg, var(--primary-site-color) 0%, #050016 70%);
+}
+
+ul.dropdown-menu.show {
+    background: #818181eb;
+    border: 1px solid #353535;
+    box-shadow: 0 0 .2rem 0 whitesmoke;
+}
+
+ul.dropdown-menu.show li{
+    color: var(--text);
+}
+
+a.dropdown-item-nav-menu {
+    color: var(--bs-body-color);
+}
+
+.dropdown-item:hover {
+    background-color: #818181fa;
+}
+
+h1 {
+    color: inherit !important;
 }

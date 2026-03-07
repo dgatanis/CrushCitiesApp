@@ -1,17 +1,17 @@
+@using Microsoft.JSInterop
 @inherits LayoutComponentBase
+@inject IJSRuntime JS
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu Brand="@Brand" />
-    </div>
+    <header class="top-nav">
+        <NavMenu Brand="@Brand">
+            <button class="btn btn-outline-light ms-lg-3" @onclick="ToggleDarkMode">
+                @(isDark ? "Light Mode" : "Dark Mode")
+            </button>
+        </NavMenu>
+    </header>
 
     <main>
-        <div class="top-row px-4">
-            <a href="/" style="margin: unset;">
-                <img src="favicon.png" class="brand-icon" alt="Brand Icon" />
-            </a>
-        </div>
-
         <article class="content px-4">
             @Body
         </article>
@@ -21,6 +21,28 @@
 @code {
     [CascadingParameter(Name = "AppBrand")]
     public string? AppBrand { get; set; }
+    private bool isDark;
 
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var saved = await JS.InvokeAsync<string?>("theme.get");
+        if (saved is null)
+        {
+            isDark = await JS.InvokeAsync<bool>("theme.systemPrefersDark");
+        }
+        else
+        {
+            isDark = saved == "dark";
+        }
+
+        await JS.InvokeVoidAsync("theme.set", isDark ? "dark" : "light");
+    }
+
+    private async Task ToggleDarkMode() 
+    {
+        isDark = !isDark;
+        await JS.InvokeVoidAsync("theme.set", isDark ? "dark" : "light");  
+    }
 }

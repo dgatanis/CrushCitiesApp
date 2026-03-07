@@ -9,6 +9,17 @@
     display: grid;
     grid-template-columns: auto;
     grid-template-rows: 1.8rem auto;
+    transition: opacity .2s ease, filter .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+.pick-highlight {
+    box-shadow: 0 0 0 .15rem rgb(255 208 67 / 30%);
+    transform: translateY(-2px);
+}
+
+.pick-dim {
+    opacity: .28;
+    filter: grayscale(.9);
 }
 
 .draft-container {
@@ -20,6 +31,7 @@
     box-shadow: 0 0rem 0.2rem #5a5a5a94;
     margin-top: 1rem;
     margin-bottom: 1rem;
+    background: var(--faded-background);
 }
 
 .draft-season-container {
@@ -43,6 +55,7 @@
 
 .row-item {
     background-color: transparent;
+    border-bottom: none;
 }
 
 .selection-label {
@@ -99,4 +112,23 @@
 
 .player-image {
     border: 2px solid black;
+}
+
+th.row-item {
+    color: inherit;
+    border-radius: .5rem;
+}
+
+.team-header {
+    cursor: pointer;
+    transition: background-color .2s ease, transform .2s ease;
+}
+
+.team-header:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.team-header-selected {
+    background-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
 }

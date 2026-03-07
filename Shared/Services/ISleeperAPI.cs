@@ -1,7 +1,4 @@
-using System.Net.Http.Json;
 using System.Text.Json;
-using System.Net;
-using Microsoft.JSInterop;
 using Shared.Models;
 
 namespace Shared.Services;
@@ -22,6 +19,43 @@ public interface ISleeperAPI
 public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
 {
     private readonly HttpClient _http = http;
+    private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
+
+    /// <summary>
+    /// Ensure the http response returns a 2xx code
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    private async Task<string?> GetResponseContentAsync(string path)
+    {
+        var response = await _http.GetAsync(path);
+        response.EnsureSuccessStatusCode();
+
+        if (response.Content is null)
+        {
+            return null;
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        return string.IsNullOrWhiteSpace(content) ? null : content;
+    }
+
+    /// <summary>
+    /// Gets an HTTP response and deserializes if there is content in the response
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    private async Task<T?> GetAndDeserializeAsync<T>(string path)
+    {
+        var content = await GetResponseContentAsync(path);
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return default;
+        }
+
+        return JsonSerializer.Deserialize<T>(content, _jsonOptions);
+    }
 
 
     /// <summary>
@@ -32,8 +66,7 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     public async Task<LeagueModel> GetLeagueAsync(string leagueId)
     {
         if (string.IsNullOrWhiteSpace(leagueId)) return new LeagueModel();
-        return await _http.GetFromJsonAsync<LeagueModel>($"league/{leagueId}") ?? new LeagueModel();;
-
+        return await GetAndDeserializeAsync<LeagueModel>($"league/{leagueId}") ?? new LeagueModel();
     }
         
 
@@ -44,8 +77,8 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// <returns></returns>
     public async Task<List<RostersModel>> GetRostersForLeagueAsync(string leagueId)
     {
-        if (string.IsNullOrWhiteSpace(leagueId)) return new List<RostersModel>();
-        return await _http.GetFromJsonAsync<List<RostersModel>>($"league/{leagueId}/rosters") ?? [];
+        if (string.IsNullOrWhiteSpace(leagueId)) return [];
+        return await GetAndDeserializeAsync<List<RostersModel>>($"league/{leagueId}/rosters") ?? [];
     }
          
 
@@ -57,8 +90,8 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// <returns></returns>
     public async Task<List<UsersModel>> GetUsersForLeagueAsync(string leagueId)
     {
-        if (string.IsNullOrWhiteSpace(leagueId)) return new List<UsersModel>();
-        return await _http.GetFromJsonAsync<List<UsersModel>>($"league/{leagueId}/users") ?? [];
+        if (string.IsNullOrWhiteSpace(leagueId)) return [];
+        return await GetAndDeserializeAsync<List<UsersModel>>($"league/{leagueId}/users") ?? [];
     }
         
 
@@ -69,7 +102,7 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// <returns></returns>
     public async Task<Dictionary<string, PlayerLiteModel>?> GetNFLPlayerDataAsync()
     {
-        return await _http.GetFromJsonAsync<Dictionary<string, PlayerLiteModel>>("players/nfl");
+        return await GetAndDeserializeAsync<Dictionary<string, PlayerLiteModel>>("players/nfl");
     }
 
 
@@ -78,7 +111,7 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// </summary>
     /// <returns></returns>
     public Task<NFLStateModel?> GetNFLState() =>
-        _http.GetFromJsonAsync<NFLStateModel>($"state/nfl");
+        GetAndDeserializeAsync<NFLStateModel>("state/nfl");
 
 
     /// <summary>
@@ -88,8 +121,8 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// <returns></returns>
     public async Task<List<LeagueModel>> GetLeagueBySeason(string season)
     {
-        if (string.IsNullOrWhiteSpace(season)) return new List<LeagueModel>();
-        return await _http.GetFromJsonAsync<List<LeagueModel>>($"user/467550885086490624/leagues/nfl/{season}") ?? [];
+        if (string.IsNullOrWhiteSpace(season)) return [];
+        return await GetAndDeserializeAsync<List<LeagueModel>>($"user/467550885086490624/leagues/nfl/{season}") ?? [];
     }
         
 
@@ -100,15 +133,8 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// <returns></returns>
     public async Task<List<DraftsModel>> GetDraftsForLeague(string league_id)
     {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(league_id)) return new List<DraftsModel>();
-            return await _http.GetFromJsonAsync<List<DraftsModel>>($"league/{league_id}/drafts") ?? [];
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-        {
-            return [];
-        }
+        if (string.IsNullOrWhiteSpace(league_id)) return [];
+        return await GetAndDeserializeAsync<List<DraftsModel>>($"league/{league_id}/drafts") ?? [];
     }
 
     /// <summary>
@@ -118,15 +144,8 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// <returns></returns>
     public async Task<List<DraftPicksModel>> GetDraftPicksForDraft(string draft_id)
     {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(draft_id)) return new List<DraftPicksModel>();
-            return await _http.GetFromJsonAsync<List<DraftPicksModel>>($"draft/{draft_id}/picks") ?? [];
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-        {
-            return [];
-        }
+        if (string.IsNullOrWhiteSpace(draft_id)) return [];
+        return await GetAndDeserializeAsync<List<DraftPicksModel>>($"draft/{draft_id}/picks") ?? [];
     }
 
     /// <summary>
@@ -137,7 +156,10 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     public async Task<List<MatchupModel>> GetMatchupsForWeek(string league_id, string week)
     {
         if (string.IsNullOrWhiteSpace(league_id) || string.IsNullOrWhiteSpace(week)) return [];
-        return await _http.GetFromJsonAsync<List<MatchupModel>>($"league/{league_id}/matchups/{week}") ?? [];
+        var response = await GetAndDeserializeAsync<List<MatchupModel>>($"league/{league_id}/matchups/{week}");
+
+        if (response is null || response.Count == 0) return [];
+        return response.Where(m => m.MatchupId is not null).ToList();
     }
         
 }

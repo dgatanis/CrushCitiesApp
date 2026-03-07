@@ -29,12 +29,15 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
 
     }
 
-    public async Task<string?> GetTeamNameByUserId(string user_id) 
+    public async Task<string> GetTeamNameByUserId(string user_id) 
     {
-        if (string.IsNullOrWhiteSpace(user_id)) return null;
+        if (string.IsNullOrWhiteSpace(user_id)) return "";
         await EnsureLoadedAsync();
-        return Users?.FirstOrDefault(r => r.UserId == user_id)?.Metadata?.TeamName;
-    }
+        var user = Users?.FirstOrDefault(r => r.UserId == user_id);
+        var teamName = user?.Metadata?.TeamName;
+        if(user is not null && !string.IsNullOrWhiteSpace(teamName)) return teamName;
+        return "";
+    }   
 
     public async Task<string> GetOwnerAvatarImage(string user_id) 
     {

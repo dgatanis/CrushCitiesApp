@@ -39,7 +39,9 @@ else
                 <tr>
                 @foreach(var team in draft.DraftOrder?.OrderBy(x => x.Key).ToList() ?? [])
                 {
-                    <th scope="col" class="row-item">
+                    <th scope="col"
+                        class=@($"row-item team-header {(IsSelectedTeam(draft.DraftId, team.Value) ? "team-header-selected" : "")}")
+                        @onclick="() => SelectDraftTeam(draft.DraftId, team.Value)">
                             <div>
                                 <img class="owner-avatar" src=@($"{UserState.GetOwnerAvatarImage(team.Value).Result}") />
                                 <div>@UserState.GetTeamNameByUserId(team.Value).Result</div>
@@ -58,7 +60,8 @@ else
                         {
                             var pickedPlayer = PlayerState.GetByPlayerId(pick?.PlayerId!).Result;
                             <td scope="row" class="row-item">
-                                <div class="pick-container" style=@($"background-color:var(--{pick?.Metadata?.Position?.ToUpper()});")>
+                                <div class=@($"pick-container {GetPickContainerClass(pick)}")
+                                     style=@($"background-color:var(--{pick?.Metadata?.Position?.ToUpper()});")>
                                     <div class="selection-label">@GetSelectionLabel(pick, draft)</div>
                                     @if (!string.Equals(pick?.OriginalPickOwner, pick?.PickedBy, StringComparison.Ordinal))
                                     {
@@ -103,6 +106,8 @@ else
 
     private bool _isLoading = true;
     private string? _error;
+    private string? _selectedDraftId;
+    private string? _selectedPickedBy;
 
     protected override async Task OnInitializedAsync()
     {
@@ -178,5 +183,53 @@ else
         }
         var pickInRound = ((pick.PickNo - 1) % teams) + 1;
         return $"{pick.Round}.{pickInRound:D2}";
+    }
+
+    private void SelectDraftTeam(string? draftId, string? pickedBy)
+    {
+        if (string.IsNullOrWhiteSpace(draftId) || string.IsNullOrWhiteSpace(pickedBy))
+        {
+            return;
+        }
+
+        // Toggle off if user clicks the same header again.
+        if (string.Equals(_selectedDraftId, draftId, StringComparison.Ordinal) &&
+            string.Equals(_selectedPickedBy, pickedBy, StringComparison.Ordinal))
+        {
+            _selectedDraftId = null;
+            _selectedPickedBy = null;
+            return;
+        }
+
+        _selectedDraftId = draftId;
+        _selectedPickedBy = pickedBy;
+    }
+
+    private bool IsSelectedTeam(string? draftId, string? teamUserId)
+    {
+        if (string.IsNullOrWhiteSpace(draftId) || string.IsNullOrWhiteSpace(teamUserId))
+        {
+            return false;
+        }
+
+        return string.Equals(_selectedDraftId, draftId, StringComparison.Ordinal) &&
+               string.Equals(_selectedPickedBy, teamUserId, StringComparison.Ordinal);
+    }
+
+    private string GetPickContainerClass(DraftPicksModel pick)
+    {
+        if (string.IsNullOrWhiteSpace(_selectedDraftId) || string.IsNullOrWhiteSpace(_selectedPickedBy))
+        {
+            return string.Empty;
+        }
+
+        if (!string.Equals(_selectedDraftId, pick.DraftId, StringComparison.Ordinal))
+        {
+            return string.Empty;
+        }
+
+        return string.Equals(_selectedPickedBy, pick.PickedBy, StringComparison.Ordinal)
+            ? "pick-highlight"
+            : "pick-dim";
     }
 }

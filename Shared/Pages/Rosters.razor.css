@@ -21,6 +21,7 @@
     border-radius: 2rem;
     border: 1px solid var(--border-gray);
     position: relative;
+    color: #171717;
 }
 
 .player-details {
@@ -30,6 +31,7 @@
     display: flex;
     column-gap: .4rem;
     margin-left: 2.5rem;
+    font-weight: 550;
 }
 
 .player-name-container {
@@ -45,7 +47,7 @@
 .player-nickname {
     font-size: .6rem;
     font-family: "F2";   
-    color: rgb(37, 37, 37);
+    color: var(--light-text);
     grid-row: 4;
     grid-column: 2 / 4;
     height: .75rem;
@@ -65,7 +67,7 @@
 }
 
 .accordion-item {
-    background: #bbbaba73;
+    background: var(--faded-background);
 }
 
 .position-container {
@@ -80,7 +82,7 @@
 
 .player-position {
     align-content: center;
-    color: #272727ad;
+    color: #161515;
     font-size: .8rem;
     font-family: 'F1';
 }
@@ -96,23 +98,4 @@
     right: .5rem;
     top: 45%;
     position: absolute;
-}
-
-.accordion-button {
-    background-color: var(--sidebar-top);
-    color: #dcdcdc;
-}
-
-.accordion-button.collapsed {
-    background-color: var(--sidebar-top);
-    color: #dcdcdc;
-}
-
-.accordion-button:not(.collapsed) {
-    background: var(--sidebar-bottom);
-}
-
-.accordion-button {
-    display: grid;
-    text-align: center;
 }
