@@ -2,13 +2,26 @@ using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class RosterState(ISleeperAPI sleeperApi, LeagueState leagueState)
+public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
-    private readonly LeagueState _leagueState = leagueState;
+    private readonly UserState _userState = userState;
+
+    
     public List<RostersModel>? Rosters { get; private set; }
     public bool IsLoaded => Rosters is not null && Rosters.Count > 0;
+    public readonly Dictionary<int, string> TeamNameByRosterId = new();
+    public readonly Dictionary<(int rosterId, string playerId), string> PlayerNicknameByRosterId = new();
+    public readonly Dictionary<string, int> RosterIdByUserId = new();
+    public bool CacheLoaded => PlayerNicknameByRosterId.Count > 0 && TeamNameByRosterId.Count > 0 && RosterIdByUserId.Count > 0;
 
+
+    /// <summary>
+    /// Sets the roster based on the leagueid
+    /// </summary>
+    /// <param name="league_id"></param>
+    /// <param name="forceRefresh"></param>
+    /// <returns></returns>
     public async Task SetRosters(string league_id, bool forceRefresh = false)
     {
         if (!IsLoaded || forceRefresh)
@@ -19,43 +32,62 @@ public sealed class RosterState(ISleeperAPI sleeperApi, LeagueState leagueState)
                 Rosters = rosters;
             }
         }
+        await BuildLookupCachesAsync();
     }
+        
     
-    public async Task<RostersModel?> GetByRosterId(int roster_id)
+    /// <summary>
+    /// Builds dictionaries to be used for quicker lookups on pages
+    /// </summary>
+    /// <returns></returns>
+    public async Task BuildLookupCachesAsync()
     {
-        if (roster_id < 0) return null;
-        await EnsureLoadedAsync();
-        return Rosters?.FirstOrDefault(r => r.RosterId == roster_id);
-    }
-        
+        TeamNameByRosterId.Clear();
+        PlayerNicknameByRosterId.Clear();
+        RosterIdByUserId.Clear();
 
-    public async Task<RostersModel?> GetByUserId(string user_id)
-    {
-        if (string.IsNullOrWhiteSpace(user_id)) return null;
-        await EnsureLoadedAsync();
-        return Rosters?.FirstOrDefault(r => r.OwnerId == user_id);
-    }
-
-    public async Task<string> GetPlayerNickname(string player_id, string roster_id)
-    {
-        if (string.IsNullOrWhiteSpace(player_id) || string.IsNullOrWhiteSpace(roster_id)) return "";
-        await EnsureLoadedAsync();
-        var nickname = Rosters?.FirstOrDefault(r => r.RosterId.ToString() == roster_id)?.Metadata?.TryGetValue($"p_nick_{player_id}", out var nicknameValue) == true
-            ? nicknameValue
-            : "";
-        return nickname;
-    }
-        
-    private async Task EnsureLoadedAsync(bool forceRefresh = false)
-    {
-        if (IsLoaded && !forceRefresh) return;
-        
-        var leagueId = await _leagueState.GetCurrentLeagueId();
-        if (string.IsNullOrWhiteSpace(leagueId))
+        // Team names by RosterId
+        foreach (var roster in Rosters ?? [])
         {
-            throw new InvalidOperationException("Current league id is not available.");
+            var teamName = $"Roster {roster.RosterId}";
+
+            if (!string.IsNullOrWhiteSpace(roster.OwnerId))
+            {
+                var fromUser = await _userState.GetTeamNameByUserId(roster.OwnerId);
+                if (!string.IsNullOrWhiteSpace(fromUser))
+                    teamName = fromUser;
+            }
+            
+            TeamNameByRosterId[roster.RosterId] = teamName;
         }
-        await SetRosters(leagueId, true);
+
+
+        //Player nicknames by rosterid
+        foreach (var roster in Rosters ?? [])
+        {
+            if (roster.Metadata is null) continue;
+
+            foreach (var kvp in roster.Metadata)
+            {
+                // keys look like "p_nick_<playerId>"
+                if (!kvp.Key.StartsWith("p_nick_", StringComparison.Ordinal)) continue;
+
+                var playerId = kvp.Key.Substring("p_nick_".Length);
+                if (string.IsNullOrWhiteSpace(playerId)) continue;
+
+                var nickname = kvp.Value ?? "";
+                if (nickname.Length == 0) continue;
+
+                PlayerNicknameByRosterId[(roster.RosterId, playerId)] = nickname;
+            }
+        }
+
+        //Get RosterId by UserId
+        foreach (var roster in Rosters ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(roster.OwnerId)) continue;
+            RosterIdByUserId[roster.OwnerId] = roster.RosterId;
+        }
     }
     
 }

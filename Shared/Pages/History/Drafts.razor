@@ -10,11 +10,7 @@
 
 <PageTitle>Drafts</PageTitle>
 
-@if (!string.IsNullOrWhiteSpace(_error))
-{
-    <p role="alert">@_error</p>
-}
-else if (_isLoading)
+@if (_isLoading)
 {
     <p role="status">Loading draft history...</p>
 }
@@ -43,10 +39,10 @@ else
                         class=@($"row-item team-header {(IsSelectedTeam(draft.DraftId, team.Value) ? "team-header-selected" : "")}")
                         @onclick="() => SelectDraftTeam(draft.DraftId, team.Value)">
                             <div>
-                                <img class="owner-avatar" src=@($"{UserState.GetOwnerAvatarImage(team.Value).Result}") />
-                                <div>@UserState.GetTeamNameByUserId(team.Value).Result</div>
+                                <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(team.Value, out var name) ? name : $"Roster {team.Value}") />
+                                <div>@(UserState.TeamNameByUserId.TryGetValue(team.Value, out var teamName) ? teamName : "Team Not Found")</div>
                             </div>
-                    </th>
+                    </th> 
                 }
                 </tr>
                 </thead>
@@ -56,32 +52,28 @@ else
                     <tr>
                     @foreach(var pick in row) 
                     {
-                        @if(pick is not null)
+                        @if(pick is not null && pick.PlayerId is not null)
                         {
-                            var pickedPlayer = PlayerState.GetByPlayerId(pick?.PlayerId!).Result;
+                            var pickedPlayer = PlayerState.PlayerById.TryGetValue(pick.PlayerId, out var p) ? p : null;
                             <td scope="row" class="row-item">
                                 <div class=@($"pick-container {GetPickContainerClass(pick)}")
                                      style=@($"background-color:var(--{pick?.Metadata?.Position?.ToUpper()});")>
-                                    <div class="selection-label">@GetSelectionLabel(pick, draft)</div>
+                                    <div class="selection-label">@GetSelectionLabel(pick is not null ? pick : new DraftPicksModel(), draft)</div>
                                     @if (!string.Equals(pick?.OriginalPickOwner, pick?.PickedBy, StringComparison.Ordinal))
                                     {
-                                        <img class="owner-avatar-xsmall" title=@($"Selected by {UserState.GetTeamNameByUserId(pick?.PickedBy!).Result}") src=@($"{UserState.GetOwnerAvatarImage(pick?.PickedBy!).Result}") />
+                                        <img class="owner-avatar-xsmall" title=@(UserState.TeamNameByUserId.TryGetValue(pick?.PickedBy ?? "", out var teamName) ? teamName : $"Team Not Found") 
+                                            src=@(UserState.OwnerAvatarByUserId.TryGetValue(pick?.PickedBy ?? "", out var name) ? name : "") />
                                     }
                                     <div class="player-position">@pickedPlayer?.Position</div>
                                     <div class="player-name">@pickedPlayer?.Firstname @pickedPlayer?.Lastname</div>
                                     <div class="player-image-container">
                                         <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(pick?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)" >
-                                            <img class="player-team-logo" src=@($"{PlayerState.GetPlayerTeamImage(pick?.Metadata?.Team!).Result}") />
+                                            <img class="player-team-logo" src=@(pickedPlayer?.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(pickedPlayer.Team, out var img) ? img : "")/>
                                         </div>
                                     </div>
                                     <div class="player-college">@pickedPlayer?.College</div>
                                     <div class="player-nickname">
-                                        @(Brand == "Public FFL"
-                                            ? ""
-                                            : RosterState.GetPlayerNickname(
-                                                pick?.PlayerId!,
-                                                RosterState.GetByUserId(pick?.PickedBy!).Result?.RosterId.ToString() ?? ""
-                                            ).Result)
+                                        @GetPlayerNicknameByUserId(pick?.PickedBy ?? "", pick?.PlayerId ?? "")
                                     </div>
                                 </div>
                             </td>
@@ -105,7 +97,6 @@ else
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
 
     private bool _isLoading = true;
-    private string? _error;
     private string? _selectedDraftId;
     private string? _selectedPickedBy;
 
@@ -114,18 +105,21 @@ else
         await LoadDraftHistory();
     }
 
+    /// <summary>
+    /// Load draft history beginning from current season until previous leagueId is null/not found
+    /// TODO: fix so this doesn't run everytime on load
+    /// </summary>
+    /// <returns></returns>
     private async Task LoadDraftHistory()
     {
         _isLoading = true;
-        _error = null;
         _draftHistory.Clear();
         _draftPicks.Clear();
         try
         {
-            var visitedLeagueIds = new HashSet<string>();
             var leagueId = await LeagueState.GetCurrentLeagueId();
 
-            while (!string.IsNullOrWhiteSpace(leagueId) && visitedLeagueIds.Add(leagueId))
+            while (!string.IsNullOrWhiteSpace(leagueId))
             {
                 await DraftState.SetDraftData(leagueId, forceRefresh: true);
 
@@ -136,7 +130,7 @@ else
                     var slotToOwner = draft.DraftOrder?.ToDictionary(kvp => 
                                                                     kvp.Value, kvp => kvp.Key)
                                                                     ?? new Dictionary<int, string>();
-                    
+
                     _draftHistory.Add(new DraftPickSeasonSummary
                     {
                         Season = draft.Season,
@@ -148,16 +142,12 @@ else
                     {
                         pick.OriginalPickOwner = slotToOwner.TryGetValue(pick.DraftSlot, out var ownerId)? 
                                                  ownerId : null;                        
-                        
+
                         _draftPicks.Add(pick);
                     }
                 }
                 leagueId = await LeagueState.GetPreviousLeagueId(leagueId); // Loop backwards to get all past drafts until null
             }
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
         }
         finally
         {
@@ -165,6 +155,9 @@ else
         }
     }
 
+    /// <summary>
+    /// Stores details about each draft season for easier looping in html
+    /// </summary>
     private sealed class DraftPickSeasonSummary
     {
         public string? Season { get; init; }
@@ -174,6 +167,13 @@ else
         public Dictionary<int, string>? DraftOrder { get; set; }
     }
 
+
+    /// <summary>
+    /// Gets the selection label based on the pick of the draft (ie 1.01, 2.02, 3.06...)
+    /// </summary>
+    /// <param name="pick"></param>
+    /// <param name="draft"></param>
+    /// <returns></returns>
     private static string GetSelectionLabel(DraftPicksModel pick, DraftPickSeasonSummary draft)
     {
         var teams = draft.DraftOrder?.Count ?? 10;
@@ -185,6 +185,12 @@ else
         return $"{pick.Round}.{pickInRound:D2}";
     }
 
+
+    /// <summary>
+    /// When user icon selected on the front end, update _selectedDraftId/_selectedPickedBy
+    /// </summary>
+    /// <param name="draftId"></param>
+    /// <param name="pickedBy"></param>
     private void SelectDraftTeam(string? draftId, string? pickedBy)
     {
         if (string.IsNullOrWhiteSpace(draftId) || string.IsNullOrWhiteSpace(pickedBy))
@@ -205,6 +211,12 @@ else
         _selectedPickedBy = pickedBy;
     }
 
+    /// <summary>
+    /// Toggles whether the userid in that draftId was selected for styling
+    /// </summary>
+    /// <param name="draftId"></param>
+    /// <param name="teamUserId"></param>
+    /// <returns></returns>
     private bool IsSelectedTeam(string? draftId, string? teamUserId)
     {
         if (string.IsNullOrWhiteSpace(draftId) || string.IsNullOrWhiteSpace(teamUserId))
@@ -216,6 +228,13 @@ else
                string.Equals(_selectedPickedBy, teamUserId, StringComparison.Ordinal);
     }
 
+
+    /// <summary>
+    /// Toggles the styling based on the if pick DraftId is in the selectedDraftId and then if the PickedBy of the pick is by the selectedUser
+    /// TODO: Add functionality to allow multiple drafts to be selected at once
+    /// </summary>
+    /// <param name="pick"></param>
+    /// <returns></returns>
     private string GetPickContainerClass(DraftPicksModel pick)
     {
         if (string.IsNullOrWhiteSpace(_selectedDraftId) || string.IsNullOrWhiteSpace(_selectedPickedBy))
@@ -231,5 +250,19 @@ else
         return string.Equals(_selectedPickedBy, pick.PickedBy, StringComparison.Ordinal)
             ? "pick-highlight"
             : "pick-dim";
+    }
+
+
+    /// <summary>
+    /// Helper class to get nickname by userid
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="playerId"></param>
+    /// <returns></returns>
+    public string GetPlayerNicknameByUserId(string userId, string playerId)
+    {
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(playerId)) return "";
+        if (!RosterState.RosterIdByUserId.TryGetValue(userId, out var rosterId)) return "";
+        return RosterState.PlayerNicknameByRosterId.TryGetValue((rosterId, playerId), out var nick) ? nick : "";
     }
 }

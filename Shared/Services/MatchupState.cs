@@ -2,49 +2,68 @@ using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class MatchupState(ISleeperAPI sleeperApi)
+public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
-    public List<MatchupModel>? Matchups { get; set; }
-    public List<MatchupModel> AllMatchups { get; set; } = [];
-    public bool IsLoaded => Matchups is not null && Matchups.Count > 0;
-    public string? LeagueId { get; set; } = null;
-    public string? Season { get; set; }
+    private readonly LeagueState _leagueState = leagueState;
 
-    public async Task SetMatchups(string league_id, string week, bool forceRefresh = false)
+    
+    public List<MatchupModel>? AllMatchups { get; set; } = new();
+    public bool IsLoadedAllMatchups { get; set; } = false;
+
+
+    /// <summary>
+    /// Sets All Matchups starting from the currentLeagueId looping backwards using the PreviousLeagueId
+    /// </summary>
+    /// <param name="forceRefresh"></param>
+    /// <returns></returns>
+    public async Task SetAllMatchups(bool forceRefresh = false)
     {
-        if (!IsLoaded || forceRefresh)
+        if(forceRefresh) ClearAllMatchups();
+        var leagueId = await _leagueState.GetCurrentLeagueId();
+
+        while (!string.IsNullOrWhiteSpace(leagueId))
         {
-            var matchups = await _sleeperApi.GetMatchupsForWeek(league_id, week);
+            await _leagueState.SetLeague(leagueId, forceRefresh: true);
 
-            if (LeagueId != league_id)
+            if (_leagueState.IsLoaded &&
+                _leagueState.League?.Settings?.LastScoredLeg is not null &&
+                _leagueState.League.LeagueId is not null)
             {
-                var league = await _sleeperApi.GetLeagueAsync(league_id);
-                Season = league.Season;
-                LeagueId = league_id;
-            }
+                var currentLeagueId = _leagueState.League.LeagueId;
+                var season = _leagueState.League.Season ?? "";
+                var lastWeek = _leagueState.League.Settings.LastScoredLeg;
 
-            if (matchups is not null)
-            {
-                Matchups = matchups
-                    .Select(m =>
-                    {
-                        m.Season = Season;
-                        m.Week = week;
-                        return m;
-                    })
-                    .OrderBy(m => m.MatchupId).ToList();
+                for(int i = lastWeek; i > 0; i--)
+                {
+                    var matchups = await _sleeperApi.GetMatchupsForWeekAsync(leagueId, i.ToString());
 
-                AllMatchups.AddRange(matchups
-                    .Select(m =>
+                    if (matchups is not null)
                     {
-                        m.Season = Season;
-                        m.Week = week;
-                        return m;
-                    }).OrderBy(m => m.MatchupId).ToList());
+                        AllMatchups?.AddRange(matchups
+                            .Where(m => !AllMatchups.Any(a => a.MatchupId == m.MatchupId && a.Season == m.Season && a.Week == m.Week))
+                            .Select(m =>
+                            {
+                                m.Season = season;
+                                m.Week = i.ToString();
+                                return m;
+                            }).OrderBy(m => m.MatchupId).ToList());
+                    }
+                }
+                leagueId = await _leagueState.GetPreviousLeagueId(leagueId);
             }
         }
+        IsLoadedAllMatchups = true;
     }
 
-    public void ClearAllMatchups() => AllMatchups = null;
+
+    /// <summary>
+    /// Clears all of the matchups
+    /// </summary>
+    public void ClearAllMatchups()
+    {
+        AllMatchups = [];
+        IsLoadedAllMatchups = false;
+    }
+
 }

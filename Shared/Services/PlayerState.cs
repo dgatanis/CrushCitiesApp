@@ -4,19 +4,28 @@ using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, LeagueState leagueState)
+public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly IJSRuntime _js = js;
-    private readonly LeagueState _leagueState = leagueState;
     private const string NflPlayersCacheKey = "sleeper:nfl:players-lite:v1";
-    public Dictionary<string, PlayerLiteModel>? Players { get; private set; }
-    public bool IsLoaded => Players is not null;
     private static readonly TimeSpan NflPlayersCacheTtl = TimeSpan.FromHours(6);
     private Dictionary<string, PlayerLiteModel>? _memoryPlayers;
     private DateTimeOffset _memoryExpiration;
 
+    
+    public readonly Dictionary<string, PlayerLiteModel> PlayerById = new();
+    public Dictionary<string, string> PlayerNFLTeamImageByAbbr = new();
+    public Dictionary<string, PlayerLiteModel>? Players { get; private set; }
+    public bool IsLoaded => Players is not null;
+    public bool CacheLoaded => PlayerNFLTeamImageByAbbr.Count > 0 && PlayerById.Count > 0;
 
+
+    /// <summary>
+    /// Sets the players in local storage and sets an expiration for that data
+    /// </summary>
+    /// <param name="forceRefresh"></param>
+    /// <returns></returns>
     public async Task SetPlayers(bool forceRefresh = false)
     {
         if (!forceRefresh &&
@@ -40,6 +49,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, LeagueSta
                     _memoryPlayers = cached.Data;
                     _memoryExpiration = cached.Expiration;
                     Players = cached.Data;
+                    await BuildLookupCachesAsync();
                     return;
                 }
                 else
@@ -121,51 +131,10 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, LeagueSta
                     await _js.InvokeVoidAsync("localStorage.setItem", NflPlayersCacheKey, JsonSerializer.Serialize(payload));
                 }
             }
+            await BuildLookupCachesAsync();
         }
     }
 
-    private PlayerLiteModel? GetById(string playerId)
-    {
-        if (_memoryPlayers is not null &&
-            _memoryExpiration > DateTimeOffset.UtcNow &&
-            _memoryPlayers.TryGetValue(playerId, out var memoryPlayer))
-        {
-            return memoryPlayer;
-        }
-
-        if (_js is IJSInProcessRuntime inProcess)
-        {
-            var cachedJson = inProcess.Invoke<string?>("localStorage.getItem", NflPlayersCacheKey);
-            if (!string.IsNullOrWhiteSpace(cachedJson))
-            {
-                var cached = JsonSerializer.Deserialize<PlayersCacheModel>(cachedJson);
-                if (cached is not null &&
-                    cached.Data is not null &&
-                    cached.Expiration > DateTimeOffset.UtcNow - NflPlayersCacheTtl)
-                {
-                    _memoryPlayers = cached.Data;
-                    _memoryExpiration = cached.Expiration;
-                    Players = cached.Data;
-                    return cached.Data.TryGetValue(playerId, out var player) ? player : null;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public async Task<PlayerLiteModel?> GetByPlayerId(string playerId) =>
-        GetById(playerId);
-
-    public static async Task<string> GetPlayerTeamImage(string teamAbbr)
-    {
-        if (string.IsNullOrWhiteSpace(teamAbbr)) return "/images/question-mark.png";
-        if (teamAbbr != "FA") // Free agents don't have a team image
-        {
-            return $"https://sleepercdn.com/images/team_logos/nfl/{teamAbbr.ToLower()}.png";
-        }
-        return "/images/question-mark.png"; // Placeholder image for free agents
-    }
 
     /// <summary>
     /// Internal model used for caching the NFL player data in localStorage, including a timestamp for cache invalidation logic.
@@ -174,5 +143,45 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, LeagueSta
     {
         public DateTimeOffset Expiration { get; set; }
         public Dictionary<string, PlayerLiteModel>? Data { get; set; }
+    }
+
+
+    /// <summary>
+    /// Builds dictionaries to be used for quicker lookups on pages
+    /// </summary>
+    /// <returns></returns>
+    public async Task BuildLookupCachesAsync()
+    {
+        if(_memoryPlayers is not null)
+        {
+            PlayerById.Clear();
+            PlayerNFLTeamImageByAbbr.Clear();
+
+            //Get Player by id
+            foreach (var player in _memoryPlayers)
+            {
+                PlayerById[player.Key] = player.Value;
+            }
+
+            //Get nfl team image by abbreviation
+            foreach (var teamAbbr in _memoryPlayers.Values.Select(p => p.Team).Distinct()) 
+            {
+                if (string.IsNullOrWhiteSpace(teamAbbr)) continue;
+
+                if (teamAbbr != "FA")
+                {
+                    PlayerNFLTeamImageByAbbr[teamAbbr] =
+                        $"https://sleepercdn.com/images/team_logos/nfl/{teamAbbr.ToLower()}.png";
+                }
+                else
+                {
+                    PlayerNFLTeamImageByAbbr[teamAbbr] = "/images/question-mark.png";
+                }
+            }
+        }
+        else
+        {
+            await SetPlayers();
+        }
     }
 }

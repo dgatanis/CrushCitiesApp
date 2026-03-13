@@ -3,6 +3,7 @@
 @using Shared.Services
 @inject RosterState RosterState 
 @inject UserState UserState
+@inject LeagueState LeagueState
 
 <PageTitle>Home</PageTitle>
 
@@ -20,13 +21,13 @@
     </p>
 </div>  
 <div class="teams-container">
-    @foreach (var item in _rosters!)
+    @foreach (var roster in _rosters)
     {
-        @if (!string.IsNullOrWhiteSpace(item.OwnerId))
+        @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
         {
             <button type="button" class="btn btn-outline-secondary">
-            <img class="owner-avatar" src=@UserState.GetOwnerAvatarImage(item.OwnerId).Result>
-            <span class="team-name">@UserState.GetTeamNameByUserId(item.OwnerId).Result</span>
+            <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
+            <span class="team-name">@(UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : $"Team Not Found")</span>
             </button>
         }
     }
@@ -38,11 +39,19 @@
     public string? AppBrand { get; set; }
 
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
-    private List<RostersModel>? _rosters = new List<RostersModel>();
+    private List<RostersModel> _rosters = new List<RostersModel>();
 
     protected override async Task OnInitializedAsync()
     {
-        _rosters = RosterState.Rosters;
+        if(RosterState.IsLoaded)
+        {
+            _rosters = RosterState.Rosters ?? [];
+        }
+        else 
+        {
+            var leagueId = LeagueState.GetCurrentLeagueId().Result;
+            await RosterState.SetRosters(leagueId ?? "");
+        }
     }
 
 }

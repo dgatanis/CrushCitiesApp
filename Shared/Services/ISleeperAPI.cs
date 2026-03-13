@@ -8,12 +8,12 @@ public interface ISleeperAPI
     Task<LeagueModel> GetLeagueAsync(string leagueId);
     Task<Dictionary<string, PlayerLiteModel>?> GetNFLPlayerDataAsync();
     Task<NFLStateModel?> GetNFLState();
-    Task<List<LeagueModel>> GetLeagueBySeason(string season);
+    Task<List<LeagueModel>> GetLeagueBySeasonAsync(string season);
     Task<List<RostersModel>> GetRostersForLeagueAsync(string leagueId);
     Task<List<UsersModel>> GetUsersForLeagueAsync(string leagueId);
-    Task<List<DraftsModel>> GetDraftsForLeague(string league_id);
-    Task<List<DraftPicksModel>> GetDraftPicksForDraft(string draft_id);
-    Task<List<MatchupModel>> GetMatchupsForWeek(string league_id, string week);
+    Task<List<DraftsModel>> GetDraftsForLeagueAsync(string league_id);
+    Task<List<DraftPicksModel>> GetDraftPicksForDraftAsync(string draft_id);
+    Task<List<MatchupModel>> GetMatchupsForWeekAsync(string league_id, string week);
 }
 
 public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
@@ -119,7 +119,7 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// </summary>
     /// <param name="season"></param>
     /// <returns></returns>
-    public async Task<List<LeagueModel>> GetLeagueBySeason(string season)
+    public async Task<List<LeagueModel>> GetLeagueBySeasonAsync(string season)
     {
         if (string.IsNullOrWhiteSpace(season)) return [];
         return await GetAndDeserializeAsync<List<LeagueModel>>($"user/467550885086490624/leagues/nfl/{season}") ?? [];
@@ -131,7 +131,7 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// </summary>
     /// <param name="league_id"></param>
     /// <returns></returns>
-    public async Task<List<DraftsModel>> GetDraftsForLeague(string league_id)
+    public async Task<List<DraftsModel>> GetDraftsForLeagueAsync(string league_id)
     {
         if (string.IsNullOrWhiteSpace(league_id)) return [];
         return await GetAndDeserializeAsync<List<DraftsModel>>($"league/{league_id}/drafts") ?? [];
@@ -142,7 +142,7 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// </summary>
     /// <param name="draft_id"></param>
     /// <returns></returns>
-    public async Task<List<DraftPicksModel>> GetDraftPicksForDraft(string draft_id)
+    public async Task<List<DraftPicksModel>> GetDraftPicksForDraftAsync(string draft_id)
     {
         if (string.IsNullOrWhiteSpace(draft_id)) return [];
         return await GetAndDeserializeAsync<List<DraftPicksModel>>($"draft/{draft_id}/picks") ?? [];
@@ -153,7 +153,7 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// </summary>
     /// <param name="league_id"></param><param name="week"></param>
     /// <returns></returns>
-    public async Task<List<MatchupModel>> GetMatchupsForWeek(string league_id, string week)
+    public async Task<List<MatchupModel>> GetMatchupsForWeekAsync(string league_id, string week)
     {
         if (string.IsNullOrWhiteSpace(league_id) || string.IsNullOrWhiteSpace(week)) return [];
         var response = await GetAndDeserializeAsync<List<MatchupModel>>($"league/{league_id}/matchups/{week}");
