@@ -1,0 +1,30 @@
+img.player-team-logo {
+    position: absolute;
+    top: .8rem;
+}
+
+.row.g-2.mt-1 {
+    padding: .5rem;
+    background: var(--faded-background);
+    margin-top: 1.5rem !important;
+}
+
+.p-2.border-3.border.rounded.border.border-dark {
+    background: #030011;
+}
+
+.teams-container {
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .teams-container {
+        width: 75%;
+    }
+}
+
+@media (min-width: 992px) {
+    .teams-container {
+        width: 60%;
+    }
+}

@@ -7,13 +7,17 @@
 @inject UserState UserState
 @inject PlayerState PlayerState
 
-<PageTitle>Matchups</PageTitle>
+<PageTitle>Matchups | @Brand</PageTitle>
 
-
+<div class="d-flex justify-content-center">
+    <h1>Matchups</h1>    
+</div>
 
 @if (_isLoading)
 {
-    <div>Loading Matchups...</div>
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Primary" Size="SpinnerSize.Large" />
+    </div>
 }
 else if (_matchups.Count == 0)
 {
@@ -140,6 +144,9 @@ else
 }
 
 @code {
+    [CascadingParameter(Name = "AppBrand")]
+    public string? AppBrand { get; set; }
+    private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
     private List<MatchupModel> _matchups = [];
     private bool _isLoading = true;
     private List<RostersModel>? _rosters = null;
@@ -156,7 +163,6 @@ else
 
     /// <summary>
     /// Loads all elements needed for the page
-    /// TODO: make this quicker load between page clicks
     /// </summary>
     /// <returns></returns>
     private  async Task LoadPageAsync()

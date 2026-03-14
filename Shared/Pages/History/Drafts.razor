@@ -8,11 +8,17 @@
 @inject RosterState RosterState
 @inject UserState UserState
 
-<PageTitle>Drafts</PageTitle>
+<PageTitle>Drafts | @Brand</PageTitle>
+
+<div class="d-flex justify-content-center">
+    <h1>Drafts</h1>    
+</div>
 
 @if (_isLoading)
 {
-    <p role="status">Loading draft history...</p>
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Primary" Size="SpinnerSize.Large" />
+    </div>
 }
 else if (_draftHistory.Count == 0)
 {

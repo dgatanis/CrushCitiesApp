@@ -9,11 +9,11 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState)
 
     
     public List<RostersModel>? Rosters { get; private set; }
-    public bool IsLoaded => Rosters is not null && Rosters.Count > 0;
     public readonly Dictionary<int, string> TeamNameByRosterId = new();
     public readonly Dictionary<(int rosterId, string playerId), string> PlayerNicknameByRosterId = new();
     public readonly Dictionary<string, int> RosterIdByUserId = new();
     public bool CacheLoaded => PlayerNicknameByRosterId.Count > 0 && TeamNameByRosterId.Count > 0 && RosterIdByUserId.Count > 0;
+    public bool IsLoaded => Rosters is not null && Rosters.Count > 0;
 
 
     /// <summary>

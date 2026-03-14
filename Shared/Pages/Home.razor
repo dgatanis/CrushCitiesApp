@@ -5,53 +5,72 @@
 @inject UserState UserState
 @inject LeagueState LeagueState
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Home | @Brand</PageTitle>
 
-<div class="brand-container">
-    <h1>@Brand</h1>
+<div class="d-flex justify-content-center">
+    <div class="brand-container">
+        <h1>@Brand</h1>
+    </div>  
 </div>
 
-<div class="welcome-container">
-    <p class="welcome-text">
-        Welcome to the @Brand.ToString().Replace("FFL", "") dynasty fantasy football league, founded in the summer of 2020. 
-        This league is comprised of 10 members who dream of bringing home a jersey of their choice, each and every year. 
-        However, some owners' dreams are just that, dreams. At the conclusion of the season, the champion is given the 
-        opportunity to select our new destination to draft rookies that will almost certainly become future waiver additions 
-        for someone else. Luck? Skill? Who cares. The only thing that matters is: Don't. Finish. Last.
-    </p>
-</div>  
-<div class="teams-container">
-    @foreach (var roster in _rosters)
-    {
-        @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
+@if (_isLoading)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Primary" Size="SpinnerSize.Large" />
+    </div>
+}
+else
+{
+    <div class="welcome-container">
+        <p class="welcome-text">
+            Welcome to the @Brand.ToString().Replace("FFL", "") dynasty fantasy football league, founded in the summer of 2020. 
+            This league is comprised of 10 members who dream of bringing home a jersey of their choice, each and every year. 
+            However, some owners' dreams are just that, dreams. At the conclusion of the season, the champion is given the 
+            opportunity to select our new destination to draft rookies that will almost certainly become future waiver additions 
+            for someone else. Luck? Skill? Who cares. The only thing that matters is: Don't. Finish. Last.
+        </p>
+    </div>  
+    <div class="teams-container">
+        @foreach (var roster in _rosters)
         {
-            <button type="button" class="btn btn-outline-secondary">
-            <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
-            <span class="team-name">@(UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : $"Team Not Found")</span>
-            </button>
+            @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
+            {
+                <button type="button" class="btn btn-outline-secondary">
+                <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
+                <span class="team-name">@(UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : $"Team Not Found")</span>
+                </button>
+            }
         }
-    }
-</div>
+    </div>
+}
+
 
 
 @code {
     [CascadingParameter(Name = "AppBrand")]
     public string? AppBrand { get; set; }
+    private bool _isLoading = true;
 
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
     private List<RostersModel> _rosters = new List<RostersModel>();
 
     protected override async Task OnInitializedAsync()
     {
-        if(RosterState.IsLoaded)
-        {
-            _rosters = RosterState.Rosters ?? [];
-        }
-        else 
+        if(!RosterState.IsLoaded)
         {
             var leagueId = LeagueState.GetCurrentLeagueId().Result;
             await RosterState.SetRosters(leagueId ?? "");
         }
+        else 
+        {
+            _rosters = RosterState.Rosters ?? [];
+        }
+        
+        if(!UserState.CacheLoaded)
+        {
+            await UserState.BuildLookupCachesAsync(); 
+        }
+        _isLoading = false;
     }
 
 }

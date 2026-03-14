@@ -9,7 +9,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
 
     
     public List<MatchupModel>? AllMatchups { get; set; } = new();
-    public bool IsLoadedAllMatchups { get; set; } = false;
+    public bool IsLoadedAllMatchups { get; private set; } = false;
 
 
     /// <summary>

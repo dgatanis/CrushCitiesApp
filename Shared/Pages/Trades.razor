@@ -1,18 +1,450 @@
 ﻿@page "/trades"
+@using Shared.Models
+@using Shared.Services
+@inject RosterState RosterState 
+@inject UserState UserState
+@inject TransactionState TransactionState
+@inject PlayerState PlayerState
+@inject LeagueState LeagueState
 
-<PageTitle>Trades</PageTitle>
+<PageTitle>Trades | @Brand</PageTitle>
 
-<h1>Trades</h1>
+<div class="d-flex justify-content-center">
+    <h1>Trades</h1>    
+</div>
 
-<p role="status">Current count: @currentCount</p>
+@if (_isLoading)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Primary" Size="SpinnerSize.Large" />
+    </div>
+} 
+else if(_trades.Count == 0)
+{
+    <div>No Trades Found...</div>
+}
+else
+{
+    <div style="margin-top: 2rem;" class="d-flex flex-wrap gap-2 align-items-center mb-3 justify-content-center">
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                @GetDropdownLabel(_selectedRosterId1)
+            </button>
+            <ul class="dropdown-menu">
+                @if (_rosters is not null && _rosters.Count > 0)
+                {
+                    @foreach (var roster in _rosters.Where(r => _selectedRosterId2 == -1 || r.RosterId != _selectedRosterId2)
+                                                    .OrderBy(r => r.RosterId))
+                    {
+                        <li>
+                            <button class="dropdown-item" type="button" @onclick="() => {_selectedRosterId1 = roster.RosterId; _pageIndex = 0;}">
+                                @(RosterState.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")
+                            </button>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    }
+                }
+                else
+                {
+                    <li><span class="dropdown-item-text">No rosters loaded</span></li>
+                }
+            </ul>
+        </div>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                @GetDropdownLabel(_selectedRosterId2)
+            </button>
+            <ul class="dropdown-menu">
+                @if (_rosters is not null && _rosters.Count > 0)
+                {
+                    @foreach (var roster in _rosters.Where(r => _selectedRosterId1 == -1 || r.RosterId != _selectedRosterId1)
+                                                    .OrderBy(r => r.RosterId))
+                    {
+                        <li>
+                            <button class="dropdown-item" type="button" @onclick="() => {_selectedRosterId2 = roster.RosterId; _pageIndex = 0;}">
+                                @(RosterState.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")
+                            </button>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    }
+                }
+                else
+                {
+                    <li><span class="dropdown-item-text">No rosters loaded</span></li>
+                }
+            </ul>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+            <label class="form-label mb-0">From</label>
+            <input class="form-control" type="date" @bind="_fromDate" @bind:format="yyyy-MM-dd" @bind:after="() => _pageIndex = 0" />
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <label class="form-label mb-0">To</label>
+            <input class="form-control" type="date" @bind="_toDate" @bind:format="yyyy-MM-dd" @bind:after="() => _pageIndex = 0" />
+        </div>
+    </div>
+
+    <nav aria-label="Trades pagination">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(_pageIndex == 0 ? "disabled" : "")">
+                <button class="page-link" @onclick="PrevPage" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </button>
+            </li>
+
+            @foreach (var page in VisiblePages)
+            {
+                <li class="page-item @(page == _pageIndex ? "active" : "")">
+                    <button type="button" class="page-link" @onclick="() => GoToPage(page)">@(page + 1)</button>
+                </li>
+            }
+
+            <li class="page-item @(_pageIndex >= TotalPages - 1 ? "disabled" : "")">
+                <button class="page-link" @onclick="NextPage" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </button>
+            </li>
+        </ul>
+    </nav>
+    <div class="d-flex justify-content-center">
+    <div class="teams-container">
+        @foreach (var trade in PagedTrades.Where(ShouldShowTrade))
+        {
+            var allTradeAdds = trade.Adds?.Keys.ToHashSet() ?? new HashSet<string>();
+                <div class="row g-2 mt-1 border rounded">
+                    <div class="d-flex justify-content-center">@(DateTimeOffset.FromUnixTimeMilliseconds(@trade.Created).ToLocalTime().ToString("dd/MM/yyyy hh:mm tt"))</div>
+                    @foreach (var team in trade.ConsenterIds ?? [])
+                    {
+                        
+                        var teamAdds = trade.Adds?
+                            .Where(kvp => kvp.Value == team)
+                            .Select(kvp => kvp.Key)
+                            .ToList() ?? new();
+
+                        var teamDrops = trade.Drops?
+                            .Where(kvp => kvp.Value == team)
+                            .Select(kvp => kvp.Key)
+                            .ToList() ?? new();
+
+                        var teamPicks = trade.DraftPicks?
+                            .Where(p => p.OwnerId == team)
+                            .ToList() ?? new();
+
+                        var teamBudget = trade.WaiverBudget?
+                            .Where(w => w.Receiver == team)
+                            .ToList() ?? new();
+
+                        <div class="col-12 col-md-6">
+                            <div class="p-2 border-3 border rounded border border-dark">
+                                <div class="d-flex justify-content-center" style="color:#d6d6d6;">@(RosterState.TeamNameByRosterId.TryGetValue(team, out var name) ? name : "")</div>
+
+                                <div class="d-flex flex-wrap gap-2 mt-2 justify-content-center">
+                                    @if (teamAdds.Any())
+                                    {
+                                        @foreach (var playerId in teamAdds)
+                                        {
+                                            var player = PlayerState.PlayerById.TryGetValue(playerId, out var p) ? p : null;
+                                            if (player is not null)
+                                            {
+                                                <span class="badge bg-success-subtle text-success border border-success d-inline-flex align-items-center gap-1">
+                                                    <span style="font-size: x-large;">+</span>
+                                                    <span class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)">
+                                                        <img class="player-team-logo" src="@(player.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")" />
+                                                    </span>
+                                                    <span style="color: #333;">@player.Firstname @player.Lastname</span>
+                                                </span>
+                                            }
+                                        }
+                                    }
+
+                                    @if ((teamDrops ?? []).Any(id => !allTradeAdds.Contains(id)))
+                                    {
+                                        @foreach (var playerId in (teamDrops ?? []).Where(id => !allTradeAdds.Contains(id)))
+                                        {
+                                            var player = PlayerState.PlayerById.TryGetValue(playerId, out var p) ? p : null;
+                                            if (player is not null)
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger border border-danger">
+                                                <span style="font-size: x-large;">-</span>
+                                                    <span class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)">
+                                                        <img class="player-team-logo" src="@(player.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")" />
+                                                    </span>
+                                                    <span style="color: #333;">@player.Firstname @player.Lastname</span>
+                                                </span>
+                                            }
+                                        }
+                                    }
+
+                                    @if (teamPicks.Any())
+                                    {
+                                        @foreach (var pick in teamPicks)
+                                        {
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-inline-block">
+                                                    <span class="badge bg-info-subtle text-info border border-info d-inline-flex align-items-center gap-1 text-nowrap">
+                                                        Pick:
+                                                        <span style="color:#333">@GetOrdinal(pick.Round) Round @pick.Season</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+
+                                    @if (teamBudget.Any())
+                                    {
+                                        @foreach (var waiver in teamBudget)
+                                        {
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-inline-block">
+                                                    <span class="badge bg-warning-subtle text-warning border border-warning d-inline-flex align-items-center gap-1">
+                                                        $@waiver.Amount
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            
+        }
+    </div>
+    </div>
+}
+
+
 
 @code {
-    private int currentCount = 0;
+    [CascadingParameter(Name = "AppBrand")]
+    public string? AppBrand { get; set; }
+    private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
+    private List<TransactionsModel> _trades = new List<TransactionsModel>();
+    private bool _isLoading = true;
+    private int _pageIndex = 0;
+    private const int PageSize = 10;
+    private const int MaxPageButtons = 10;
+    private List<RostersModel>? _rosters = null;
+    private int _selectedRosterId1 = -1;
+    private int _selectedRosterId2 = -1;
+    private DateTime? _fromDate = null;
+    private DateTime? _toDate = null;
 
-    private void IncrementCount()
+
+    protected override void OnInitialized()
     {
-        currentCount++;
+        _isLoading = true;
+        _ = LoadPageAsync();
     }
+
+    /// <summary>
+    /// Loads the page data
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoadPageAsync()
+    {
+        try
+        {
+            await Task.Yield(); 
+            await LoadTransactions();
+            await LoadRosters();
+            _trades = TransactionState.FilteredTransactions;
+        }
+        finally 
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+
+    /// <summary>
+    /// Sets all of the transactions data and filters for trades
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoadTransactions() 
+    {
+        if(!TransactionState.IsLoaded)
+        {
+            await TransactionState.SetAllTransactionsData();
+        }
+
+        await TransactionState.FilterTransactionsData("trade");
+    }
+
+
+    /// <summary>
+    /// Loads Roster data if not already loaded
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoadRosters()
+    {
+        if (RosterState.IsLoaded)
+        {
+            _rosters = RosterState.Rosters;
+            return;
+        }
+
+        var leagueId = await LeagueState.GetCurrentLeagueId();
+        if (!string.IsNullOrWhiteSpace(leagueId))
+        {
+            await RosterState.SetRosters(leagueId, forceRefresh: true);
+            _rosters = RosterState.Rosters;
+        }
+    }
+
+
+    /// <summary>
+    /// Helper method to set the dropdown label to the name of the chosen rosterid
+    /// </summary>
+    /// <param name="rosterId"></param>
+    /// <returns></returns>
+    private string GetDropdownLabel(int rosterId)
+    {
+        if (rosterId == -1) return "Filter by team";
+        return RosterState.TeamNameByRosterId.TryGetValue(rosterId, out var name)
+            ? name
+            : $"Roster {rosterId}";
+    }
+
+
+    /// <summary>
+    /// Determines if a trade should be shown based on selections in the filters
+    /// </summary>
+    /// <param name="trade"></param>
+    /// <returns></returns>
+    private bool ShouldShowTrade(TransactionsModel trade)
+    {
+        var rosterIds = trade.ConsenterIds ?? trade.RosterIds ?? []; //Teams involved in trade (rosterIds)
+
+        //Roster filtering
+        if (_selectedRosterId1 == -1 && _selectedRosterId2 == -1)
+        {
+            return true;
+        }
+        else if (_selectedRosterId1 != -1 && _selectedRosterId2 == -1)
+        {
+            if (!rosterIds.Contains(_selectedRosterId1)) return false;
+        }
+        else if (_selectedRosterId1 == -1 && _selectedRosterId2 != -1)
+        {
+            if (!rosterIds.Contains(_selectedRosterId2)) return false;
+        }
+        else
+        {
+            if (!rosterIds.Contains(_selectedRosterId1) || !rosterIds.Contains(_selectedRosterId2)) return false;
+        }
+
+        //Date filtering
+        if (!_fromDate.HasValue && !_toDate.HasValue)
+        {
+            return true;
+        }
+
+        var tradeDate = DateTimeOffset.FromUnixTimeMilliseconds(trade.Created).ToLocalTime().Date;
+
+        if (_fromDate.HasValue && !_toDate.HasValue)
+            return tradeDate >= _fromDate.Value.Date;
+
+        if (!_fromDate.HasValue && _toDate.HasValue)
+            return tradeDate <= _toDate.Value.Date;
+
+        return tradeDate >= _fromDate.Value.Date && tradeDate <= _toDate.Value.Date;
+    }
+
+
+    private IEnumerable<int> VisiblePages
+    {
+        get
+        {
+            var total = TotalPages;
+            if (total <= 0) return Enumerable.Empty<int>();
+
+            var half = MaxPageButtons / 2;
+            var start = Math.Max(0, _pageIndex - half);
+            var end = Math.Min(total - 1, start + MaxPageButtons - 1);
+
+            // adjust start if we’re near the end
+            start = Math.Max(0, end - MaxPageButtons + 1);
+
+            return Enumerable.Range(start, end - start + 1);
+        }
+    }
+
+
+    /// <summary>
+    /// Sets the filtered trades to all trades on load and then filters based on the filter selections
+    /// </summary>
+    private IEnumerable<TransactionsModel> FilteredTrades =>
+        (_trades ?? []).Where(ShouldShowTrade);
+
+
+    /// <summary>
+    /// Used to loop through all available trades based on the filters chosen/set in FilteredTrades
+    /// </summary>
+    private IEnumerable<TransactionsModel> PagedTrades =>
+        (FilteredTrades ?? [])
+        .Skip(_pageIndex * PageSize)
+        .Take(PageSize);
+
+
+    /// <summary>
+    /// Gets the total available pages based on the FilteredTrades
+    /// </summary>
+    private int TotalPages =>
+        (int)Math.Ceiling((double)(FilteredTrades.Count()) / PageSize);
+
+
+    /// <summary>
+    /// Pagination helper
+    /// </summary>
+    private void PrevPage()
+    {
+        if (_pageIndex > 0) _pageIndex--;
+    }
+
+
+    /// <summary>
+    /// Pagination helper
+    /// </summary>
+    private void NextPage()
+    {
+        if (_pageIndex < TotalPages - 1) _pageIndex++;
+    }
+
+
+    /// <summary>
+    /// Pagination helper
+    /// </summary>
+    private void GoToPage(int page)
+    {
+        if (page >= 0 && page < TotalPages)
+        {
+            _pageIndex = page;
+            StateHasChanged();
+        }
+    }
+
+
+    /// <summary>
+    /// Gets the ordinal to be used on the round 
+    /// </summary>
+    /// <param name="number"></param>
+    /// <returns></returns>
+    private static string GetOrdinal(int number)
+    {
+        if (number % 100 is 11 or 12 or 13) return $"{number}th";
+        return (number % 10) switch
+        {
+            1 => $"{number}st",
+            2 => $"{number}nd",
+            3 => $"{number}rd",
+            _ => $"{number}th"
+        };
+    }
+
 }
+
