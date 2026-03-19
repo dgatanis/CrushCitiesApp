@@ -15,6 +15,8 @@ public interface ISleeperAPI
     Task<List<DraftPicksModel>> GetDraftPicksForDraftAsync(string draft_id);
     Task<List<MatchupModel>> GetMatchupsForWeekAsync(string league_id, string week);
     Task<List<TransactionsModel>> GetTransactionsForWeekAsync(string league_id, string week);
+    Task<List<PlayoffBracketsModel>> GetPlayoffWinnersBracketAsync(string league_id);
+    Task<List<PlayoffBracketsModel>> GetPlayoffLosersBracketAsync(string league_id);
 }
 
 public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
@@ -177,6 +179,36 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     {
         if (string.IsNullOrWhiteSpace(league_id) || string.IsNullOrWhiteSpace(week)) return [];
         var response = await GetAndDeserializeAsync<List<TransactionsModel>>($"league/{league_id}/transactions/{week}");
+
+        if (response is null || response.Count == 0) return [];
+        return [.. response];
+    }
+
+
+    /// <summary>
+    /// Gets the winners bracket for the given leagueId
+    /// </summary>
+    /// <param name="league_id"></param>
+    /// <returns></returns>
+    public async Task<List<PlayoffBracketsModel>> GetPlayoffWinnersBracketAsync(string league_id)
+    {
+        if (string.IsNullOrWhiteSpace(league_id)) return [];
+        var response = await GetAndDeserializeAsync<List<PlayoffBracketsModel>>($"league/{league_id}/winners_bracket");
+
+        if (response is null || response.Count == 0) return [];
+        return [.. response];
+    }
+
+
+    /// <summary>
+    /// Gets the losers bracket for the given leagueId
+    /// </summary>
+    /// <param name="league_id"></param>
+    /// <returns></returns>
+    public async Task<List<PlayoffBracketsModel>> GetPlayoffLosersBracketAsync(string league_id)
+    {
+        if (string.IsNullOrWhiteSpace(league_id)) return [];
+        var response = await GetAndDeserializeAsync<List<PlayoffBracketsModel>>($"league/{league_id}/losers_bracket");
 
         if (response is null || response.Count == 0) return [];
         return [.. response];

@@ -117,7 +117,7 @@ code {
 :root {
     --primary-site-color: #050018;
     --secondary-site-color: #331300;
-    --secondary-site-alt1: #1f0b15;
+    --secondary-site-alt1: #3b1217;
     --secondary-site-alt2: #2A0F13;
     --QB: #ff2a6d;
     --RB: #00ceb8;
@@ -133,6 +133,7 @@ code {
     --text: #131313;
     --light-text: #4b4b4b;
     --top-row: #f7f7f7;
+    --dark-background: #040018;
 }
 
 :root[data-theme="dark"] {
@@ -211,7 +212,7 @@ main {
 }
 
 ul.dropdown-menu.show {
-    background: #818181eb;
+    background: #818181f7;
     border: 1px solid #353535;
     box-shadow: 0 0 .2rem 0 whitesmoke;
 }
@@ -230,4 +231,22 @@ a.dropdown-item-nav-menu {
 
 h1 {
     color: inherit !important;
+}
+
+.bi-arrow-clockwise-icon {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='rgb(13, 110, 253)' class='bi bi-arrow-clockwise' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z'/%3E%3Cpath d='M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466'/%3E%3C/svg%3E");
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: transparent;
+    color: inherit;
+    border-color: #5a5a5a94 !important;
+    box-shadow: 0 0rem 0.2rem #5a5a5a94;
 }

@@ -26,7 +26,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
     /// </summary>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetPlayers(bool forceRefresh = false)
+    public async Task SetPlayersAsync(bool forceRefresh = false)
     {
         if (!forceRefresh &&
             _memoryPlayers is not null &&
@@ -181,7 +181,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
         }
         else
         {
-            await SetPlayers();
+            await SetPlayersAsync();
         }
     }
 }

@@ -35,9 +35,9 @@ else
         {
             @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
             {
-                <button type="button" class="btn btn-outline-secondary">
-                <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
-                <span class="team-name">@(UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : $"Team Not Found")</span>
+                <button type="button" class="btn btn-outline-secondary w-50 h-100">
+                    <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
+                    <span class="team-name">@(UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : $"Team Not Found")</span>
                 </button>
             }
         }
@@ -58,8 +58,8 @@ else
     {
         if(!RosterState.IsLoaded)
         {
-            var leagueId = LeagueState.GetCurrentLeagueId().Result;
-            await RosterState.SetRosters(leagueId ?? "");
+            var leagueId = LeagueState.GetCurrentLeagueIdAsync().Result;
+            await RosterState.SetRostersAsync(leagueId ?? "");
         }
         else 
         {

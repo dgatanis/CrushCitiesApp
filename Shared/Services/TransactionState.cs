@@ -22,37 +22,30 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
     /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetAllTransactionsData(bool forceRefresh = false)
+    public async Task SetAllTransactionsDataAsync(bool forceRefresh = false)
     {
         var json = await _http.GetStringAsync("/data/fleaflicker_trades_data.json");
         var fleaflicker_trades = JsonSerializer.Deserialize<List<TransactionsModel>>(json);
         
         if (!IsLoaded || forceRefresh)
         {
-            var leagueId = await _leagueState.GetCurrentLeagueId();
+            if(!_leagueState.IsLoadedAllLeagues) await _leagueState.SetAllLeaguesDataAsync();
             
-            while (!string.IsNullOrWhiteSpace(leagueId))
+            foreach(var league in _leagueState.AllLeagues)
             {
-                await _leagueState.SetLeague(leagueId, forceRefresh: true);
-                
-                if (_leagueState.IsLoaded &&
-                    _leagueState.League?.Settings?.LastScoredLeg is not null &&
-                    _leagueState.League.LeagueId is not null)
+                if (league.Settings?.LastScoredLeg is not null && league.LeagueId is not null)
                 {
-                    var lastWeek = Math.Max(1, _leagueState.League.Settings.LastScoredLeg); //If 0 use week 1 instead
-
+                    var lastWeek = Math.Max(1, league.Settings.LastScoredLeg); //If 0 use week 1 instead
                     for(int i = lastWeek; i > 0; i--)
                     {
-                        var transactions = await _sleeperApi.GetTransactionsForWeekAsync(leagueId, i.ToString());
+                        var transactions = await _sleeperApi.GetTransactionsForWeekAsync(league.LeagueId, i.ToString());
 
                         if (transactions is not null)
                         {
                             Transactions.AddRange(transactions);
                         }
                     }
-                    
                 }
-                leagueId = await _leagueState.GetPreviousLeagueId(leagueId);
             }
 
             if (fleaflicker_trades is not null)
@@ -86,15 +79,5 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
                 FilteredTransactions = Transactions;
             }
         }
-    }
-
-
-    /// <summary>
-    /// Builds dictionaries to be used for quicker lookups on pages
-    /// </summary>
-    /// <returns></returns>
-    public async Task BuildLookupCachesAsync()
-    {
-
     }
 }

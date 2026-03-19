@@ -21,7 +21,7 @@
     border-radius: 2rem;
     border: 1px solid var(--border-gray);
     position: relative;
-    color: #171717;
+    color: #050505;
 }
 
 .player-details {
@@ -98,4 +98,10 @@
     right: .5rem;
     top: 45%;
     position: absolute;
+}
+
+.player-container.border.border-1.rounded-end {
+    border-style: inset !important;
+    border-right: unset !important;
+    box-shadow: 0 0rem 0.2rem #5a5a5a94;
 }

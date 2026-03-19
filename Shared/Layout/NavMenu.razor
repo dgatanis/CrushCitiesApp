@@ -1,3 +1,15 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime IJSRuntime
+
+<script>
+    window.collapseNavbar = (selector) => {
+    const el = document.querySelector(selector);
+    if (!el) return;
+    const bsCollapse = bootstrap.Collapse.getOrCreateInstance(el);
+    bsCollapse.hide();
+    };
+</script>
+
 <nav class="navbar navbar-expand-lg navbar-dark top-navbar">
     <div class="container-fluid">
         <NavLink class="navbar-brand" href="/" Match="NavLinkMatch.All" style="margin-right: 1.5rem;">
@@ -12,28 +24,28 @@
         <div class="collapse navbar-collapse" id="mainNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
+                    <NavLink class="nav-link" @onclick="ToggleNavMenu" href="" Match="NavLinkMatch.All">Home</NavLink>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         History
                     </a>
                     <ul class="dropdown-menu">
-                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" href="history/current-season">Current Season</NavLink></li>
-                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" href="history/drafts">Drafts</NavLink></li>
-                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" href="history/champs">League Champs</NavLink></li>
-                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" href="history/matchups">Matchups</NavLink></li>
-                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" href="history/stats">Stats</NavLink></li>
+                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" @onclick="ToggleNavMenu" href="history/current-season">Current Season</NavLink></li>
+                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" @onclick="ToggleNavMenu" href="history/drafts">Drafts</NavLink></li>
+                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" @onclick="ToggleNavMenu" href="history/champs">League Champs</NavLink></li>
+                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" @onclick="ToggleNavMenu" href="history/matchups">Matchups</NavLink></li>
+                        <li><NavLink class="dropdown-item-nav-menu dropdown-item" @onclick="ToggleNavMenu" href="history/stats">Stats</NavLink></li>
                     </ul>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-link" href="rosters">Rosters</NavLink>
+                    <NavLink class="nav-link" @onclick="ToggleNavMenu" href="rosters">Rosters</NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-link" href="trades">Trades</NavLink>
+                    <NavLink class="nav-link" @onclick="ToggleNavMenu" href="trades">Trades</NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-link" href="rankings">Power Rankings</NavLink>
+                    <NavLink class="nav-link" @onclick="ToggleNavMenu" href="rankings">Power Rankings</NavLink>
                 </li>
             </ul>
 
@@ -48,6 +60,16 @@
 </nav>
 
 @code {
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
     [Parameter] public string Brand { get; set; } = "FFL";
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Close nav menu when clicking on a page
+    /// </summary>
+    /// <returns></returns>
+    private async Task ToggleNavMenu() {
+        await JS.InvokeVoidAsync("collapseNavbar", "#mainNavbar");
+    }
 }

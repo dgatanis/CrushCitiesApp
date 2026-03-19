@@ -131,3 +131,15 @@ public sealed class DraftSettingsModel
     [JsonPropertyName("teams")]
     public int Teams { get; set; }
 }
+
+/// <summary>
+/// Stores details about each draft season for easier looping in html
+/// </summary>
+public sealed class DraftPickSeasonSummary
+{
+    public string? Season { get; init; }
+    public string? LeagueId { get; init; }
+    public string? DraftId { get; init; }
+
+    public Dictionary<int, string>? DraftOrder { get; set; }
+}

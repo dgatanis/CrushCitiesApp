@@ -21,7 +21,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
     /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetUsers(string league_id, bool forceRefresh = false)
+    public async Task SetUsersAsync(string league_id, bool forceRefresh = false)
     {
         if (!IsLoaded || forceRefresh)
         {
@@ -40,7 +40,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
     /// </summary>
     /// <param name="user_id"></param>
     /// <returns></returns>
-    public async Task<string> GetTeamNameByUserId(string user_id) 
+    public async Task<string> GetTeamNameByUserIdAsync(string user_id) 
     {
         if (string.IsNullOrWhiteSpace(user_id)) return "";
         await EnsureLoadedAsync();
@@ -61,12 +61,12 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
     {
         if (IsLoaded && !forceRefresh) return;
 
-            var leagueId = await _leagueState.GetCurrentLeagueId();
+            var leagueId = await _leagueState.GetCurrentLeagueIdAsync();
             if (string.IsNullOrWhiteSpace(leagueId))
             {
                 throw new InvalidOperationException("Current league id is not available.");
             }
-            await SetUsers(leagueId, forceRefresh);
+            await SetUsersAsync(leagueId, forceRefresh);
     }
 
 
@@ -86,7 +86,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
 
             if (!string.IsNullOrWhiteSpace(user.UserId))
             {
-                var fromUser = await GetTeamNameByUserId(user.UserId);
+                var fromUser = await GetTeamNameByUserIdAsync(user.UserId);
                 if (!string.IsNullOrWhiteSpace(fromUser))
                     teamName = fromUser;
 

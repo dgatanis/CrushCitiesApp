@@ -22,7 +22,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState)
     /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetRosters(string league_id, bool forceRefresh = false)
+    public async Task SetRostersAsync(string league_id, bool forceRefresh = false)
     {
         if (!IsLoaded || forceRefresh)
         {
@@ -53,7 +53,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState)
 
             if (!string.IsNullOrWhiteSpace(roster.OwnerId))
             {
-                var fromUser = await _userState.GetTeamNameByUserId(roster.OwnerId);
+                var fromUser = await _userState.GetTeamNameByUserIdAsync(roster.OwnerId);
                 if (!string.IsNullOrWhiteSpace(fromUser))
                     teamName = fromUser;
             }

@@ -5,16 +5,39 @@ img.player-team-logo {
 
 .row.g-2.mt-1 {
     padding: .5rem;
-    background: var(--faded-background);
     margin-top: 1.5rem !important;
 }
 
-.p-2.border-3.border.rounded.border.border-dark {
-    background: #030011;
+.border-3.border.rounded.border {
+    background: var(--dark-background);
+    border-style: inset !important;
+    box-shadow: 0 0rem 0.2rem #5a5a5a94;
 }
 
 .teams-container {
     width: 100%;
+}
+
+img.owner-avatar {
+    max-width: 2.5rem;
+}
+
+button.page-link {
+    background: transparent;
+    color: inherit;
+    border-color: var(--text);
+}
+
+.pagination .page-item.active .page-link,
+.pagination .page-item.active > .page-link,
+.pagination .page-item.active > button.page-link {
+    background-color: #878787;
+    color: #fff; 
+}
+
+.col-12.col-md-6 {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
 }
 
 @media (min-width: 768px) {

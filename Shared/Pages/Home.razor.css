@@ -26,8 +26,13 @@
 }
 
 button.btn.btn-outline-secondary {
-    width: 70%;
+    width: fit-content;
     margin: auto;
     margin-top: 1rem;
     height: -webkit-fill-available;
+    color: inherit;
+}
+
+.owner-avatar {
+    max-width: 2.5rem;
 }

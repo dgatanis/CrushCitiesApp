@@ -1,18 +1,82 @@
 @page "/history/champs"
+@using Shared.Models
+@using Shared.Services
+@inject PlayoffState PlayoffState 
+@inject RosterState RosterState
+@inject LeagueState LeagueState
 
 <PageTitle>League Champs</PageTitle>
 
-<h1>League Champs</h1>
+<div class="d-flex justify-content-center">
+    <h1>League Champs</h1>    
+</div>
 
-<p role="status">Current count: @currentCount</p>
-
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+@if (_isLoading)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Primary" Size="SpinnerSize.Large" />
+    </div>
+}
+else
+{
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10">
+                @foreach(var seasonBracket in _winnersBrackets)
+                {
+                    var leagueId = seasonBracket.Key;
+                    <div class="mt-4">
+                        <div class="row g-3 justify-content-center">
+                            @foreach(var bracket in seasonBracket.Value)
+                            {
+                                if(bracket.PlacementGame == 1 && LeagueState.AllLeagues is not null)
+                                {
+                                    var league = LeagueState.AllLeagues.FirstOrDefault(x => x.LeagueId == seasonBracket.Key);
+                                    var finalWeek = league is not null ? league.Settings?.LastScoredLeg.ToString() : "";
+                                    var winningMatchup = _winnersMatchups.FirstOrDefault(x => x.RosterId == bracket.WinnerId && x.LeagueId == leagueId && x.Week == finalWeek);
+                                    if(winningMatchup is not null && league is not null)
+                                    {
+                                        <div class="col-12 col-md-6 col-lg-4 d-flex">
+                                            <div class="card h-100 shadow-sm w-100 text-center">
+                                                <div class="card-body">
+                                                    <div class="text-muted small">@league.Season</div>
+                                                    <div class="fs-5 fw-semibold">
+                                                        @(bracket.WinnerId is int id && RosterState.TeamNameByRosterId.TryGetValue(id, out var name) ? name : "(unknown)")
+                                                    </div>
+                                                    <div class="mt-2 text-muted small">Points</div>
+                                                    <div class="fs-6">@winningMatchup.Points</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
 
 @code {
-    private int currentCount = 0;
+    private bool _isLoading = true;
+    private List<MatchupModel> _winnersMatchups = new();
+    private List<MatchupModel> _losersMatchups = new();
+    private Dictionary<string, List<PlayoffBracketsModel>> _winnersBrackets = new();
+    private Dictionary<string, List<PlayoffBracketsModel>> _losersBrackets = new();
 
-    private void IncrementCount()
+    protected override async Task OnInitializedAsync()
     {
-        currentCount++;
+        if(!PlayoffState.IsLoaded)
+        {
+            await PlayoffState.SetAllPlayoffDataAsync();
+        }
+
+        _winnersMatchups = PlayoffState.WinnersBracketMatchups;
+        _losersMatchups = PlayoffState.LosersBracketMatchups;
+        _winnersBrackets = PlayoffState.AllWinnersBrackets;
+        _losersBrackets = PlayoffState.AllLosersBrackets;
+        _isLoading = false;
     }
 }

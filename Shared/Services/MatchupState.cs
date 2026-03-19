@@ -17,27 +17,24 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
     /// </summary>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetAllMatchups(bool forceRefresh = false)
+    public async Task SetAllMatchupsAsync(bool forceRefresh = false)
     {
         if(forceRefresh) ClearAllMatchups();
-        var leagueId = await _leagueState.GetCurrentLeagueId();
+        if(!_leagueState.IsLoadedAllLeagues) await _leagueState.SetAllLeaguesDataAsync();
 
-        while (!string.IsNullOrWhiteSpace(leagueId))
+        foreach(var league in _leagueState.AllLeagues)
         {
-            await _leagueState.SetLeague(leagueId, forceRefresh: true);
-
-            if (_leagueState.IsLoaded &&
-                _leagueState.League?.Settings?.LastScoredLeg is not null &&
-                _leagueState.League.LeagueId is not null)
+            if (league.Settings?.LastScoredLeg is not null &&
+                league.LeagueId is not null)
             {
-                var currentLeagueId = _leagueState.League.LeagueId;
-                var season = _leagueState.League.Season ?? "";
-                var lastWeek = _leagueState.League.Settings.LastScoredLeg;
+                var currentLeagueId = league.LeagueId;
+                var season = league.Season ?? "";
+                var lastWeek = league.Settings.LastScoredLeg;
 
                 for(int i = lastWeek; i > 0; i--)
                 {
-                    var matchups = await _sleeperApi.GetMatchupsForWeekAsync(leagueId, i.ToString());
-
+                    var matchups = await _sleeperApi.GetMatchupsForWeekAsync(league.LeagueId, i.ToString());
+                    
                     if (matchups is not null)
                     {
                         AllMatchups?.AddRange(matchups
@@ -46,11 +43,11 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
                             {
                                 m.Season = season;
                                 m.Week = i.ToString();
+                                m.LeagueId = currentLeagueId;
                                 return m;
                             }).OrderBy(m => m.MatchupId).ToList());
                     }
                 }
-                leagueId = await _leagueState.GetPreviousLeagueId(leagueId);
             }
         }
         IsLoadedAllMatchups = true;

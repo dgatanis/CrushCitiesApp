@@ -31,5 +31,7 @@ public sealed class MatchupModel
     public string? Season { get; set; }
 
     public string? Week { get; set; }
+
+    public string? LeagueId { get; set; }
     
 }

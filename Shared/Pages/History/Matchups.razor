@@ -25,6 +25,7 @@ else if (_matchups.Count == 0)
 }
 else
 {
+    <div style="margin-bottom:2rem; margin-top:1rem;" class="d-flex justify-content-center flex-wrap gap-2">
     <div class="dropdown">
         <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             @GetDropdownLabel(_selectedRosterId1)
@@ -32,12 +33,21 @@ else
         <ul class="dropdown-menu">
             @if (_rosters is not null && _rosters.Count > 0)
             {
-                @foreach (var roster in _rosters.Where(r => _selectedRosterId2 == -1 || r.RosterId != _selectedRosterId2)
+                @foreach (var roster in _rosters.Where(r => (_selectedRosterId2 == -1 || r.RosterId != _selectedRosterId2) && r.RosterId != _selectedRosterId1)
                                                             .OrderBy(r => r.RosterId))
                 {
-                    <li><button class="dropdown-item" type="button" @onclick="() => _selectedRosterId1 = roster.RosterId">@(RosterState.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")</button></li>
+                    <li>
+                        <button class="dropdown-item" type="button" @onclick="() => _selectedRosterId1 = roster.RosterId">
+                            @(RosterState.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")
+                        </button>
+                    </li>
                     <li><hr class="dropdown-divider"></li>
                 }
+                    <li>
+                        <button class="dropdown-item" type="button" @onclick="() => {_selectedRosterId1 = -1;}">
+                        --Reset--
+                        </button>
+                    </li>
             }
             else
             {
@@ -52,12 +62,21 @@ else
         <ul class="dropdown-menu">
             @if (_rosters is not null && _rosters.Count > 0)
             {
-                @foreach (var roster in _rosters.Where(r => _selectedRosterId1 == -1 || r.RosterId != _selectedRosterId1)
+                @foreach (var roster in _rosters.Where(r => (_selectedRosterId1 == -1 || r.RosterId != _selectedRosterId1) && r.RosterId != _selectedRosterId2)
                                                             .OrderBy(r => r.RosterId))
                 {
-                    <li><button class="dropdown-item" type="button" @onclick="() => _selectedRosterId2 = roster.RosterId">@(RosterState.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")</button></li>
+                    <li>
+                        <button class="dropdown-item" type="button" @onclick="() => _selectedRosterId2 = roster.RosterId">
+                            @(RosterState.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")
+                        </button>
+                    </li>
                     <li><hr class="dropdown-divider"></li>
                 }
+                    <li>
+                        <button class="dropdown-item" type="button" @onclick="() => {_selectedRosterId2 = -1;}">
+                        --Reset--
+                        </button>
+                    </li>
             }
             else
             {
@@ -65,7 +84,7 @@ else
             }
         </ul>
     </div>
-
+    </div>
     <div class="accordion" id="accordionSeasons">
         @foreach (var seasonGroup in _matchups
             .Where(m => !string.IsNullOrWhiteSpace(m.Season))
@@ -207,7 +226,7 @@ else
     /// <returns></returns>
     private async Task LoadMatchupsAsync(bool forceRefresh = false)
     {
-        await MatchupState.SetAllMatchups(forceRefresh);
+        await MatchupState.SetAllMatchupsAsync(forceRefresh);
         _matchups = MatchupState.AllMatchups ?? [];
     }
 
@@ -224,10 +243,10 @@ else
         }
         else 
         {
-            var leagueId = await LeagueState.GetCurrentLeagueId();
+            var leagueId = await LeagueState.GetCurrentLeagueIdAsync();
             if(leagueId is not null)
             {
-                await RosterState.SetRosters(leagueId, forceRefresh:true);
+                await RosterState.SetRostersAsync(leagueId, forceRefresh:true);
                 _rosters = RosterState.Rosters;
             }
         }

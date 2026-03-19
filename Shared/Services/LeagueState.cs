@@ -8,26 +8,36 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
 
 
-    public LeagueModel? League { get; private set; }
-    public bool IsLoaded => League is not null;
+    public List<LeagueModel> AllLeagues { get; private set; } = new();
+    public bool IsLoadedAllLeagues => AllLeagues is not null && AllLeagues.Count > 0;
+    public string CurrentLeagueId { get; private set; } = "-1";
 
 
     /// <summary>
-    /// Sets the league based on the leagueid
+    /// Sets all league dataq based starting from the currentleagueid and looping backwards
     /// </summary>
     /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetLeague(string league_id, bool forceRefresh = false)
+    public async Task SetAllLeaguesDataAsync(bool forceRefresh = false)
     {
-        if (!IsLoaded || forceRefresh)
+        if (!IsLoadedAllLeagues || forceRefresh)
         {
-            var league = await _sleeperApi.GetLeagueAsync(league_id ?? string.Empty);
-            if (league is not null)
+            var league_id = await GetCurrentLeagueIdAsync();
+            CurrentLeagueId = league_id ?? "-1";
+            while (!string.IsNullOrWhiteSpace(league_id))
             {
-                League = league;
+
+                    var league = await _sleeperApi.GetLeagueAsync(league_id ?? string.Empty);
+                    if (league is not null)
+                    {
+                        AllLeagues.Add(league);
+                    }
+                
+                league_id = await GetPreviousLeagueIdAsync(league_id ?? string.Empty);
             }
         }
+            
     }
 
 
@@ -35,7 +45,7 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
     /// Returns the currentleagueid for the league
     /// </summary>
     /// <returns></returns>
-    public async Task<string?> GetCurrentLeagueId()
+    public async Task<string?> GetCurrentLeagueIdAsync()
     {
         var nflState = await _sleeperApi.GetNFLState();
         if (nflState?.LeagueSeason is not null)
@@ -56,7 +66,7 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
     /// </summary>
     /// <param name="league_id"></param>
     /// <returns></returns>
-    public async Task<string?> GetPreviousLeagueId(string league_id)
+    public async Task<string?> GetPreviousLeagueIdAsync(string league_id)
     {
         if (string.IsNullOrWhiteSpace(league_id)) return null;
         try
