@@ -7,16 +7,37 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
 
-    
+    /// <summary>
+    /// List of all users
+    /// Set via SetUsersAsync(league_id).
+    /// </summary>
     public List<UsersModel>? Users { get; private set; } 
+
+    /// <summary>
+    /// Lookup dictionary for getting a users team name by providing their user_id (owner_id).
+    /// Set via BuildLookupCachesAsync()
+    /// </summary>
     public readonly Dictionary<string, string> TeamNameByUserId = new();
+
+    /// <summary>
+    /// Lookup dictionary for getting a users avatar by providing the user_id (owner_id).
+    /// Set via BuildLookupCachesAsync()
+    /// </summary>
     public readonly Dictionary<string, string> OwnerAvatarByUserId = new();
+
+    /// <summary>
+    /// Ensures the lookups for this service are loaded
+    /// </summary>
     public bool CacheLoaded => OwnerAvatarByUserId.Count > 0 && TeamNameByUserId.Count > 0;
+
+    /// <summary>
+    /// Verifies all users have been loaded
+    /// </summary>
     public bool IsLoaded => Users is not null && Users.Count > 0;
 
 
     /// <summary>
-    /// Sets the users for the given leagueid and builds cache lookups 
+    /// Sets the users for the given league_id and builds cache lookups 
     /// </summary>
     /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
@@ -36,7 +57,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
 
 
     /// <summary>
-    /// Helper method to get the team name by userid 
+    /// Helper method to get the team name by user_id (owner_id)
     /// </summary>
     /// <param name="user_id"></param>
     /// <returns></returns>
@@ -48,7 +69,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
         var teamName = user?.Metadata?.TeamName;
         if(user is not null && !string.IsNullOrWhiteSpace(teamName)) return teamName;
         return "";
-    }   
+    }      
 
 
     /// <summary>
@@ -79,7 +100,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
         TeamNameByUserId.Clear();
         OwnerAvatarByUserId.Clear();
 
-        //Get teamname by userid
+        // Get teamname by userid
         foreach (var user in Users ?? [])
         {
             var teamName = $"Roster {user.UserId}";
@@ -94,7 +115,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
             }
         }
 
-        //Get owner avatar by userid
+        // Get owner avatar by userid
         foreach (var user in Users ?? [])
         {
             if (string.IsNullOrWhiteSpace(user.UserId)) continue;

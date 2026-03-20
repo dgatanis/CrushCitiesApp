@@ -7,8 +7,15 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
 
-    
+    /// <summary>
+    /// List of all Matchups.
+    /// Set via SetAllMatchupsAsync()
+    /// </summary>
     public List<MatchupModel>? AllMatchups { get; set; } = new();
+
+    /// <summary>
+    /// Ensures AllMatchups is loaded
+    /// </summary>
     public bool IsLoadedAllMatchups { get; private set; } = false;
 
 

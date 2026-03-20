@@ -35,7 +35,7 @@ else
             <div class="draft-season-container container text-center">   
                 <div class="draft-season">@draft.Season Season</div>
             </div>
-            <div class="draft-container container text-center">
+            <div class="draft-container container text-center common-container">
             <table class="table draft-table">
                 <thead>
                 <tr>
@@ -45,7 +45,7 @@ else
                         class=@($"row-item team-header {(IsSelectedTeam(draft.DraftId, team.Value) ? "team-header-selected" : "")}")
                         @onclick="() => SelectDraftTeam(draft.DraftId, team.Value)">
                             <div>
-                                <img class="owner-avatar" style="max-width: 3rem;" src=@(UserState.OwnerAvatarByUserId.TryGetValue(team.Value, out var name) ? name : $"Roster {team.Value}") />
+                                <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(team.Value, out var name) ? name : $"Roster {team.Value}") />
                                 <div style="font-size: .9rem;">@(UserState.TeamNameByUserId.TryGetValue(team.Value, out var teamName) ? teamName : "Team Not Found")</div>
                             </div>
                     </th> 
@@ -67,7 +67,7 @@ else
                                     <div class="selection-label">@GetSelectionLabel(pick is not null ? pick : new DraftPicksModel(), draft)</div>
                                     @if (!string.Equals(pick?.OriginalPickOwner, pick?.PickedBy, StringComparison.Ordinal))
                                     {
-                                        <img class="owner-avatar-xsmall" title=@(UserState.TeamNameByUserId.TryGetValue(pick?.PickedBy ?? "", out var teamName) ? teamName : $"Team Not Found") 
+                                        <img class="owner-avatar-xsmall" title="Drafted by @(UserState.TeamNameByUserId.TryGetValue(pick?.PickedBy ?? "", out var teamName) ? teamName : $"Team Not Found")" 
                                             src=@(UserState.OwnerAvatarByUserId.TryGetValue(pick?.PickedBy ?? "", out var name) ? name : "") />
                                     }
                                     <div class="player-position">@pickedPlayer?.Position</div>

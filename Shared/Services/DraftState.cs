@@ -7,9 +7,28 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
     
+    /// <summary>
+    /// List of all drafts for a league (DraftsModel).
+    /// Set via SetAllDraftDataAsync()
+    /// </summary>
     public List<DraftsModel>? AllDrafts { get; private set; } = new();
+
+    /// <summary>
+    /// List of all draft picks for a league (DraftPicksModel).
+    /// Set via SetAllDraftDataAsync()
+    /// </summary>
     public List<DraftPicksModel>? AllDraftPicks { get; private set; }
+
+    /// <summary>
+    /// Lookup list for finding quick details about a draft.
+    /// Stores Season, LeagueId, DraftId and a mapping between roster_id and draft_slot for that draft.
+    /// Set via BuildLookupCachesAsync()
+    /// </summary>
     public List<DraftPickSeasonSummary> DraftHistory { get; private set; } = new();
+
+    /// <summary>
+    /// Ensures AllDrafts and AllDraftPicks is loaded
+    /// </summary>
     public bool IsLoadedAllDrafts => AllDrafts is not null && AllDraftPicks is not null;
 
 
@@ -18,7 +37,6 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
     /// Sets the draft data for the given leagueid
     /// TODO: Change so it sets all Draft Data 
     /// </summary>
-    /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
     public async Task SetAllDraftDataAsync(bool forceRefresh = false)

@@ -129,7 +129,7 @@ code {
     --TE-faded: #ffae5847;
     --border-gray: #616161;
     --faded-background: #9595954a;
-    --bg: var(--bs-body-bg);
+    --bg: #b8b7b7;
     --text: #131313;
     --top-row: #f7f7f7;
     --dark-background: #040018;
@@ -179,9 +179,10 @@ code {
 }
 
 .accordion-button:not(.collapsed) {
-    background: var(--secondary-site-alt1);
+    background: var(--secondary-site-alt2);
     color: #dcdcdc;
     box-shadow: none !important;
+    opacity: .9;
 }
 
 .accordion-button {
@@ -248,4 +249,12 @@ h1 {
     color: inherit;
     border-color: #5a5a5a94 !important;
     box-shadow: 0 0rem 0.2rem #5a5a5a94;
+}
+
+.common-container {
+    background: var(--dark-background) !important;
+    border-style: inset !important;
+    box-shadow: 0 0rem 0.1rem #5a5a5a94 !important;
+    border-color: #a0a0a036 !important;
+    color: #d6d6d6 !important;
 }

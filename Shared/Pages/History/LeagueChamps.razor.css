@@ -1,0 +1,19 @@
+.player-image {
+    margin-right: .5rem;
+}
+
+img.owner-avatar {
+    max-width: 2.5rem;
+}
+
+.fs-5.fw-semibold {
+    font-family: 'F1';
+}
+
+.text-muted {
+    color: #818181 !important;
+}
+
+.card.h-100.shadow-sm.w-100.text-center {
+    color: #d6d6d6;
+}

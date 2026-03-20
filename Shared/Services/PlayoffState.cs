@@ -9,18 +9,39 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
     private readonly LeagueState _leagueState = leagueState;
     private readonly MatchupState _matchupState = matchupState;
     
+    /// <summary>
+    /// Lookup dictionary of all the winner brackets (PlayoffBracketsModel). 
+    /// Set via SetAllPlayoffDataAsync()
+    /// </summary>
     public Dictionary<string, List<PlayoffBracketsModel>> AllWinnersBrackets  = new();
+
+    /// <summary>
+    /// Lookup dictionary of all the loser brackets (PlayoffBracketsModel). 
+    /// Set via SetAllPlayoffDataAsync()
+    /// </summary>
     public Dictionary<string, List<PlayoffBracketsModel>> AllLosersBrackets = new();
+
+    /// <summary>
+    /// List of the matchups that were part of the winner bracket playoffs. 
+    /// Set via BuildLookupCachesAsync()
+    /// </summary>
     public List<MatchupModel> WinnersBracketMatchups { get; private set; } = new();
+
+    /// <summary>
+    /// List of the matchups that were part of the loser bracket playoffs
+    /// Set via BuildLookupCachesAsync()
+    /// </summary>
     public List<MatchupModel> LosersBracketMatchups { get; private set; } = new();
 
+    /// <summary>
+    /// Ensures AllWinnersBrackets and AllLosersBrackets is loaded
+    /// </summary>
     public bool IsLoaded => AllWinnersBrackets.Count > 0 && AllLosersBrackets.Count > 0;
 
 
     /// <summary>
-    /// Sets the roster based on the leagueid
+    /// Sets all playoff data beginning with the CurrentLeagueId looping backwards through PreviousLeagueIds
     /// </summary>
-    /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
     public async Task SetAllPlayoffDataAsync(bool forceRefresh = false)
@@ -61,10 +82,8 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
             
             foreach(var bracket in list.Value)
             {
-                Console.WriteLine($"TESTING123 - {_leagueState.AllLeagues.Count}");
                 if(_leagueState.AllLeagues.Count > 0)
                 {
-                    Console.WriteLine($"TESTING123 {_leagueState.AllLeagues.FirstOrDefault(l => l.LeagueId == league_id)}");
                     var week = _leagueState.AllLeagues.FirstOrDefault(l => l.LeagueId == league_id)?.Settings?.PlayoffWeekStart is int start && bracket.Round is >= 1 and <= 3
                                 ? (start + (bracket.Round - 1)).ToString()
                                 : "";

@@ -7,16 +7,27 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
 
-
+    /// <summary>
+    /// List of all league details for this league.
+    /// Set via SetAllLeaguesDataAsync()
+    /// </summary>
     public List<LeagueModel> AllLeagues { get; private set; } = new();
+
+    /// <summary>
+    /// Ensures AllLeagues is loaded
+    /// </summary>
     public bool IsLoadedAllLeagues => AllLeagues is not null && AllLeagues.Count > 0;
+
+    /// <summary>
+    /// The current league_id for this league.
+    /// Set via SetAllLeaguesDataAsync()
+    /// </summary>
     public string CurrentLeagueId { get; private set; } = "-1";
 
 
     /// <summary>
     /// Sets all league dataq based starting from the currentleagueid and looping backwards
     /// </summary>
-    /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
     public async Task SetAllLeaguesDataAsync(bool forceRefresh = false)

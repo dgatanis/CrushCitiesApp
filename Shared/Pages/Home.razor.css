@@ -17,7 +17,7 @@
 .teams-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    width: 100%;
+    width: 50%;
 }
 
 .team-name {
@@ -31,6 +31,9 @@ button.btn.btn-outline-secondary {
     margin-top: 1rem;
     height: -webkit-fill-available;
     color: inherit;
+    width: 12rem;
+    height: 7rem;
+    font-size: .9rem;
 }
 
 .owner-avatar {

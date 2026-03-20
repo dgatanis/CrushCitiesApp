@@ -102,6 +102,6 @@
 
 .player-container.border.border-1.rounded-end {
     border-style: inset !important;
-    border-right: unset !important;
-    box-shadow: 0 0rem 0.2rem #5a5a5a94;
+    box-shadow: 0 0rem 0.1rem #5a5a5a94;
+    border-color: #a0a0a0b0 !important;
 }

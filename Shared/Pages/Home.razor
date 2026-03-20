@@ -30,17 +30,19 @@ else
             for someone else. Luck? Skill? Who cares. The only thing that matters is: Don't. Finish. Last.
         </p>
     </div>  
-    <div class="teams-container">
-        @foreach (var roster in _rosters)
-        {
-            @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
+    <div class="d-flex justify-content-center">
+        <div class="teams-container gap-2 justify-content-center">
+            @foreach (var roster in _rosters)
             {
-                <button type="button" class="btn btn-outline-secondary w-50 h-100">
-                    <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
-                    <span class="team-name">@(UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : $"Team Not Found")</span>
-                </button>
+                @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
+                {
+                    <button type="button" class="btn btn-outline-secondary common-container border-3">
+                        <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
+                        <span class="team-name">@(UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : $"Team Not Found")</span>
+                    </button>
+                }
             }
-        }
+        </div>
     </div>
 }
 

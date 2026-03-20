@@ -8,12 +8,6 @@ img.player-team-logo {
     margin-top: 1.5rem !important;
 }
 
-.border-3.border.rounded.border {
-    background: var(--dark-background);
-    border-style: inset !important;
-    box-shadow: 0 0rem 0.2rem #5a5a5a94;
-}
-
 .teams-container {
     width: 100%;
 }
@@ -31,8 +25,7 @@ button.page-link {
 .pagination .page-item.active .page-link,
 .pagination .page-item.active > .page-link,
 .pagination .page-item.active > button.page-link {
-    background-color: #878787;
-    color: #fff; 
+    background-color: #87878791;
 }
 
 .col-12.col-md-6 {

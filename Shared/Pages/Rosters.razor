@@ -59,7 +59,7 @@ else
                                     </div>
                                     <div class="player-name-container">
                                         <div class="player-name">@player?.Firstname @player?.Lastname</div>
-                                        <img class="player-team-logo" src=@(player?.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "")>
+                                        <img class="player-team-logo" src=@(player?.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")>
                                     </div>
                                     <div class="player-details">
                                         <span class="player-number">#@player?.Number</span>
@@ -94,7 +94,7 @@ else
                             if(roster.Starters is not null && !roster.Starters.Contains(bench) && !roster.Taxi!.Contains(bench))
                             {
                                 var player = PlayerState.PlayerById.TryGetValue(bench, out var p) ? p : null;
-                                <div class="player-container border border-1 rounded-end" style="background-color:#80808057">
+                                <div class="player-container border border-1 rounded-end" style="background-color:#6e6e6e73;">
                                     <div class="position-container">
                                         <div class="player-position">
                                             @player?.Position
@@ -139,7 +139,7 @@ else
                         @foreach(var taxi in roster.Taxi ?? [])
                         {
                             var player = PlayerState.PlayerById.TryGetValue(taxi, out var p) ? p : null;
-                            <div class="player-container border border-1 rounded-end" style="background-color:#80808057;">
+                            <div class="player-container border border-1 rounded-end" style="background-color:#6e6e6e73;">
                                 <div class="position-container">
                                     <div class="player-position">
                                         @player?.Position
@@ -150,7 +150,7 @@ else
                                 </div>
                                 <div class="player-name-container">
                                     <div class="player-name">@player?.Firstname @player?.Lastname</div>
-                                    <img class="player-team-logo" src=@(player?.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "")>
+                                    <img class="player-team-logo" src=@(player?.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")>
                                 </div>
                                 <div class="player-details">
                                     <span class="player-number">#@player?.Number</span>

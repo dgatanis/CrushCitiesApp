@@ -7,13 +7,46 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState)
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly UserState _userState = userState;
 
-    
+    /// <summary>
+    /// List of all rosters. 
+    /// Set via SetRostersAsync(league_id)
+    /// </summary>
     public List<RostersModel>? Rosters { get; private set; }
+
+    /// <summary>
+    /// Lookup dictionary for getting the team name by providing the roster_id.
+    /// Set via BuildLookupCachesAsync()
+    /// </summary>
     public readonly Dictionary<int, string> TeamNameByRosterId = new();
+
+    /// <summary>
+    /// Lookup dictionary for getting the player nickname by providing the roster_id and player_id.
+    /// Set via BuildLookupCachesAsync()
+    /// </summary>
     public readonly Dictionary<(int rosterId, string playerId), string> PlayerNicknameByRosterId = new();
+
+    /// <summary>
+    /// Lookup dictionary for getting the user_id (owner_id) by providing the roster_id.
+    /// Set via BuildLookupCachesAsync()
+    /// </summary>
     public readonly Dictionary<string, int> RosterIdByUserId = new();
-    public bool CacheLoaded => PlayerNicknameByRosterId.Count > 0 && TeamNameByRosterId.Count > 0 && RosterIdByUserId.Count > 0;
+
+    /// <summary>
+    /// Lookup dictionary for getting a user_id by providing the roster_id.
+    /// Set via BuildLookupCachesAsync()
+    /// </summary>
+    public readonly Dictionary<string, string> UserIdByRosterId = new();
+
+    /// <summary>
+    /// Ensures the cached lookups are loaded
+    /// </summary>
+    public bool CacheLoaded => PlayerNicknameByRosterId.Count > 0 && TeamNameByRosterId.Count > 0 && RosterIdByUserId.Count > 0 && UserIdByRosterId.Count > 0;
+    
+    /// <summary>
+    /// Esnures the rosters are loaded
+    /// </summary>
     public bool IsLoaded => Rosters is not null && Rosters.Count > 0;
+    
 
 
     /// <summary>
@@ -45,6 +78,12 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState)
         TeamNameByRosterId.Clear();
         PlayerNicknameByRosterId.Clear();
         RosterIdByUserId.Clear();
+        UserIdByRosterId.Clear();
+
+         var userIds = (_userState.Users ?? [])
+            .Where(u => !string.IsNullOrWhiteSpace(u?.UserId))
+            .Select(u => u!.UserId)
+            .ToHashSet();
 
         // Team names by RosterId
         foreach (var roster in Rosters ?? [])
@@ -87,6 +126,15 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState)
         {
             if (string.IsNullOrWhiteSpace(roster.OwnerId)) continue;
             RosterIdByUserId[roster.OwnerId] = roster.RosterId;
+        }
+
+        // Get user_id by roster_id
+        foreach (var roster in Rosters ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(roster?.OwnerId)) continue;
+            if (!userIds.Contains(roster.OwnerId)) continue;
+
+            UserIdByRosterId[roster.RosterId.ToString()] = roster.OwnerId;
         }
     }
     

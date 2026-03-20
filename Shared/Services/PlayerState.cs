@@ -13,11 +13,31 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
     private Dictionary<string, PlayerLiteModel>? _memoryPlayers;
     private DateTimeOffset _memoryExpiration;
 
-    
+    /// <summary>
+    /// Lookup dictionary for getting a PlayerLite model by providing the player_id
+    /// </summary>
     public readonly Dictionary<string, PlayerLiteModel> PlayerById = new();
+    
+    /// <summary>
+    /// Lookup dictionary for getting a players nfl team image by providing the team_abbr (MIA, TEN, WAS...).
+    /// Set via BuildLookupCachesAsync()
+    /// </summary>
     public Dictionary<string, string> PlayerNFLTeamImageByAbbr = new();
+
+    /// <summary>
+    /// Dictionary to store the player_id by the PlayerLiteModel.
+    /// Use PlayerLiteModel to store less data than the full PlayerModel
+    /// </summary>
     public Dictionary<string, PlayerLiteModel>? Players { get; private set; }
+
+    /// <summary>
+    /// Ensures that the Players object is loaded
+    /// </summary>
     public bool IsLoaded => Players is not null;
+
+    /// <summary>
+    /// Ensures the lookups PlayerNFLTeamImageByAbbr and PlayerById are loaded
+    /// </summary>
     public bool CacheLoaded => PlayerNFLTeamImageByAbbr.Count > 0 && PlayerById.Count > 0;
 
 

@@ -10,8 +10,21 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
 
     private readonly HttpClient _http = http;
     
+    /// <summary>
+    /// List of all transactions. 
+    /// Set via SetAllTransactionsDataAsync()
+    /// </summary>
     public List<TransactionsModel> Transactions { get; private set; } = new();
+
+    /// <summary>
+    /// List of filtered transactions filtered by using FilterTransactionsData(type). 
+    /// Can dynamically update list based on "type" needs.
+    /// </summary>
     public List<TransactionsModel> FilteredTransactions { get; private set; } = new();
+
+    /// <summary>
+    /// Ensures transactions are loaded
+    /// </summary>
     public bool IsLoaded => Transactions is not null && Transactions.Count > 0;
 
 
@@ -19,7 +32,6 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
     /// Sets all transaction data beginning from the currentleagueid looping backwards
     /// Appends "extra" fleaflicker trade data from a json
     /// </summary>
-    /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
     public async Task SetAllTransactionsDataAsync(bool forceRefresh = false)
@@ -62,7 +74,7 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    public async Task FilterTransactionsData(string type = "")
+    public void FilterTransactionsData(string type = "")
     {
 
         FilteredTransactions.Clear();

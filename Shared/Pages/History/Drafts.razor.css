@@ -37,6 +37,7 @@
 .draft-season-container {
     font-family: 'F3';
     font-size: 2rem;
+    margin-top: 2.5rem;
 }
 
 .owner-avatar-xsmall {
@@ -46,6 +47,10 @@
     margin-top: .2rem;
     grid-row: 1;
     grid-column: 1;
+}
+
+.owner-avatar{
+    max-width: 2.5rem;
 }
 
 .draft-table {
