@@ -26,7 +26,7 @@ main {
   color: #333;
 }
 
-span.me-4.small {
+span.me-5.small {
     color: #d5d5d5;
 }
 
@@ -55,7 +55,7 @@ span.me-4.small {
 
 ::deep .ticker-team { font-size: 1.05rem; font-family: 'F1'; }
 ::deep .ticker-details { font-size: .75rem !important; margin-right:.2rem; }
-::deep .ticker-added { color: #3bd16f80;}
+::deep .ticker-added { color: #54c67b;}
 ::deep .ticker-dropped { color: #ff4d4dc4;}
 
 .ticker-line {

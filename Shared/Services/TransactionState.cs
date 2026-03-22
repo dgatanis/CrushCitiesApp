@@ -45,7 +45,7 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
         if (!IsLoaded || forceRefresh)
         {
             
-            if(!_leagueState.IsLoadedAllLeagues) await _leagueState.SetAllLeaguesDataAsync();
+            await _leagueState.EnsureLoadedAsync();
             
             foreach(var league in _leagueState.AllLeagues)
             {
@@ -99,7 +99,8 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
 
 
     /// <summary>
-    /// Verify filtered transactions contains all types 
+    /// Verify filtered transactions contains all provided types.
+    /// Includes "trade", "waiver", "free_agent" types.
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
@@ -122,13 +123,13 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
     }
 
     /// <summary>
-    /// Ensures that the transactions data is loaded
+    /// Ensures that the Transactions data is loaded.
     /// </summary>
     /// <returns></returns>
     public Task EnsureLoadedAsync()
     {
         if (IsLoaded) return Task.CompletedTask;
-        _loadTask ??= SetAllTransactionsDataAsync();
+        _loadTask ??= SetAllTransactionsDataAsync(forceRefresh: true);
         return _loadTask;
     }
 }

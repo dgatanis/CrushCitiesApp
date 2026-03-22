@@ -2,14 +2,17 @@ using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState)
+public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, LeagueState leagueState)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly UserState _userState = userState;
+    private readonly LeagueState _leagueState = leagueState;
+    private Task? _loadTask;
+    private Task? _cacheTask;
 
     /// <summary>
     /// List of all rosters. 
-    /// Set via SetRostersAsync(league_id)
+    /// Set via SetCurrentRostersAsync(league_id)
     /// </summary>
     public List<RostersModel>? Rosters { get; private set; }
 
@@ -40,7 +43,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState)
     /// <summary>
     /// Ensures the cached lookups are loaded
     /// </summary>
-    public bool CacheLoaded => PlayerNicknameByRosterId.Count > 0 && TeamNameByRosterId.Count > 0 && RosterIdByUserId.Count > 0 && UserIdByRosterId.Count > 0;
+    public bool IsCacheLoaded => PlayerNicknameByRosterId.Count > 0 && TeamNameByRosterId.Count > 0 && RosterIdByUserId.Count > 0 && UserIdByRosterId.Count > 0;
     
     /// <summary>
     /// Esnures the rosters are loaded
@@ -55,11 +58,13 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState)
     /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetRostersAsync(string league_id, bool forceRefresh = false)
+    public async Task SetCurrentRostersAsync(bool forceRefresh = false)
     {
+        await _leagueState.EnsureLoadedAsync();
+        var currentLeagueId = _leagueState.CurrentLeagueId;
         if (!IsLoaded || forceRefresh)
         {
-            var rosters = await _sleeperApi.GetRostersForLeagueAsync(league_id);
+            var rosters = await _sleeperApi.GetRostersForLeagueAsync(currentLeagueId);
             if (rosters is {Count: > 0})
             {
                 Rosters = rosters;
@@ -73,14 +78,15 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState)
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    public async Task BuildLookupCachesAsync()
+    private async Task BuildLookupCachesAsync()
     {
+        await _userState.EnsureLoadedAsync();
         TeamNameByRosterId.Clear();
         PlayerNicknameByRosterId.Clear();
         RosterIdByUserId.Clear();
         UserIdByRosterId.Clear();
 
-         var userIds = (_userState.Users ?? [])
+        var userIds = (_userState.Users ?? [])
             .Where(u => !string.IsNullOrWhiteSpace(u?.UserId))
             .Select(u => u!.UserId)
             .ToHashSet();
@@ -137,5 +143,28 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState)
             UserIdByRosterId[roster.RosterId.ToString()] = roster.OwnerId;
         }
     }
+
+    /// <summary>
+    /// Ensures that the Rosters data is loaded.
+    /// </summary>
+    /// <returns></returns>
+    public Task EnsureLoadedAsync()
+    {
+        if (IsLoaded) return Task.CompletedTask;
+        _loadTask ??= SetCurrentRostersAsync(forceRefresh: true);
+        return _loadTask;
+    }
+
+
     
+    /// <summary>
+    /// Ensures the cached data is loaded.
+    /// </summary>
+    /// <returns></returns>
+    public Task EnsureCacheLoadedAsync()
+    {
+        if (IsCacheLoaded) return Task.CompletedTask;
+        _cacheTask ??= BuildLookupCachesAsync();
+        return _cacheTask;
+    }
 }

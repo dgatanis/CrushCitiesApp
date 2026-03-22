@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography.X509Certificates;
 using Shared.Models;
 
@@ -8,35 +9,43 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
     private readonly MatchupState _matchupState = matchupState;
+    private Task? _loadTask;
+    private Task? _cacheTask;
     
     /// <summary>
-    /// Lookup dictionary of all the winner brackets (PlayoffBracketsModel). 
-    /// Set via SetAllPlayoffDataAsync()
+    /// Dictionary of all the winner brackets (PlayoffBracketsModel). 
+    /// Set via SetAllPlayoffDataAsync().
     /// </summary>
     public Dictionary<string, List<PlayoffBracketsModel>> AllWinnersBrackets  = new();
 
     /// <summary>
-    /// Lookup dictionary of all the loser brackets (PlayoffBracketsModel). 
-    /// Set via SetAllPlayoffDataAsync()
+    /// Dictionary of all the loser brackets (PlayoffBracketsModel). 
+    /// Set via SetAllPlayoffDataAsync().
     /// </summary>
     public Dictionary<string, List<PlayoffBracketsModel>> AllLosersBrackets = new();
 
     /// <summary>
     /// List of the matchups that were part of the winner bracket playoffs. 
-    /// Set via BuildLookupCachesAsync()
+    /// Set via BuildLookupCachesAsync().
     /// </summary>
     public List<MatchupModel> WinnersBracketMatchups { get; private set; } = new();
 
     /// <summary>
     /// List of the matchups that were part of the loser bracket playoffs
-    /// Set via BuildLookupCachesAsync()
+    /// Set via BuildLookupCachesAsync().
     /// </summary>
     public List<MatchupModel> LosersBracketMatchups { get; private set; } = new();
+    
+    /// <summary>
+    /// Ensures WinnersBracketMatchups and LosersBracketMatchups is loaded
+    /// </summary>
+    public bool IsCacheLoaded => LosersBracketMatchups is not null && LosersBracketMatchups.Count > 0 && WinnersBracketMatchups is not null && WinnersBracketMatchups.Count > 0;
+
 
     /// <summary>
     /// Ensures AllWinnersBrackets and AllLosersBrackets is loaded
     /// </summary>
-    public bool IsLoaded => AllWinnersBrackets.Count > 0 && AllLosersBrackets.Count > 0;
+    public bool IsLoaded => AllWinnersBrackets is not null && AllWinnersBrackets.Count > 0 && AllLosersBrackets is not null && AllLosersBrackets.Count > 0;
 
 
     /// <summary>
@@ -72,10 +81,10 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    public async Task BuildLookupCachesAsync()
+    private async Task BuildLookupCachesAsync()
     {
-        if(!_matchupState.IsLoadedAllMatchups) await _matchupState.SetAllMatchupsAsync();
-        if(!_leagueState.IsLoadedAllLeagues) await _leagueState.SetAllLeaguesDataAsync();
+        await _matchupState.EnsureLoadedAsync();
+        await _leagueState.EnsureLoadedAsync();
         foreach(var list in AllWinnersBrackets)
         {
             var league_id = list.Key;
@@ -129,5 +138,28 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
             
         }
     }
+
+    /// <summary>
+    /// Ensures that the AllWinnersBrackets and AllLosersBrackets data is loaded.
+    /// </summary>
+    /// <returns></returns>
+    public Task EnsureLoadedAsync()
+    {
+        if (IsLoaded) return Task.CompletedTask;
+        _loadTask ??= SetAllPlayoffDataAsync(forceRefresh: true);
+        return _loadTask;
+    }
     
+
+
+    /// <summary>
+    /// Ensures the cached data is loaded.
+    /// </summary>
+    /// <returns></returns>
+    public Task EnsureCacheLoadedAsync()
+    {
+        if (IsCacheLoaded) return Task.CompletedTask;
+        _cacheTask ??= BuildLookupCachesAsync();
+        return _cacheTask;
+    }
 }

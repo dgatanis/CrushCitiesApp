@@ -6,6 +6,8 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
+    private Task? _loadTask;
+    private Task? _cacheTask;
     
     /// <summary>
     /// List of all drafts for a league (DraftsModel).
@@ -27,9 +29,16 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
     public List<DraftPickSeasonSummary> DraftHistory { get; private set; } = new();
 
     /// <summary>
+    /// Ensures DraftHistory loaded
+    /// </summary>
+    public bool IsCacheLoaded => DraftHistory is not null && DraftHistory.Count > 0;
+
+    
+
+    /// <summary>
     /// Ensures AllDrafts and AllDraftPicks is loaded
     /// </summary>
-    public bool IsLoadedAllDrafts => AllDrafts is not null && AllDraftPicks is not null;
+    public bool IsLoaded => AllDrafts is not null && AllDrafts.Count > 0 && AllDraftPicks is not null && AllDraftPicks.Count > 0;
 
 
 
@@ -41,9 +50,9 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
     /// <returns></returns>
     public async Task SetAllDraftDataAsync(bool forceRefresh = false)
     {
-        if (!IsLoadedAllDrafts || forceRefresh)
+        if (!IsLoaded || forceRefresh)
         {
-            if(!_leagueState.IsLoadedAllLeagues) await _leagueState.SetAllLeaguesDataAsync();
+            await _leagueState.EnsureLoadedAsync();
             AllDrafts = new();
             AllDraftPicks = new();
 
@@ -73,7 +82,7 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    public async Task BuildLookupCachesAsync()
+    private async Task BuildLookupCachesAsync()
     {
         DraftHistory.Clear();
 
@@ -92,5 +101,28 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
                 DraftOrder = slotToOwner
             });
         }
+    }
+
+    /// <summary>
+    /// Ensures that the AllTransactions data is loaded.
+    /// </summary>
+    /// <returns></returns>
+    public Task EnsureLoadedAsync()
+    {
+        if (IsLoaded) return Task.CompletedTask;
+        _loadTask ??= SetAllDraftDataAsync(forceRefresh: true);
+        return _loadTask;
+    }
+
+
+    /// <summary>
+    /// Ensures the cached data is loaded.
+    /// </summary>
+    /// <returns></returns>
+    public Task EnsureCacheLoadedAsync()
+    {
+        if (IsCacheLoaded) return Task.CompletedTask;
+        _cacheTask ??= BuildLookupCachesAsync();
+        return _cacheTask;
     }
 }

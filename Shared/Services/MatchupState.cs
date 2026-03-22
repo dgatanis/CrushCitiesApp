@@ -6,6 +6,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
+    private Task? _loadTask;
 
     /// <summary>
     /// List of all Matchups.
@@ -16,7 +17,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
     /// <summary>
     /// Ensures AllMatchups is loaded
     /// </summary>
-    public bool IsLoadedAllMatchups { get; private set; } = false;
+    public bool IsLoaded => AllMatchups is not null && AllMatchups.Count > 0;
 
 
     /// <summary>
@@ -27,7 +28,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
     public async Task SetAllMatchupsAsync(bool forceRefresh = false)
     {
         if(forceRefresh) ClearAllMatchups();
-        if(!_leagueState.IsLoadedAllLeagues) await _leagueState.SetAllLeaguesDataAsync();
+        await _leagueState.EnsureLoadedAsync();
 
         foreach(var league in _leagueState.AllLeagues)
         {
@@ -57,7 +58,6 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
                 }
             }
         }
-        IsLoadedAllMatchups = true;
     }
 
 
@@ -67,7 +67,18 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
     public void ClearAllMatchups()
     {
         AllMatchups = [];
-        IsLoadedAllMatchups = false;
+    }
+
+
+    /// <summary>
+    /// Ensures that the AllMatchups data is loaded.
+    /// </summary>
+    /// <returns></returns>
+    public Task EnsureLoadedAsync()
+    {
+        if (IsLoaded) return Task.CompletedTask;
+        _loadTask ??= SetAllMatchupsAsync(forceRefresh: true);
+        return _loadTask;
     }
 
 }

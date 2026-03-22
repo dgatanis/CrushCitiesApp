@@ -313,18 +313,8 @@ else
     /// <returns></returns>
     private async Task LoadRosters()
     {
-        if (RosterState.IsLoaded)
-        {
-            _rosters = RosterState.Rosters;
-            return;
-        }
-
-        var leagueId = await LeagueState.GetCurrentLeagueIdAsync();
-        if (!string.IsNullOrWhiteSpace(leagueId))
-        {
-            await RosterState.SetRostersAsync(leagueId, forceRefresh: true);
-            _rosters = RosterState.Rosters;
-        }
+        await RosterState.EnsureLoadedAsync();
+        _rosters = RosterState.Rosters;
     }
 
 
@@ -334,8 +324,8 @@ else
     private async Task LoadDraftHistory()
     {
         _draftInfoBySeason.Clear();
-        if(!LeagueState.IsLoadedAllLeagues) await LeagueState.SetAllLeaguesDataAsync();
-        if(!DraftState.IsLoadedAllDrafts) await DraftState.SetAllDraftDataAsync();
+        await LeagueState.EnsureLoadedAsync();
+        await DraftState.EnsureLoadedAsync();
         
         foreach(var draft in DraftState.AllDrafts ?? [])
         {

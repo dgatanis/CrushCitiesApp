@@ -116,8 +116,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        if(!PlayoffState.IsLoaded) await PlayoffState.SetAllPlayoffDataAsync();
-        if(!RosterState.CacheLoaded) await RosterState.BuildLookupCachesAsync();
+        await PlayoffState.EnsureLoadedAsync();
+        await RosterState.EnsureLoadedAsync();
 
         LoadPreviousChamps();
         _winnersMatchups = PlayoffState.WinnersBracketMatchups;

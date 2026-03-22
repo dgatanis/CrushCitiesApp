@@ -23,6 +23,7 @@ builder.Services.AddScoped<DraftState>();
 builder.Services.AddScoped<MatchupState>();
 builder.Services.AddScoped<TransactionState>();
 builder.Services.AddScoped<PlayoffState>();
+builder.Services.AddScoped<INormalizer, Normalizer>();
 builder.Services.AddBlazorBootstrap();
 
 var host = builder.Build();
@@ -31,14 +32,10 @@ var playerState = host.Services.GetRequiredService<PlayerState>();
 var userState = host.Services.GetRequiredService<UserState>();
 var rosterState = host.Services.GetRequiredService<RosterState>();
 var leagueState = host.Services.GetRequiredService<LeagueState>();
-var leagueId = await leagueState.GetCurrentLeagueIdAsync();
-if (string.IsNullOrWhiteSpace(leagueId))
-{
-    throw new InvalidOperationException("Current league id is not available.");
-}
-await playerState.SetPlayersAsync(forceRefresh: true);
-await rosterState.SetRostersAsync(leagueId, forceRefresh: true);
-await userState.SetUsersAsync(leagueId, forceRefresh: true);
 await leagueState.SetAllLeaguesDataAsync(forceRefresh: true);
+await userState.SetCurrentUsersAsync(forceRefresh: true);
+await rosterState.SetCurrentRostersAsync(forceRefresh: true);
+await playerState.SetPlayersAsync(forceRefresh: true);
+
 
 await host.RunAsync();

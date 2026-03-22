@@ -189,26 +189,11 @@ else
         try
         {
             await Task.Yield(); 
-
-            if (MatchupState.IsLoadedAllMatchups)
-            {
-                _matchups = MatchupState.AllMatchups ?? [];
-            }
-            else
-            {
-                await LoadMatchupsAsync(forceRefresh: true); 
-            }
-
+            await LoadMatchupsAsync(); 
             if(!PlayerState.CacheLoaded)
             {
                 await PlayerState.BuildLookupCachesAsync(); 
             }
-
-            if(!RosterState.CacheLoaded)
-            {
-                await RosterState.BuildLookupCachesAsync(); 
-            }
-
             await LoadRosters();
             
         }
@@ -222,11 +207,10 @@ else
     /// <summary>
     /// Loads All Matchups 
     /// </summary>
-    /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    private async Task LoadMatchupsAsync(bool forceRefresh = false)
+    private async Task LoadMatchupsAsync()
     {
-        await MatchupState.SetAllMatchupsAsync(forceRefresh);
+        await MatchupState.EnsureLoadedAsync();
         _matchups = MatchupState.AllMatchups ?? [];
     }
 
@@ -237,19 +221,9 @@ else
     /// <returns></returns>
     private async Task LoadRosters()
     {
-        if(RosterState.IsLoaded)
-        {
-            _rosters = RosterState.Rosters;
-        }
-        else 
-        {
-            var leagueId = await LeagueState.GetCurrentLeagueIdAsync();
-            if(leagueId is not null)
-            {
-                await RosterState.SetRostersAsync(leagueId, forceRefresh:true);
-                _rosters = RosterState.Rosters;
-            }
-        }
+        await RosterState.EnsureLoadedAsync();
+        await RosterState.EnsureCacheLoadedAsync();
+        _rosters = RosterState.Rosters;
     }
 
 
@@ -320,7 +294,7 @@ else
     {
         _isLoading = true;
         MatchupState.ClearAllMatchups();
-        await LoadMatchupsAsync(forceRefresh: true);
+        await LoadMatchupsAsync();
         _matchups = MatchupState.AllMatchups ?? [];
         _isLoading = false;
     }

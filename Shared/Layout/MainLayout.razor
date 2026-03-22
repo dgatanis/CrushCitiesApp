@@ -25,83 +25,91 @@
         <div class="ticker fixed-bottom bg-dark text-light py-1">
             <div class="ticker-track">
             <div class="d-inline-block">
-            @foreach(var transaction in _latestTransactions)
+            @if(_isTickerLoading == true)
             {
-                var allTradeAdds = transaction.Adds?.Keys.ToHashSet() ?? new HashSet<string>();
-                var transactionType = transaction.Type ?? "";
-                var transactionSummary = new StringBuilder();
-                if(transaction is not null)
+                <span class="large ticker-type">LOADING...</span>
+
+            }
+            else
+            {
+                @foreach(var transaction in _latestTransactions)
                 {
-                    @foreach (var rosterId in transaction.ConsenterIds ?? [])
+                    var allTradeAdds = transaction.Adds?.Keys.ToHashSet() ?? new HashSet<string>();
+                    var transactionType = transaction.Type ?? "";
+                    var transactionSummary = new StringBuilder();
+                    if(transaction is not null)
                     {
-
-                        var ownerId = RosterState.Rosters?.FirstOrDefault(x => x.RosterId == rosterId)?.OwnerId;
-                        var teamAdds = transaction.Adds?
-                            .Where(kvp => kvp.Value == rosterId)
-                            .Select(kvp => kvp.Key)
-                            .ToList() ?? new();
-                            
-                        var teamDrops = transaction.Drops?
-                            .Where(kvp => kvp.Value == rosterId)
-                            .Select(kvp => kvp.Key)
-                            .ToList() ?? new();
-
-                        var teamPicks = transaction.DraftPicks?
-                            .Where(p => p.OwnerId == rosterId)
-                            .ToList() ?? new();
-
-                        var teamBudget = transaction.WaiverBudget?
-                            .Where(w => w.Receiver == rosterId)
-                            .ToList() ?? new();
-
-                        var team = RosterState.TeamNameByRosterId.TryGetValue(rosterId, out var name) ? name : "";
-                        var acquiredPlayers = teamAdds.Any() ? teamAdds.Count() : 0;
-                        var acquiredBudget = teamBudget.Any() ? teamBudget[0].Amount : 0;
-                        var acquiredPicks = teamPicks.Any() ? teamPicks.Count() : 0;
-
-                        if(transactionType == "trade")
+                        @foreach (var rosterId in transaction.ConsenterIds ?? [])
                         {
-                            var received = new List<string>();
 
-                            if (acquiredPlayers > 0) received.Add($"{acquiredPlayers} player{(acquiredPlayers > 1 ? "s" : "")}");
-                            if (acquiredPicks > 0) received.Add($"{acquiredPicks} pick{(acquiredPicks > 1 ? "s" : "")}");
-                            if (acquiredBudget > 0) received.Add($"${acquiredBudget}");
-                            transactionSummary.Append($"<span class='ticker-team'>{team}</span>");
-                            transactionSummary.Append(handler: $"<span class='ticker-details ticker-added'> (received: {string.Join(", ", received)}) </span>");
+                            var ownerId = RosterState.Rosters?.FirstOrDefault(x => x.RosterId == rosterId)?.OwnerId;
+                            var teamAdds = transaction.Adds?
+                                .Where(kvp => kvp.Value == rosterId)
+                                .Select(kvp => kvp.Key)
+                                .ToList() ?? new();
+                                
+                            var teamDrops = transaction.Drops?
+                                .Where(kvp => kvp.Value == rosterId)
+                                .Select(kvp => kvp.Key)
+                                .ToList() ?? new();
+
+                            var teamPicks = transaction.DraftPicks?
+                                .Where(p => p.OwnerId == rosterId)
+                                .ToList() ?? new();
+
+                            var teamBudget = transaction.WaiverBudget?
+                                .Where(w => w.Receiver == rosterId)
+                                .ToList() ?? new();
+
+                            var team = RosterState.TeamNameByRosterId.TryGetValue(rosterId, out var name) ? name : "";
+                            var acquiredPlayers = teamAdds.Any() ? teamAdds.Count() : 0;
+                            var acquiredBudget = teamBudget.Any() ? teamBudget[0].Amount : 0;
+                            var acquiredPicks = teamPicks.Any() ? teamPicks.Count() : 0;
+
+                            if(transactionType == "trade")
+                            {
+                                var received = new List<string>();
+
+                                if (acquiredPlayers > 0) received.Add($"{acquiredPlayers} player{(acquiredPlayers > 1 ? "s" : "")}");
+                                if (acquiredPicks > 0) received.Add($"{acquiredPicks} pick{(acquiredPicks > 1 ? "s" : "")}");
+                                if (acquiredBudget > 0) received.Add($"${acquiredBudget}");
+                                transactionSummary.Append($"<span class='ticker-team'>{team}</span>");
+                                transactionSummary.Append(handler: $"<span class='ticker-details ticker-added'> (received: {string.Join(", ", received)}) </span>");
+                            }
+                            else
+                            {
+                                transactionSummary.Append($"<span class='ticker-team'>{team}</span>");
+                                if (teamAdds.Any())
+                                {
+                                    transactionSummary.Append(" <span class='ticker-added small'>added</span> ");
+                                    transactionSummary.Append(string.Join(", ",
+                                        teamAdds
+                                            .Select(id => PlayerState.PlayerById.TryGetValue(id, out var p) ? $"{p.Firstname} {p.Lastname}" : null)
+                                            .Where(name => !string.IsNullOrWhiteSpace(name))));
+                                }
+
+                                if (teamDrops.Any())
+                                {
+                                    transactionSummary.Append(" <span class='ticker-dropped small'>dropped</span> ");
+                                    transactionSummary.Append(string.Join(", ",
+                                        teamDrops
+                                            .Select(id => PlayerState.PlayerById.TryGetValue(id, out var p) ? $"{p.Firstname} {p.Lastname}" : null)
+                                            .Where(name => !string.IsNullOrWhiteSpace(name))));
+                                }
+
+                                if (acquiredBudget > 0)
+                                {
+                                    transactionSummary.Append(" for $");
+                                    transactionSummary.Append(acquiredBudget);
+                                }
+                            }   
                         }
-                        else
-                        {
-                            transactionSummary.Append($"<span class='ticker-team'>{team}</span>");
-                            if (teamAdds.Any())
-                            {
-                                transactionSummary.Append(" <span class='ticker-added small'>added</span> ");
-                                transactionSummary.Append(string.Join(", ",
-                                    teamAdds
-                                        .Select(id => PlayerState.PlayerById.TryGetValue(id, out var p) ? $"{p.Firstname} {p.Lastname}" : null)
-                                        .Where(name => !string.IsNullOrWhiteSpace(name))));
-                            }
-
-                            if (teamDrops.Any())
-                            {
-                                transactionSummary.Append(" <span class='ticker-dropped small'>dropped</span> ");
-                                transactionSummary.Append(string.Join(", ",
-                                    teamDrops
-                                        .Select(id => PlayerState.PlayerById.TryGetValue(id, out var p) ? $"{p.Firstname} {p.Lastname}" : null)
-                                        .Where(name => !string.IsNullOrWhiteSpace(name))));
-                            }
-
-                            if (acquiredBudget > 0)
-                            {
-                                transactionSummary.Append(" for $");
-                                transactionSummary.Append(acquiredBudget);
-                            }
-                        }   
+                        <span class="ticker-line">
+                            <span class="large ticker-type">@transactionType.Replace("_", " ").ToUpper()</span>
+                            <span>&#8226;</span>
+                            <span class="me-5 small d-flex align-items-baseline gap-1">@((MarkupString)transactionSummary.ToString())</span>
+                        </span>
                     }
-                    <span class="ticker-line">
-                        <span class="large ticker-type">@transactionType.Replace("_", " ").ToUpper()</span>
-                        <span>&#8226;</span>
-                        <span class="me-4 small">@((MarkupString)transactionSummary.ToString())</span>
-                    </span>
                 }
             }
             </div>
@@ -115,6 +123,7 @@
     public string? AppBrand { get; set; }
     private bool isDark;
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
+    private bool _isTickerLoading = true;
 
     private List<TransactionsModel> _latestTransactions = new();
 
@@ -133,6 +142,7 @@
         await JS.InvokeVoidAsync("theme.set", isDark ? "dark" : "light");
         await TransactionState.EnsureLoadedAsync();
         _latestTransactions = TransactionState.Transactions.OrderByDescending(x => x.Created).Take(50).ToList();
+        _isTickerLoading = false;
     }
 
     private async Task ToggleDarkMode() 

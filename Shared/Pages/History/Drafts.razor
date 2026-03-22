@@ -127,7 +127,7 @@ else
         _draftPicks.Clear();
         try
         {       
-            if(!DraftState.IsLoadedAllDrafts) await DraftState.SetAllDraftDataAsync(forceRefresh: true);
+            await DraftState.EnsureLoadedAsync();
             
             _draftHistory = DraftState.DraftHistory;
             _draftPicks = DraftState.AllDraftPicks ?? [];

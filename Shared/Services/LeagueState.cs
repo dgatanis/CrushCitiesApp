@@ -6,6 +6,7 @@ namespace Shared.Services;
 public sealed class LeagueState(ISleeperAPI sleeperApi)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
+    private Task? _loadTask;
 
     /// <summary>
     /// List of all league details for this league.
@@ -16,7 +17,7 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
     /// <summary>
     /// Ensures AllLeagues is loaded
     /// </summary>
-    public bool IsLoadedAllLeagues => AllLeagues is not null && AllLeagues.Count > 0;
+    public bool IsLoaded => AllLeagues is not null && AllLeagues.Count > 0;
 
     /// <summary>
     /// The current league_id for this league.
@@ -32,7 +33,7 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
     /// <returns></returns>
     public async Task SetAllLeaguesDataAsync(bool forceRefresh = false)
     {
-        if (!IsLoadedAllLeagues || forceRefresh)
+        if (!IsLoaded || forceRefresh)
         {
             var league_id = await GetCurrentLeagueIdAsync();
             CurrentLeagueId = league_id ?? "-1";
@@ -91,5 +92,16 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Ensures that the All Leagues data is loaded
+    /// </summary>
+    /// <returns></returns>
+    public Task EnsureLoadedAsync()
+    {
+        if (IsLoaded) return Task.CompletedTask;
+        _loadTask ??= SetAllLeaguesDataAsync(forceRefresh: true);
+        return _loadTask;
     }
 }

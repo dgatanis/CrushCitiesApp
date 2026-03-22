@@ -2,10 +2,13 @@ using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
+public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, INormalizer normalizer)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
+    private readonly INormalizer _normalizer = normalizer;
+    private Task? _loadTask;
+    private Task? _cacheTask;
 
     /// <summary>
     /// List of all users
@@ -28,7 +31,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
     /// <summary>
     /// Ensures the lookups for this service are loaded
     /// </summary>
-    public bool CacheLoaded => OwnerAvatarByUserId.Count > 0 && TeamNameByUserId.Count > 0;
+    public bool IsCacheLoaded => OwnerAvatarByUserId is not null && OwnerAvatarByUserId.Count > 0 && TeamNameByUserId.Count > 0 && TeamNameByUserId is not null;
 
     /// <summary>
     /// Verifies all users have been loaded
@@ -37,19 +40,21 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
 
 
     /// <summary>
-    /// Sets the users for the given league_id and builds cache lookups 
+    /// Sets the users for the given current leagueId and builds cache lookups 
     /// </summary>
     /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetUsersAsync(string league_id, bool forceRefresh = false)
+    public async Task SetCurrentUsersAsync(bool forceRefresh = false)
     {
+        await _leagueState.EnsureLoadedAsync();
+        var currentLeagueId = _leagueState.CurrentLeagueId;
         if (!IsLoaded || forceRefresh)
         {
-            var users = await _sleeperApi.GetUsersForLeagueAsync(league_id);
+            var users = await _sleeperApi.GetUsersForLeagueAsync(currentLeagueId);
             if (users is not null)
             {
-                Users = users;
+                Users = _normalizer.NormalizeUsers(users);
             }
             await BuildLookupCachesAsync();
         }
@@ -73,30 +78,12 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
 
 
     /// <summary>
-    /// Ensures the data is loaded, if not load it
-    /// </summary>
-    /// <param name="forceRefresh"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    private async Task EnsureLoadedAsync(bool forceRefresh = false)
-    {
-        if (IsLoaded && !forceRefresh) return;
-
-            var leagueId = await _leagueState.GetCurrentLeagueIdAsync();
-            if (string.IsNullOrWhiteSpace(leagueId))
-            {
-                throw new InvalidOperationException("Current league id is not available.");
-            }
-            await SetUsersAsync(leagueId, forceRefresh);
-    }
-
-
-    /// <summary>
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    public async Task BuildLookupCachesAsync()
+    private async Task BuildLookupCachesAsync()
     {
+        await EnsureLoadedAsync();
         TeamNameByUserId.Clear();
         OwnerAvatarByUserId.Clear();
 
@@ -133,5 +120,29 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState)
                 OwnerAvatarByUserId[user.UserId] = "/images/question-mark.png";
             }
         }
+    }
+
+
+    /// <summary>
+    /// Ensures the Users data is loaded.
+    /// </summary>
+    /// <returns></returns>
+    public Task EnsureLoadedAsync()
+    {
+        if (IsLoaded) return Task.CompletedTask;
+        _loadTask ??= SetCurrentUsersAsync(forceRefresh: true);
+        return _loadTask;
+    }
+
+
+    /// <summary>
+    /// Ensures the cached data is loaded.
+    /// </summary>
+    /// <returns></returns>
+    public Task EnsureCacheLoadedAsync()
+    {
+        if (IsCacheLoaded) return Task.CompletedTask;
+        _cacheTask ??= BuildLookupCachesAsync();
+        return _cacheTask;
     }
 }

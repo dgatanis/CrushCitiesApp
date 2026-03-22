@@ -192,19 +192,9 @@ else
         {
             await PlayerState.BuildLookupCachesAsync(); 
         }
-        if(!UserState.CacheLoaded)
-        {
-            await UserState.BuildLookupCachesAsync(); 
-        }
-        if(!RosterState.CacheLoaded)
-        {
-            await RosterState.BuildLookupCachesAsync(); 
-        }
-        if(!RosterState.IsLoaded) 
-        {
-            var leagueId = await LeagueState.GetCurrentLeagueIdAsync();
-            await RosterState.SetRostersAsync(leagueId ?? "");
-        }
+        
+        await RosterState.EnsureLoadedAsync();
+        await UserState.EnsureCacheLoadedAsync();
         _rosters = RosterState.Rosters;
         _isLoading = false;
     }
