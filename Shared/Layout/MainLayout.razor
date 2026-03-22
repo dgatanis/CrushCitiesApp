@@ -24,11 +24,27 @@
 
         <div class="ticker fixed-bottom bg-dark text-light py-1">
             <div class="ticker-track">
-            <div class="d-inline-block">
+                @TickerContent
+                @TickerContent
+            </div>
+        </div>
+    </main>
+</div>
+
+@code {
+    [CascadingParameter(Name = "AppBrand")]
+    public string? AppBrand { get; set; }
+    private bool isDark;
+    private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
+    private bool _isTickerLoading = true;
+
+    private List<TransactionsModel> _latestTransactions = new();
+
+    private RenderFragment TickerContent => @<div class="ticker-segment">
+    
             @if(_isTickerLoading == true)
             {
-                <span class="large ticker-type">LOADING...</span>
-
+                <span class="large ticker-type">...</span>
             }
             else
             {
@@ -112,20 +128,9 @@
                     }
                 }
             }
-            </div>
-            </div>
-        </div>
-    </main>
-</div>
 
-@code {
-    [CascadingParameter(Name = "AppBrand")]
-    public string? AppBrand { get; set; }
-    private bool isDark;
-    private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
-    private bool _isTickerLoading = true;
 
-    private List<TransactionsModel> _latestTransactions = new();
+    </div>;
 
     protected override async Task OnInitializedAsync()
     {

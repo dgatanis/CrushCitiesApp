@@ -33,11 +33,14 @@ span.me-5.small {
 .ticker {
   overflow: hidden;
   white-space: nowrap;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .ticker-track {
-  display: inline-block;
-  padding-left: 100%;
+  display: inline-flex;
+  align-items: baseline;
+  width: max-content;
+  gap: 2.5rem;
   animation: ticker-scroll 240s linear infinite;
 }
 
@@ -64,9 +67,15 @@ span.me-5.small {
   gap: 0.5rem;
 }
 
+.ticker-segment {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2.5rem;
+}
+
 @keyframes ticker-scroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
+  0%   { transform: translate3d(100vw, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
 }
 
 @font-face {
