@@ -129,7 +129,7 @@ code {
     --TE-faded: #ffae5847;
     --border-gray: #616161;
     --faded-background: #9595954a;
-    --bg: #b8b7b7;
+    --bg: #c4c4c4;
     --text: #131313;
     --light-text: #4b4b4b;
     --top-row: #f7f7f7;
@@ -146,11 +146,14 @@ code {
 .owner-avatar {
     max-width: 3.5rem;
     border-radius: 50%;
+    border: 2px solid #545454;
+    box-shadow: 0 0 .2rem #b6b6b69c;
 }
 
 .owner-avatar-xsmall {
     max-width: 1.5rem;
     border-radius: 50%;
+    border: 2px solid #3d3d3d;
 }
 
 .player-image {
@@ -163,6 +166,7 @@ code {
     overflow: visible;
     border-radius: 50px;
     background-color: #73737340;
+    border: 2px solid #494949;
 }
 
 .player-team-logo {

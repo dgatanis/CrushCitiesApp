@@ -61,11 +61,16 @@ else
                         @if(pick is not null && pick.PlayerId is not null)
                         {
                             var pickedPlayer = PlayerState.PlayerById.TryGetValue(pick.PlayerId, out var p) ? p : null;
+                            var isOriginalOwner =   draft?.DraftOrder is not null 
+                                                        ? draft.DraftOrder.TryGetValue(pick.DraftSlot, out var originalPickedByUserId)
+                                                        && RosterState.RosterIdByUserId.TryGetValue(originalPickedByUserId, out var originalRosterId)
+                                                        && originalRosterId == pick.RosterId
+                                                        : false;
                             <td scope="row" class="row-item">
                                 <div class=@($"pick-container {GetPickContainerClass(pick)}")
                                      style=@($"background-color:var(--{pick?.Metadata?.Position?.ToUpper()});")>
                                     <div class="selection-label">@GetSelectionLabel(pick is not null ? pick : new DraftPicksModel(), draft)</div>
-                                    @if (!string.Equals(pick?.OriginalPickOwner, pick?.PickedBy, StringComparison.Ordinal))
+                                    @if (!isOriginalOwner)
                                     {
                                         <img class="owner-avatar-xsmall" title="Drafted by @(UserState.TeamNameByUserId.TryGetValue(pick?.PickedBy ?? "", out var teamName) ? teamName : $"Team Not Found")" 
                                             src=@(UserState.OwnerAvatarByUserId.TryGetValue(pick?.PickedBy ?? "", out var name) ? name : "") />

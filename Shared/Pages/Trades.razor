@@ -168,7 +168,7 @@ else
                                                 {
                                                     <span class="badge bg-success-subtle text-success border border-success d-inline-flex align-items-center gap-1">
                                                         <span style="font-size: x-large;">+</span>
-                                                        <span class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)">
+                                                        <span class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp);border-color:var(--@(player.Position?.ToUpper()))">
                                                             <img class="player-team-logo" src="@(player.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")" />
                                                         </span>
                                                         <span style="color: #333;">@player.Firstname @player.Lastname</span>
@@ -299,12 +299,10 @@ else
     /// <returns></returns>
     private async Task LoadTransactions() 
     {
-        if(!TransactionState.IsLoaded)
-        {
-            await TransactionState.SetAllTransactionsDataAsync();
-        }
-
-        TransactionState.FilterTransactionsData("trade");
+        await TransactionState.EnsureLoadedAsync();
+        
+        if(!TransactionState.FilteredTransactionsContainsTypes(["trade"])) TransactionState.FilterTransactionsData("trade");
+        
         _trades = TransactionState.FilteredTransactions;
     }
 

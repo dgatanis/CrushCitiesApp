@@ -26,6 +26,49 @@ main {
   color: #333;
 }
 
+span.me-4.small {
+    color: #d5d5d5;
+}
+
+.ticker {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ticker-track {
+  display: inline-block;
+  padding-left: 100%;
+  animation: ticker-scroll 240s linear infinite;
+}
+
+.ticker-type {
+    font-family: 'F2';
+}
+
+.ticker.fixed-bottom.bg-dark.text-light.py-1 {
+    background-color: #00010d !important;
+    border: 2px solid black;
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
+}
+
+::deep .ticker-team { font-size: 1.05rem; font-family: 'F1'; }
+::deep .ticker-details { font-size: .75rem !important; margin-right:.2rem; }
+::deep .ticker-added { color: #3bd16f80;}
+::deep .ticker-dropped { color: #ff4d4dc4;}
+
+.ticker-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
 @font-face {
   font-family: "F1";
   src: url("/_content/Shared/Fonts/Lato-Black.ttf") format('truetype');

@@ -43,7 +43,6 @@
 .owner-avatar-xsmall {
     opacity: .9;
     margin: auto;
-    border: 2px solid #131313;
     margin-top: .2rem;
     grid-row: 1;
     grid-column: 1;
