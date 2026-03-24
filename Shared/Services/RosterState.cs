@@ -2,11 +2,12 @@ using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, LeagueState leagueState)
+public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, LeagueState leagueState, INormalizer normalizer)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly UserState _userState = userState;
     private readonly LeagueState _leagueState = leagueState;
+    private readonly INormalizer _normalizer = normalizer;
     private Task? _loadTask;
     private Task? _cacheTask;
 
@@ -67,7 +68,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
             var rosters = await _sleeperApi.GetRostersForLeagueAsync(currentLeagueId);
             if (rosters is {Count: > 0})
             {
-                Rosters = rosters;
+                Rosters = _normalizer.NormalizeRosters(rosters);
             }
         }
         await BuildLookupCachesAsync();
