@@ -205,12 +205,12 @@ else
                                             {
                                                 <div class="d-flex align-items-center">
                                                     <div class="d-inline-block">
-                                                        <span class="badge bg-info-subtle text-info border border-info d-inline-flex align-items-center gap-1 text-nowrap">
+                                                        <span class="badge bg-info-subtle text-info border border-info d-inline-flex align-items-baseline gap-1 text-nowrap">
                                                             Pick:
                                                             <span style="color:#333">@GetTradePickLabel(pick)</span>
                                                             @if(pick.RosterId != pick.PreviousOwnerId && !_draftInfoBySeason.TryGetValue(pick.Season ?? "", out var info))
                                                             {
-                                                                <span style="color: #3b3b3b;font-size: smaller;">@(RosterState.TeamNameByRosterId.TryGetValue(pick.RosterId, out var teamName) ? $"via ({teamName})" : "")</span>
+                                                                <span style="color: #3b3b3b;font-size: smaller;">@(RosterState.TeamNameByRosterId.TryGetValue(pick.RosterId, out var teamName) ? $"via {teamName}" : "")</span>
                                                             }
                                                         </span>
                                                     </div>

@@ -54,7 +54,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
 
 
     /// <summary>
-    /// Sets the roster based on the leagueid
+    /// Sets the rosters from the currentLeagueId
     /// </summary>
     /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
