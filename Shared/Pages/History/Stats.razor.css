@@ -1,0 +1,34 @@
+.stats-table {
+    background: var(--dark-background);
+    color: #d6d6d6;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    box-shadow: var(--box-shadow);
+    overflow: hidden;
+    border-spacing: 0;
+    border-collapse: separate;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stats-table thead th,
+.stats-table tbody td {
+    background: transparent;
+    color: inherit;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.stats-table.table-striped tbody tr:nth-of-type(odd) > * {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.stats-table.table-hover tbody tr:hover > * {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.stats-table thead tr {
+  border-bottom: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.stats-table thead th {
+  border-bottom: 2px solid rgba(255, 255, 255, 0.25);
+}

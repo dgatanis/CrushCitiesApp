@@ -55,7 +55,7 @@
                     var transactionSummary = new StringBuilder();
                     if(transaction is not null)
                     {
-                        @foreach (var rosterId in transaction.ConsenterIds ?? [])
+                        @foreach (var rosterId in transaction.ConsenterIds ?? Enumerable.Empty<int>())
                         {
 
                             var ownerId = RosterState.Rosters?.FirstOrDefault(x => x.RosterId == rosterId)?.OwnerId;

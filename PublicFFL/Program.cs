@@ -23,6 +23,7 @@ builder.Services.AddScoped<DraftState>();
 builder.Services.AddScoped<MatchupState>();
 builder.Services.AddScoped<TransactionState>();
 builder.Services.AddScoped<PlayoffState>();
+builder.Services.AddScoped<StatsData>();
 builder.Services.AddScoped<INormalizer, Normalizer>();
 builder.Services.AddBlazorBootstrap();
 

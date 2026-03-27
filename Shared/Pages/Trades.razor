@@ -207,11 +207,13 @@ else
                                                     <div class="d-inline-block">
                                                         <span class="badge bg-info-subtle text-info border border-info d-inline-flex align-items-baseline gap-1 text-nowrap">
                                                             Pick:
-                                                            <span style="color:#333">@GetTradePickLabel(pick)</span>
-                                                            @if(pick.RosterId != pick.PreviousOwnerId && !_draftInfoBySeason.TryGetValue(pick.Season ?? "", out var info))
-                                                            {
-                                                                <span style="color: #3b3b3b;font-size: smaller;">@(RosterState.TeamNameByRosterId.TryGetValue(pick.RosterId, out var teamName) ? $"via {teamName}" : "")</span>
-                                                            }
+                                                            <span class="gap-1 d-flex" style="flex-direction:column;">
+                                                                <span class="text-start" style="color:#333">@GetTradePickLabel(pick)</span>
+                                                                @if(pick.RosterId != pick.PreviousOwnerId && !_draftInfoBySeason.TryGetValue(pick.Season ?? "", out var info))
+                                                                {
+                                                                    <span class="text-end" style="color: #3b3b3b;font-size: .55rem;">@(RosterState.TeamNameByRosterId.TryGetValue(pick.RosterId, out var teamName) ? $"via {teamName}" : "")</span>
+                                                                }
+                                                            </span>
                                                         </span>
                                                     </div>
                                                 </div>
@@ -252,11 +254,11 @@ else
     [CascadingParameter(Name = "AppBrand")]
     public string? AppBrand { get; set; }
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
-    private List<TransactionsModel> _trades = new List<TransactionsModel>();
+    private IReadOnlyList<TransactionsModel> _trades = new List<TransactionsModel>();
     private bool _isLoading = true;
     private int _pageIndex = 0;
     private const int PageSize = 10;
-    private const int MaxPageButtons = 7;
+    private const int MaxPageButtons = 5;
     private List<RostersModel>? _rosters = null;
     private int _selectedRosterId1 = -1;
     private int _selectedRosterId2 = -1;
@@ -301,9 +303,7 @@ else
     {
         await TransactionState.EnsureLoadedAsync();
         
-        if(!TransactionState.FilteredTransactionsContainsTypes(["trade"])) TransactionState.FilterTransactionsData("trade");
-        
-        _trades = TransactionState.FilteredTransactions;
+        _trades = TransactionState.GetFilterTransactionsData(["trade"]);
     }
 
 

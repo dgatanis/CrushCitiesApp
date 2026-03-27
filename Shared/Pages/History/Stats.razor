@@ -1,34 +1,280 @@
 @page "/history/stats"
+@using Shared.Models
+@using Shared.Services
+@using System.Security.Cryptography.X509Certificates
+@inject UserState UserState
+@inject RosterState RosterState
+@inject PlayerState PlayerState
+@inject LeagueState LeagueState
+@inject StatsData StatsData
 
-<PageTitle>Stats</PageTitle>
+<PageTitle>Stats | @Brand</PageTitle>
 
-<h1>Stats</h1>
-
-<div>
-    <Accordion>
-        <AccordionItem Title="Accordion Item #1">
-            <Content>
-                <b>This is the first item's accordion body.</b> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow.
-            </Content>
-        </AccordionItem>
-        <AccordionItem Title="Accordion Item #2" Active="true">
-            <Content>
-                <b>This is the second item's accordion body.</b> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow.
-            </Content>
-        </AccordionItem>
-        <AccordionItem Title="Accordion Item #3">
-            <Content>
-                <b>This is the third item's accordion body.</b> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow.
-            </Content>
-        </AccordionItem>
-    </Accordion>
+<div class="d-flex justify-content-center">
+    <h1>Stats</h1>
 </div>
 
-@code {
-    private int currentCount = 0;
+@if (_isLoading)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Primary" Size="SpinnerSize.Large" />
+    </div>
+}
+else 
+{
+    <div class="container">
+        <div class="row justify-content-center g-4">
+            <div class="col-12 col-lg-6">
+                <h3 class="h5 text-center mb-3">Lowest Scoring Teams</h3>
+                <table class="table table-sm table-bordered text-center align-middle stats-table">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Margin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var t in _lowScoringTeams ?? [])
+                        {
+                            <tr>
+                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                <td>@t.Points</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
 
-    private void IncrementCount()
+            <div class="col-12 col-lg-6">
+                <h3 class="h5 text-center mb-3">Top Scoring Teams</h3>
+                <table class="table table-sm table-bordered text-center align-middle stats-table">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var t in _topScoringTeams ?? [])
+                        {
+                            <tr>
+                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                <td>@t.Points</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-12 col-lg-6">
+                <h3 class="h5 text-center mb-3">Lowest Scoring Starters</h3>
+                <table class="table table-sm table-bordered text-center align-middle stats-table">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Player</th>
+                            <th>Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var t in _lowScoringPlayers ?? [])
+                        {
+                            var playerPoints = (t.PlayersPoints ?? Enumerable.Empty<KeyValuePair<string, double>>())
+                                                                    .Where(kv => t.Starters != null && t.Starters.Contains(kv.Key))
+                                                                    .OrderBy(kv => kv.Value)
+                                                                    .FirstOrDefault();
+                            var player = PlayerState.PlayerById.TryGetValue(playerPoints.Key, out var p) ? p : null;
+                            if(player is not null)
+                            {
+                                <tr>
+                                    <td>@(RosterState.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                    <td>@player.Firstname @player.Lastname</td>
+                                    <td>@playerPoints.Value</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <h3 class="h5 text-center mb-3">Top Scoring Starters</h3>
+                <table class="table table-sm table-bordered text-center align-middle stats-table">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Player</th>
+                            <th>Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var t in _topScoringPlayers ?? [])
+                        {
+                            var playerPoints = (t.PlayersPoints ?? Enumerable.Empty<KeyValuePair<string, double>>())
+                                                                        .Where(kv => t.Starters != null && t.Starters.Contains(kv.Key))
+                                                                        .OrderByDescending(kv => kv.Value)
+                                                                        .FirstOrDefault();
+                            var player = PlayerState.PlayerById.TryGetValue(playerPoints.Key, out var p) ? p : null;
+                            if(player is not null)
+                            {
+                                <tr>
+                                    <td>@(RosterState.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                    <td>@player.Firstname @player.Lastname</td>
+                                    <td>@playerPoints.Value</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-12 col-lg-6">
+                <h3 class="h5 text-center mb-3">Most High-Scoring Weeks</h3>
+                <table class="table table-sm table-bordered text-center align-middle stats-table">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Weeks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var kv in _highScoringWeeksByRosterId
+                            .OrderByDescending(kv => kv.Value)
+                            .ThenBy(kv => kv.Key))
+                        {
+                            <tr>
+                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(kv.Key, out var name) ? name : "")</td>
+                                <td>@kv.Value</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-12 col-lg-6">
+                <h3 class="h5 text-center mb-3">Most Low-Scoring Weeks</h3>
+                <table class="table table-sm table-bordered text-center align-middle stats-table">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Weeks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var kv in _lowScoringWeeksByRosterId
+                            .OrderByDescending(kv => kv.Value)
+                            .ThenBy(kv => kv.Key))
+                        {
+                            <tr>
+                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(kv.Key, out var name) ? name : "")</td>
+                                <td>@kv.Value</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-12 col-lg-6">
+                <h3 class="h5 text-center mb-3">Largest Margins of Victory</h3>
+                <table class="table table-sm table-bordered text-center align-middle stats-table">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var kv in _largestMarginOfVictory ?? [])
+                        {
+                            var t = kv.Key;
+                            <tr>
+                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                <td>@kv.Value.ToString("F2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <h3 class="h5 text-center mb-3">Tightest Margins of Victory</h3>
+                <table class="table table-sm table-bordered text-center align-middle stats-table">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Margin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var kv in _tightestMarginOfVictory ?? [])
+                        {
+                            var t = kv.Key;
+                            <tr>
+                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                <td>@kv.Value.ToString("F2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-12 col-lg-6">
+                <h3 class="h5 text-center mb-3">All-Time Records</h3>
+                <table class="table table-sm table-bordered text-center align-middle stats-table">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Record</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var kv in _recordByRosterId
+                            .OrderByDescending(kv =>
+                            {
+                                var parts = kv.Value.Split('-', StringSplitOptions.TrimEntries);
+                                return parts.Length > 0 && int.TryParse(parts[0], out var wins) ? wins : 0;
+                            })
+                            .ThenBy(kv => kv.Key))
+                        {
+                            <tr>
+                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(kv.Key, out var name) ? name : "")</td>
+                                <td>@kv.Value</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [CascadingParameter(Name = "AppBrand")]
+    private string? AppBrand { get; set; }
+    private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
+    private bool _isLoading = true;
+
+    private List<MatchupModel> _topScoringTeams = new();
+    private List<MatchupModel> _lowScoringTeams = new();
+    private List<MatchupModel> _topScoringPlayers = new();
+    private List<MatchupModel> _lowScoringPlayers = new();
+    private Dictionary<int, string> _recordByRosterId = new();
+    private Dictionary<int, int> _highScoringWeeksByRosterId = new();
+    private Dictionary<int, int> _lowScoringWeeksByRosterId = new();
+    private List<KeyValuePair<MatchupModel, double>> _largestMarginOfVictory = new();
+    private List<KeyValuePair<MatchupModel, double>> _tightestMarginOfVictory = new();
+
+
+    protected override async Task OnInitializedAsync()
     {
-        currentCount++;
+        await StatsData.EnsureCacheLoadedAsync();
+
+        _topScoringTeams = StatsData.TopScoringTeams;
+        _lowScoringTeams = StatsData.LowScoringTeams;
+        _topScoringPlayers = StatsData.TopScoringPlayers;
+        _lowScoringPlayers = StatsData.LowScoringPlayers;
+        _recordByRosterId = StatsData.RecordByRosterId;
+        _highScoringWeeksByRosterId = StatsData.HighScoringWeeksByRosterId;
+        _lowScoringWeeksByRosterId = StatsData.LowScoringWeeksByRosterId;
+        _largestMarginOfVictory = StatsData.LargestMarginOfVictory;
+        _tightestMarginOfVictory = StatsData.TightestMarginOfVictory;
+        _isLoading = false;
     }
+
 }

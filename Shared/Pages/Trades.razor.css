@@ -22,6 +22,14 @@ button.page-link {
     border-color: var(--text);
 }
 
+.page-item:last-child .page-link {
+  width: 3rem;
+}
+
+.page-item:first-child .page-link {
+  width: 3rem;
+}
+
 .pagination .page-item.active .page-link,
 .pagination .page-item.active > .page-link,
 .pagination .page-item.active > button.page-link {

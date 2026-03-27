@@ -69,7 +69,7 @@ else
                             <td scope="row" class="row-item">
                                 <div class=@($"pick-container {GetPickContainerClass(pick)}")
                                      style=@($"background-color:var(--{pick?.Metadata?.Position?.ToUpper()});")>
-                                    <div class="selection-label">@GetSelectionLabel(pick is not null ? pick : new DraftPicksModel(), draft)</div>
+                                    <div class="selection-label">@GetSelectionLabel(pick is not null ? pick : new DraftPicksModel(), draft ?? new DraftPickSeasonSummary())</div>
                                     @if (!isOriginalOwner)
                                     {
                                         <img class="owner-avatar-xsmall" title="Drafted by @(UserState.TeamNameByUserId.TryGetValue(pick?.PickedBy ?? "", out var teamName) ? teamName : $"Team Not Found")" 

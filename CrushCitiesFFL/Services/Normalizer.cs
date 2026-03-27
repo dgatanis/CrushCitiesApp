@@ -13,4 +13,5 @@ public sealed class Normalizer : INormalizer
     {
         return rosters;
     }
+    
 }

@@ -67,9 +67,7 @@ else
                                         <span class="player-height">@GetHeightString(player?.Height)</span>  
                                         <span class="player-weight">@player?.Weight lbs</span>  
                                     </div>
-                                    @if(Brand != "Public FFL") {
-                                        <div class="player-nickname">@(RosterState.PlayerNicknameByRosterId.TryGetValue((roster.RosterId, player?.PlayerId ?? ""), out var nickname) ? nickname : "")</div>
-                                    }
+                                    <div class="player-nickname">@(RosterState.PlayerNicknameByRosterId.TryGetValue((roster.RosterId, player?.PlayerId ?? ""), out var nickname) ? nickname : "")</div>
                                     <a title="View Player on Rotowire" target="_blank" href=@($"https://www.rotowire.com/football/player/{player?.Firstname?.ToLower()}-{player?.Lastname?.ToLower()}-{player?.RotowireId}")>
                                         <span class="bi-search-icon"></span>
                                     </a>
@@ -113,9 +111,7 @@ else
                                         <span class="player-height">@GetHeightString(player?.Height)</span>  
                                         <span class="player-weight">@player?.Weight lbs</span>  
                                     </div>
-                                    @if(Brand != "Public FFL") {
-                                        <div class="player-nickname">@(RosterState.PlayerNicknameByRosterId.TryGetValue((roster.RosterId, player?.PlayerId ?? ""), out var nickname) ? nickname : "")</div>
-                                    }
+                                    <div class="player-nickname">@(RosterState.PlayerNicknameByRosterId.TryGetValue((roster.RosterId, player?.PlayerId ?? ""), out var nickname) ? nickname : "")</div>
                                     <a title="View Player on Rotowire" target="_blank" href=@($"https://www.rotowire.com/football/player/{player?.Firstname?.ToLower()}-{player?.Lastname?.ToLower()}-{player?.RotowireId}")>
                                         <span class="bi-search-icon"></span>
                                     </a>
@@ -158,9 +154,7 @@ else
                                     <span class="player-height">@GetHeightString(player?.Height)</span>  
                                     <span class="player-weight">@player?.Weight lbs</span>  
                                 </div>
-                                @if(Brand != "Public FFL") {
-                                    <div class="player-nickname">@(RosterState.PlayerNicknameByRosterId.TryGetValue((roster.RosterId, player?.PlayerId ?? ""), out var nickname) ? nickname : "")</div>
-                                }
+                                <div class="player-nickname">@(RosterState.PlayerNicknameByRosterId.TryGetValue((roster.RosterId, player?.PlayerId ?? ""), out var nickname) ? nickname : "")</div>
                                 <a title="View Player on Rotowire" target="_blank" href=@($"https://www.rotowire.com/football/player/{player?.Firstname?.ToLower()}-{player?.Lastname?.ToLower()}-{player?.RotowireId}")>
                                     <span class="bi-search-icon"></span>
                                 </a>
@@ -181,7 +175,7 @@ else
 @code {
     private List<RostersModel>? _rosters = new List<RostersModel>();
     [CascadingParameter(Name = "AppBrand")]
-    public string? AppBrand { get; set; }
+    private string? AppBrand { get; set; }
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
     private bool _isLoading = true;
     private int _counter = 0;

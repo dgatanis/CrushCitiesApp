@@ -129,23 +129,50 @@ code {
     --TE-faded: #ffae5847;
     --border-gray: #616161;
     --faded-background: #9595954a;
-    --bg: #c4c4c4;
+    --bg: radial-gradient(120% 90% at 5% -20%,
+                #e0e0e0 0%,
+                #d1d1d1 60%,
+                #c4c4c4 100%
+            ),
+            radial-gradient(100% 80% at 95% 95%,
+                #ded6d2 0%,
+                #d0c9c5 50%,
+                #c4c4c4 100%
+            ),
+            linear-gradient(170deg,
+                #ededed 0%,
+                #cfcfcf 60%,
+                #c4c4c4 100%
+            );
     --text: #131313;
+    --light-text: #4b4b4b;
     --top-row: #f7f7f7;
-    --dark-background: #040018;
+    --dark-background:  radial-gradient(95% 75% at 50% 100%, #0c072a 0%, #08021b 55%, #030011 95%),
+                        radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%),
+                        radial-gradient(140% 110% at 50% 100%, rgba(8, 4, 24, 0.9) 0%, rgba(3, 0, 17, 1) 70%);
+    --dark-owner-background: radial-gradient(95% 75% at 50% 100%, #0c072a 0%, #08021b 55%, #030011 95%),
+                        radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%),
+                        radial-gradient(140% 110% at 50% 100%, rgba(8, 4, 24, 0.9) 0%, rgba(3, 0, 17, 1) 70%);
+
+    --box-shadow:0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
 :root[data-theme="dark"] {
-  --bg: #030011;
+  --bg: radial-gradient(120% 90% at 5% -20%, #060016 0%, #040013 85%), 
+      radial-gradient(100% 80% at 95% 95%, #2e1100 0%, #1a0a08 45%, #030011 85%), 
+      linear-gradient(170deg, #040012 0%, #030011 60%, #04000f 100%);
   --text: #d6d6d6;
+  --light-text: #717171;
   --top-row: #d0d0d042;
+  --box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 24px rgb(28 28 28 / 24%);
 }
 
 .owner-avatar {
     max-width: 3.5rem;
     border-radius: 50%;
-    border: 2px solid #545454;
-    box-shadow: 0 0 .2rem #b6b6b69c;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 4px 12px rgba(0, 0, 0, 0.35);
+    background: var(--dark-owner-background);
+    padding: 2px;
 }
 
 .owner-avatar-xsmall {
@@ -257,8 +284,9 @@ h1 {
 
 .common-container {
     background: var(--dark-background) !important;
-    border-style: inset !important;
-    box-shadow: 0 0rem 0.1rem #5a5a5a94 !important;
-    border-color: #a0a0a036 !important;
+    box-shadow: var(--box-shadow) !important;
+    border-color: rgb(11 11 13 / 73%) !important;
     color: #d6d6d6 !important;
+    backdrop-filter: blur(6px);
+    border-width: 2px !important;
 }

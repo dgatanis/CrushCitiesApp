@@ -73,53 +73,19 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
 
 
     /// <summary>
-    /// Filter the transaction data based on the type
-    /// Sets the FilteredTransactions variable to the transactions that match the type
+    /// Returns the filtered transaction data based on the types
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    public void FilterTransactionsData(string type = "")
+    public IReadOnlyList<TransactionsModel> GetFilterTransactionsData(string[] types)
     {
+        if (Transactions is null || types is null || types.Length == 0)
+            return Transactions ?? [];
 
-        FilteredTransactions.Clear();
-        
-        if(Transactions is not null)
-        {
-            
-            if(!string.IsNullOrEmpty(type))
-            {
-                FilteredTransactions.AddRange(Transactions.Where(x => x.Type == type).OrderByDescending(t => t.Created));
-            }
-            else
-            {
-                FilteredTransactions = Transactions;
-            }
-        }
-    }
-
-
-    /// <summary>
-    /// Verify filtered transactions contains all provided types.
-    /// Includes "trade", "waiver", "free_agent" types.
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    public bool FilteredTransactionsContainsTypes(string[] types)
-    {
-        if(FilteredTransactions.Count == 0) return false;
-        var typesCount = types.Length;
-        var counter = 0;
-        foreach(var type in types)
-        {
-            var transactions = FilteredTransactions.Where(x => x.Type == type);
-            
-            if(transactions.Count() > 0)
-            {
-                counter++;
-            }
-        }
-        if(counter == typesCount) return true;
-        return false;
+        return Transactions
+            .Where(t => types.Contains(t.Type))
+            .OrderByDescending(t => t.Created)
+            .ToList();
     }
 
     /// <summary>
