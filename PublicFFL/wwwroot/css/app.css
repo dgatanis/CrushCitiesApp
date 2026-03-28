@@ -115,18 +115,18 @@ code {
 }
 
 :root {
-    --primary-site-color: #01142d;   
+    --primary-site-color: #060029;   
     --secondary-site-color: #290a32;  
-    --secondary-site-alt1: #05132F; 
-    --secondary-site-alt2: #150F30;
+    --secondary-site-alt1: #150f304d; 
+    --secondary-site-alt2: #140d37;
     --QB: #ff2a6d;
     --RB: #00ceb8;
     --WR: #58a7ff;
     --TE: #ffae58;
-    --QB-faded: #ff2a6e38;
-    --RB-faded: #00ceb926;
-    --WR-faded: #58a6ff47;
-    --TE-faded: #ffae5847;
+    --QB-faded: #ff2a6e73;
+    --RB-faded: #00ceb96e;
+    --WR-faded: #58a6ff85;
+    --TE-faded: #ffae5896;
     --border-gray: #616161;
     --faded-background: #9595954a;
     --bg: radial-gradient(120% 90% at 5% -20%,
@@ -147,14 +147,15 @@ code {
     --text: #131313;
     --light-text: #4b4b4b;
     --top-row: #f7f7f7;
-    --dark-background:  radial-gradient(95% 75% at 50% 100%, #0d0731 0%, #08021b 65%, #030011 95%), 
+    --dark-background:  radial-gradient(95% 75% at 50% 100%, #120a3f 0%, #08021b 80%, #030011 95%), 
                         radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%), 
                         radial-gradient(140% 110% at 50% 100%, rgba(8, 4, 24, 0.9) 0%, rgba(3, 0, 17, 1) 70%);
-    --dark-owner-background: radial-gradient(95% 75% at 50% 100%, #0c072a 0%, #08021b 55%, #030011 95%),
-                             radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%),
-                             radial-gradient(140% 110% at 50% 100%, rgba(8, 4, 24, 0.9) 0%, rgba(3, 0, 17, 1) 70%);
+    --dark-owner-background:  radial-gradient(95% 75% at 50% 100%, #120a3f 0%, #08021b 80%, #030011 95%),
+                              radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%),
+                              radial-gradient(140% 110% at 50% 100%, rgba(8, 4, 24, 0.9) 0%, rgba(3, 0, 17, 1) 70%);
 
-    --box-shadow:0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 24px rgba(0, 0, 0, 0.35);
+    --box-shadow: 0 0 24px rgb(0 0 0 / 32%);
+    --border-medium: rgba(126, 160, 230, 0.22);
 }
 
 :root[data-theme="dark"] {
@@ -164,7 +165,7 @@ code {
   --text: #d6d6d6;
   --light-text: #717171;
   --top-row: #d0d0d042;
-  --box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 24px rgb(28 28 28 / 24%);
+  --box-shadow: 0 0 24px rgb(104 70 200 / 9%);
 }
 
 .owner-avatar {
@@ -172,7 +173,7 @@ code {
     border-radius: 50%;
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 4px 12px rgba(0, 0, 0, 0.35);
     background: var(--dark-owner-background);
-    padding: 2px;
+    padding: 3px;
 }
 
 .owner-avatar-xsmall {
@@ -213,7 +214,7 @@ code {
     background: var(--secondary-site-alt2);
     color: #dcdcdc;
     box-shadow: none !important;
-    opacity: .9;
+    opacity: .8;
 }
 
 .accordion-button {
@@ -226,6 +227,9 @@ code {
     box-shadow: 0 0 .2rem 0 whitesmoke;
 }
 
+.accordion-body {
+    background: var(--secondary-site-alt1) !important;
+}
 
 main { 
     background: var(--bg) !important; 
@@ -276,16 +280,16 @@ h1 {
 }
 
 .btn-secondary {
-    background: transparent;
-    color: inherit;
-    border-color: #5a5a5a94 !important;
-    box-shadow: 0 0rem 0.2rem #5a5a5a94;
+    background: var(--secondary-site-alt2);
+    color: #c4c4c4;
+    border-color: var(--border-medium) !important;
+    box-shadow: var(--box-shadow) !important;
 }
 
 .common-container {
     background: var(--dark-background) !important;
     box-shadow: var(--box-shadow) !important;
-    border-color: rgb(95 95 95 / 63%) !important;
+    border-color: var(--border-medium) !important;
     color: #d6d6d6 !important;
     backdrop-filter: blur(6px);
     border-width: 1px !important;

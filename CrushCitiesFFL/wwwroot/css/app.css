@@ -116,17 +116,17 @@ code {
 
 :root {
     --primary-site-color: #050018;
-    --secondary-site-color: #331300;
-    --secondary-site-alt1: #3b1217;
-    --secondary-site-alt2: #2A0F13;
+    --secondary-site-color: rgb(5 46 53);
+    --secondary-site-alt1: rgb(17 73 65 / 24%);
+    --secondary-site-alt2: rgba(9, 29, 40, 0.85);
     --QB: #ff2a6d;
     --RB: #00ceb8;
     --WR: #58a7ff;
     --TE: #ffae58;
-    --QB-faded: #ff2a6e38;
-    --RB-faded: #00ceb926;
-    --WR-faded: #58a6ff47;
-    --TE-faded: #ffae5847;
+    --QB-faded: #ff2a6e73;
+    --RB-faded: #00ceb96e;
+    --WR-faded: #58a6ff85;
+    --TE-faded: #ffae5896;
     --border-gray: #616161;
     --faded-background: #9595954a;
     --bg:   radial-gradient(120% 90% at 5% -20%,
@@ -147,16 +147,17 @@ code {
     --text: #131313;
     --light-text: #4b4b4b;
     --top-row: #f7f7f7;
-    --dark-background:  radial-gradient(120% 90% at 50% 110%, rgb(51 19 0 / 83%) 0%, rgb(49 19 1 / 39%) 45%, rgba(5, 0, 24, 0) 80%), 
-                        radial-gradient(95% 75% at 50% 100%, #0c072a 0%, #08021b 55%, #030011 95%), 
-                        radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%), 
-                        linear-gradient(180deg, #040012 0%, #030011 60%, #04000f 100%);
-    --dark-owner-background:radial-gradient(120% 90% at 50% -10%, rgb(68 26 1 / 94%) 0%, rgba(51, 19, 0, 0.35) 45%, rgba(51, 19, 0, 0) 70%), 
-                            radial-gradient(120% 90% at 50% 110%, rgb(68 26 1 / 94%) 0%, rgba(51, 19, 0, 0.35) 45%, rgba(51, 19, 0, 0) 70%), 
-                            radial-gradient(95% 75% at 50% 100%, #0c072a 0%, #08021b 55%, #030011 95%), 
-                            radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%), 
-                            radial-gradient(140% 110% at 50% 100%, rgba(8, 4, 24, 0.9) 0%, rgba(3, 0, 17, 1) 70%);
-    --box-shadow:0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 24px rgba(0, 0, 0, 0.35);
+    --dark-background:  radial-gradient(120% 90% at 50% 110%, rgb(6 30 34) 0%, rgb(8 34 44 / 65%) 50%, rgba(5, 0, 24, 0) 80%),
+                        radial-gradient(95% 75% at 50% 100%, #0b2430 0%, #091d28 55%, #030914 95%),
+                        radial-gradient(85% 65% at 50% 100%, #0f2f3c 0%, #0a1f2a 60%, #030914 90%),
+                        linear-gradient(180deg, #071a1f 0%, #050f18 60%, #030914 100%);
+    --dark-owner-background:    radial-gradient(120% 90% at 50% -10%, rgb(11 36 48 / 94%) 0%, rgba(11, 36, 48, 0.35) 45%, rgba(11, 36, 48, 0) 70%),
+                                radial-gradient(120% 90% at 50% 110%, rgb(11 36 48 / 94%) 0%, rgba(11, 36, 48, 0.35) 45%, rgba(11, 36, 48, 0) 70%),
+                                radial-gradient(95% 75% at 50% 100%, #0b2430 0%, #091d28 55%, #030914 95%),
+                                radial-gradient(85% 65% at 50% 100%, #0b2430 0%, #0a1f2a 60%, #030914 90%),
+                                radial-gradient(140% 110% at 50% 100%, rgba(11, 36, 48, 0.9) 0%, rgba(3, 9, 20, 1) 70%);
+    --box-shadow: 0 0 24px rgb(0 0 0 / 32%); 
+    --border-medium: rgba(110, 190, 210, 0.12);
 }
 
 :root[data-theme="dark"] {
@@ -168,7 +169,7 @@ code {
   --text: #d6d6d6;
   --light-text: #717171;
   --top-row: #d0d0d042;
-  --box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 24px rgb(28 28 28 / 24%);
+  --box-shadow: 0 0 24px rgba(70, 180, 200, 0.08);
 }
 
 .owner-avatar {
@@ -176,7 +177,7 @@ code {
     border-radius: 50%;
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 4px 12px rgba(0, 0, 0, 0.35) !important;
     background: var(--dark-owner-background);
-    padding: 2px;
+    padding: 3px;
 }
 
 .owner-avatar-xsmall {
@@ -217,7 +218,7 @@ code {
     background: var(--secondary-site-alt2);
     color: #dcdcdc;
     box-shadow: none !important;
-    opacity: .9;
+    opacity: .8;
 }
 
 .accordion-button {
@@ -228,6 +229,10 @@ code {
 .accordion-item {
     border-color: #0b0b0b;
     box-shadow: 0 0 .2rem 0 whitesmoke;
+}
+
+.accordion-body {
+    background: var(--secondary-site-alt1) !important;
 }
 
 main { 
@@ -279,16 +284,16 @@ h1 {
 }
 
 .btn-secondary {
-    background: transparent;
-    color: inherit;
-    border-color: #5a5a5a94 !important;
-    box-shadow: 0 0rem 0.2rem #5a5a5a94;
+    background: var(--secondary-site-alt2);
+    color: #d6d6d6;
+    border-color: var(--border-medium) !important;
+    box-shadow: var(--box-shadow) !important;
 }
 
 .common-container {
     background: var(--dark-background) !important;
     box-shadow: var(--box-shadow) !important;
-    border-color: rgb(95 95 95 / 63%) !important;
+    border-color: var(--border-medium) !important;
     color: #d6d6d6 !important;
     backdrop-filter: blur(6px);
     border-width: 1px !important;

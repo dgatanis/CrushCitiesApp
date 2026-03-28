@@ -6,7 +6,8 @@
     overflow: hidden;
     border-spacing: 0;
     border-collapse: separate;
-    border: 1px solid rgb(95 95 95 / 63%);
+    border: 1px solid;
+    border-color: var(--border-medium) !important;
 }
 
 .stats-table thead th,

@@ -47,7 +47,7 @@
 .player-nickname {
     font-size: .6rem;
     font-family: "F2";   
-    color: var(--light-text);
+    color: var(--text);
     grid-row: 4;
     grid-column: 2 / 4;
     height: .75rem;

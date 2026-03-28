@@ -51,11 +51,13 @@ span.text-center {
     color: rgb(0 0 0);
     font-size: .55rem;
     margin-top: .1rem;
-    border-radius: 1rem;
+    border-radius: .3rem;
     padding: 3px;
     padding-left: 4px;
     padding-right: 4px;
     border-color: rgb(13 202 240 / 34%);
+    font-family: 'F1';
+    align-self: end;
 }
 
 @media (min-width: 768px) {

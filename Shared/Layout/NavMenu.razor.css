@@ -26,3 +26,11 @@
 img.brand-icon {
     max-width: 4rem;
 }
+
+nav.navbar.navbar-expand-lg.navbar-dark.top-navbar {
+    border-color: var(--border-medium) !important;
+    border: 2px solid;
+    border-top: unset;
+    border-left: unset;
+    border-right: unset;
+}

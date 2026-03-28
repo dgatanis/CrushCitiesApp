@@ -92,7 +92,7 @@ else
                             if(roster.Starters is not null && !roster.Starters.Contains(bench) && !roster.Taxi!.Contains(bench))
                             {
                                 var player = PlayerState.PlayerById.TryGetValue(bench, out var p) ? p : null;
-                                <div class="player-container border border-1 rounded-end" style="background-color:#6e6e6e73;">
+                                <div class="player-container border border-1 rounded-end" style="background-color:#6e6e6eb5;">
                                     <div class="position-container">
                                         <div class="player-position">
                                             @player?.Position
@@ -135,7 +135,7 @@ else
                         @foreach(var taxi in roster.Taxi ?? [])
                         {
                             var player = PlayerState.PlayerById.TryGetValue(taxi, out var p) ? p : null;
-                            <div class="player-container border border-1 rounded-end" style="background-color:#6e6e6e73;">
+                            <div class="player-container border border-1 rounded-end" style="background-color:#6e6e6eb5;">
                                 <div class="position-container">
                                     <div class="player-position">
                                         @player?.Position
