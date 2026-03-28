@@ -147,12 +147,12 @@ code {
     --text: #131313;
     --light-text: #4b4b4b;
     --top-row: #f7f7f7;
-    --dark-background:  radial-gradient(95% 75% at 50% 100%, #0c072a 0%, #08021b 55%, #030011 95%),
-                        radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%),
+    --dark-background:  radial-gradient(95% 75% at 50% 100%, #0d0731 0%, #08021b 65%, #030011 95%), 
+                        radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%), 
                         radial-gradient(140% 110% at 50% 100%, rgba(8, 4, 24, 0.9) 0%, rgba(3, 0, 17, 1) 70%);
     --dark-owner-background: radial-gradient(95% 75% at 50% 100%, #0c072a 0%, #08021b 55%, #030011 95%),
-                        radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%),
-                        radial-gradient(140% 110% at 50% 100%, rgba(8, 4, 24, 0.9) 0%, rgba(3, 0, 17, 1) 70%);
+                             radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%),
+                             radial-gradient(140% 110% at 50% 100%, rgba(8, 4, 24, 0.9) 0%, rgba(3, 0, 17, 1) 70%);
 
     --box-shadow:0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 24px rgba(0, 0, 0, 0.35);
 }
@@ -285,8 +285,8 @@ h1 {
 .common-container {
     background: var(--dark-background) !important;
     box-shadow: var(--box-shadow) !important;
-    border-color: rgb(11 11 13 / 73%) !important;
+    border-color: rgb(95 95 95 / 63%) !important;
     color: #d6d6d6 !important;
     backdrop-filter: blur(6px);
-    border-width: 2px !important;
+    border-width: 1px !important;
 }

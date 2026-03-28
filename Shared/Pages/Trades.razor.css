@@ -36,9 +36,26 @@ button.page-link {
     background-color: #87878791;
 }
 
+.common-container {
+    margin-top: 1rem;
+}
+
 .col-12.col-md-6 {
     margin-top: 1rem;
     margin-bottom: 1rem;
+}
+
+span.text-center {
+    background: rgb(1 168 204 / 14%);
+    border: 1px solid;
+    color: rgb(0 0 0);
+    font-size: .55rem;
+    margin-top: .1rem;
+    border-radius: 1rem;
+    padding: 3px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-color: rgb(13 202 240 / 34%);
 }
 
 @media (min-width: 768px) {

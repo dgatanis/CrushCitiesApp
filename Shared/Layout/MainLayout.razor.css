@@ -49,9 +49,7 @@ span.me-5.small {
 }
 
 .ticker.fixed-bottom.bg-dark.text-light.py-1 {
-    background: radial-gradient(95% 75% at 50% 100%, #0c072a 0%, #08021b 25%, #030011 95%), 
-                radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%), 
-                radial-gradient(140% 110% at 50% 100%, rgba(8, 4, 24, 0.9) 0%, rgba(3, 0, 17, 1) 70%) !important;
+    background: #00030d !important;
     border: 2px solid black;
     border-bottom: none;
     border-left: none;
