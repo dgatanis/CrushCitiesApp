@@ -166,12 +166,12 @@ else
                                                 var player = PlayerState.PlayerById.TryGetValue(playerId, out var p) ? p : null;
                                                 if (player is not null)
                                                 {
-                                                    <span class="badge bg-success-subtle text-success border border-success d-inline-flex align-items-center gap-1">
+                                                    <span class="badge text-success border border-success frosty-bg d-inline-flex align-items-center gap-1">
                                                         <span style="font-size: x-large;">+</span>
                                                         <span class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp);border-color:var(--@(player.Position?.ToUpper()))">
                                                             <img class="player-team-logo" src="@(player.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")" />
                                                         </span>
-                                                        <span style="color: #333;">@player.Firstname @player.Lastname</span>
+                                                        <span style="color: #d6d6d6;">@player.Firstname @player.Lastname</span>
                                                     </span>
                                                 }
                                             }
@@ -186,12 +186,12 @@ else
                                                 var player = PlayerState.PlayerById.TryGetValue(playerId, out var p) ? p : null;
                                                 if (player is not null)
                                                 {
-                                                    <span class="badge bg-danger-subtle text-danger border border-danger">
+                                                    <span class="badge frosty-bg text-danger border border-danger d-inline-flex align-items-center gap-1">
                                                     <span style="font-size: x-large;">-</span>
                                                         <span class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)">
                                                             <img class="player-team-logo" src="@(player.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")" />
                                                         </span>
-                                                        <span style="color: #333;">@player.Firstname @player.Lastname</span>
+                                                        <span style="color: #d6d6d6;">@player.Firstname @player.Lastname</span>
                                                     </span>
                                                 }
                                             }
@@ -205,17 +205,17 @@ else
                                             {
                                                 <div class="d-flex align-items-center">
                                                     <div class="d-inline-block">
-                                                        <span class="badge bg-info-subtle text-info border border-info d-inline-flex flex-column align-items-center text-nowrap">
-                                                            <span class="d-inline-flex align-items-baseline gap-1">
+                                                        <span class="badge frosty-bg text-info border border-info d-inline-flex flex-column align-items-center text-nowrap">
+                                                            <span class="d-inline-flex align-items-center gap-1">
                                                                 <span>Pick:</span>
-                                                                <span style="color:#333">@GetTradePickLabel(pick)</span>
+                                                                <span style="color: #d6d6d6;">@GetTradePickLabel(pick)</span>
+                                                                @if(pick.RosterId != pick.PreviousOwnerId && !_draftInfoBySeason.TryGetValue(pick.Season ?? "", out var info))
+                                                                {
+                                                                    <span class="text-center">
+                                                                        @(RosterState.TeamNameByRosterId.TryGetValue(pick.RosterId, out var teamName) ? $"via {teamName}" : "")
+                                                                    </span>
+                                                                }
                                                             </span>
-                                                            @if(pick.RosterId != pick.PreviousOwnerId && !_draftInfoBySeason.TryGetValue(pick.Season ?? "", out var info))
-                                                            {
-                                                                <span class="text-center">
-                                                                    @(RosterState.TeamNameByRosterId.TryGetValue(pick.RosterId, out var teamName) ? $"via {teamName}" : "")
-                                                                </span>
-                                                            }
                                                         </span>
                                                     </div>
                                                 </div>
@@ -230,7 +230,7 @@ else
                                             {
                                                 <div class="d-flex align-items-center">
                                                     <div class="d-inline-block">
-                                                        <span class="badge bg-warning-subtle text-warning border border-warning d-inline-flex align-items-center gap-1">
+                                                        <span class="badge frosty-bg text-warning border border-warning d-inline-flex align-items-center gap-1">
                                                             $@waiver.Amount
                                                         </span>
                                                     </div>
