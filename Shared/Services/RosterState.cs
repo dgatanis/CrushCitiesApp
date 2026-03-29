@@ -61,17 +61,28 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
     /// <returns></returns>
     public async Task SetCurrentRostersAsync(bool forceRefresh = false)
     {
-        await _leagueState.EnsureLoadedAsync();
-        var currentLeagueId = _leagueState.CurrentLeagueId;
-        if (!IsLoaded || forceRefresh)
+        try
         {
-            var rosters = await _sleeperApi.GetRostersForLeagueAsync(currentLeagueId);
-            if (rosters is {Count: > 0})
+            await _leagueState.EnsureLoadedAsync();
+            var currentLeagueId = _leagueState.CurrentLeagueId;
+
+            if (!IsLoaded || forceRefresh)
             {
-                Rosters = _normalizer.NormalizeRosters(rosters);
+                var rosters = await _sleeperApi.GetRostersForLeagueAsync(currentLeagueId);
+                if (rosters is {Count: > 0})
+                {
+                    Rosters = _normalizer.NormalizeRosters(rosters);
+                }
             }
+            await BuildLookupCachesAsync();
         }
-        await BuildLookupCachesAsync();
+        catch (Exception ex)
+        {
+            _loadTask = null;
+            Console.WriteLine($"ERROR: {ex.Message}");
+            throw;
+        }
+
     }
         
     
@@ -81,68 +92,78 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
     /// <returns></returns>
     private async Task BuildLookupCachesAsync()
     {
-        await _userState.EnsureLoadedAsync();
-        TeamNameByRosterId.Clear();
-        PlayerNicknameByRosterId.Clear();
-        RosterIdByUserId.Clear();
-        UserIdByRosterId.Clear();
-
-        var userIds = (_userState.Users ?? [])
-            .Where(u => !string.IsNullOrWhiteSpace(u?.UserId))
-            .Select(u => u!.UserId)
-            .ToHashSet();
-
-        // Team names by RosterId
-        foreach (var roster in Rosters ?? [])
+        try
         {
-            var teamName = $"Roster {roster.RosterId}";
+            await _userState.EnsureLoadedAsync();
+            TeamNameByRosterId.Clear();
+            PlayerNicknameByRosterId.Clear();
+            RosterIdByUserId.Clear();
+            UserIdByRosterId.Clear();
 
-            if (!string.IsNullOrWhiteSpace(roster.OwnerId))
+            var userIds = (_userState.Users ?? [])
+                .Where(u => !string.IsNullOrWhiteSpace(u?.UserId))
+                .Select(u => u!.UserId)
+                .ToHashSet();
+
+            // Team names by RosterId
+            foreach (var roster in Rosters ?? [])
             {
-                var fromUser = await _userState.GetTeamNameByUserIdAsync(roster.OwnerId);
-                if (!string.IsNullOrWhiteSpace(fromUser))
-                    teamName = fromUser;
+                var teamName = $"Roster {roster.RosterId}";
+
+                if (!string.IsNullOrWhiteSpace(roster.OwnerId))
+                {
+                    var fromUser = await _userState.GetTeamNameByUserIdAsync(roster.OwnerId);
+                    if (!string.IsNullOrWhiteSpace(fromUser))
+                        teamName = fromUser;
+                }
+                
+                TeamNameByRosterId[roster.RosterId] = teamName;
             }
-            
-            TeamNameByRosterId[roster.RosterId] = teamName;
-        }
 
 
-        //Player nicknames by rosterid
-        foreach (var roster in Rosters ?? [])
-        {
-            if (roster.Metadata is null) continue;
-
-            foreach (var kvp in roster.Metadata)
+            //Player nicknames by rosterid
+            foreach (var roster in Rosters ?? [])
             {
-                // keys look like "p_nick_<playerId>"
-                if (!kvp.Key.StartsWith("p_nick_", StringComparison.Ordinal)) continue;
+                if (roster.Metadata is null) continue;
 
-                var playerId = kvp.Key.Substring("p_nick_".Length);
-                if (string.IsNullOrWhiteSpace(playerId)) continue;
+                foreach (var kvp in roster.Metadata)
+                {
+                    // keys look like "p_nick_<playerId>"
+                    if (!kvp.Key.StartsWith("p_nick_", StringComparison.Ordinal)) continue;
 
-                var nickname = kvp.Value ?? "";
-                if (nickname.Length == 0) continue;
+                    var playerId = kvp.Key.Substring("p_nick_".Length);
+                    if (string.IsNullOrWhiteSpace(playerId)) continue;
 
-                PlayerNicknameByRosterId[(roster.RosterId, playerId)] = nickname;
+                    var nickname = kvp.Value ?? "";
+                    if (nickname.Length == 0) continue;
+
+                    PlayerNicknameByRosterId[(roster.RosterId, playerId)] = nickname;
+                }
+            }
+
+            //Get RosterId by UserId
+            foreach (var roster in Rosters ?? [])
+            {
+                if (string.IsNullOrWhiteSpace(roster.OwnerId)) continue;
+                RosterIdByUserId[roster.OwnerId] = roster.RosterId;
+            }
+
+            // Get user_id by roster_id
+            foreach (var roster in Rosters ?? [])
+            {
+                if (string.IsNullOrWhiteSpace(roster?.OwnerId)) continue;
+                if (!userIds.Contains(roster.OwnerId)) continue;
+
+                UserIdByRosterId[roster.RosterId.ToString()] = roster.OwnerId;
             }
         }
-
-        //Get RosterId by UserId
-        foreach (var roster in Rosters ?? [])
+        catch (Exception ex)
         {
-            if (string.IsNullOrWhiteSpace(roster.OwnerId)) continue;
-            RosterIdByUserId[roster.OwnerId] = roster.RosterId;
+            _cacheTask = null;
+            Console.WriteLine($"ERROR: {ex.Message}");
+            throw;
         }
 
-        // Get user_id by roster_id
-        foreach (var roster in Rosters ?? [])
-        {
-            if (string.IsNullOrWhiteSpace(roster?.OwnerId)) continue;
-            if (!userIds.Contains(roster.OwnerId)) continue;
-
-            UserIdByRosterId[roster.RosterId.ToString()] = roster.OwnerId;
-        }
     }
 
     /// <summary>

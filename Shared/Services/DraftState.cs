@@ -50,32 +50,41 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
     /// <returns></returns>
     public async Task SetAllDraftDataAsync(bool forceRefresh = false)
     {
-        if (!IsLoaded || forceRefresh)
+        try
         {
-            await _leagueState.EnsureLoadedAsync();
-            AllDrafts = new();
-            AllDraftPicks = new();
-
-            foreach(var league in _leagueState.AllLeagues)
+            if (!IsLoaded || forceRefresh)
             {
-                var drafts = await _sleeperApi.GetDraftsForLeagueAsync(league.LeagueId ?? "");
+                await _leagueState.EnsureLoadedAsync();
+                AllDrafts = new();
+                AllDraftPicks = new();
 
-                if (drafts is { Count: > 0 })
+                foreach(var league in _leagueState.AllLeagues)
                 {
-                    AllDrafts.AddRange(drafts.ToList());
-                    var Draft = drafts.FirstOrDefault();
+                    var drafts = await _sleeperApi.GetDraftsForLeagueAsync(league.LeagueId ?? "");
 
-                    var draftId = Draft?.DraftId;
-                    if (!string.IsNullOrWhiteSpace(draftId))
+                    if (drafts is { Count: > 0 })
                     {
-                        var picks = await _sleeperApi.GetDraftPicksForDraftAsync(draftId);
-                        AllDraftPicks.AddRange(picks?.Where(p => p is not null).Select(p => p!).ToList() ?? []);
+                        AllDrafts.AddRange(drafts.ToList());
+                        var Draft = drafts.FirstOrDefault();
+
+                        var draftId = Draft?.DraftId;
+                        if (!string.IsNullOrWhiteSpace(draftId))
+                        {
+                            var picks = await _sleeperApi.GetDraftPicksForDraftAsync(draftId);
+                            AllDraftPicks.AddRange(picks?.Where(p => p is not null).Select(p => p!).ToList() ?? []);
+                        }
                     }
                 }
-            }
 
+            }
+            await BuildLookupCachesAsync();
         }
-        await BuildLookupCachesAsync();
+        catch (Exception ex)
+        {
+            _loadTask = null;
+            Console.WriteLine($"ERROR: {ex.Message}");
+            throw;
+        }
     }
 
     /// <summary>
@@ -84,25 +93,35 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
     /// <returns></returns>
     private async Task BuildLookupCachesAsync()
     {
-        DraftHistory.Clear();
-
-        // Draft History
-        foreach(var draft in AllDrafts ?? [])
+        try
         {
-            var slotToOwner = draft.DraftOrder?.ToDictionary(kvp => 
-                                                            kvp.Value, kvp => kvp.Key)
-                                                            ?? new Dictionary<int, string>();
+            DraftHistory.Clear();
 
-            DraftHistory.Add(new DraftPickSeasonSummary
+            // Draft History
+            foreach(var draft in AllDrafts ?? [])
             {
-                Season = draft.Season,
-                LeagueId = draft.LeagueId,
-                DraftId = draft.DraftId,
-                DraftOrder = slotToOwner
-            });
+                var slotToOwner = draft.DraftOrder?.ToDictionary(kvp => 
+                                                                kvp.Value, kvp => kvp.Key)
+                                                                ?? new Dictionary<int, string>();
+
+                DraftHistory.Add(new DraftPickSeasonSummary
+                {
+                    Season = draft.Season,
+                    LeagueId = draft.LeagueId,
+                    DraftId = draft.DraftId,
+                    DraftOrder = slotToOwner
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _cacheTask = null;
+            Console.WriteLine($"ERROR: {ex.Message}");
+            throw;
         }
     }
 
+    
     /// <summary>
     /// Ensures that the AllTransactions data is loaded.
     /// </summary>

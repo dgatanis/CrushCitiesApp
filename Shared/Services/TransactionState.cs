@@ -39,35 +39,44 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
     /// <returns></returns>
     public async Task SetAllTransactionsDataAsync(bool forceRefresh = false)
     {
-        var json = await _http.GetStringAsync("/data/fleaflicker_trades_data.json");
-        var fleaflicker_trades = JsonSerializer.Deserialize<List<TransactionsModel>>(json);
-        Transactions.Clear();
-        if (!IsLoaded || forceRefresh)
+        try
         {
-            
-            await _leagueState.EnsureLoadedAsync();
-            
-            foreach(var league in _leagueState.AllLeagues)
-            {
-                if (league.Settings?.LastScoredLeg is not null && league.LeagueId is not null)
-                {
-                    var lastWeek = Math.Max(1, league.Settings.LastScoredLeg); //If 0 use week 1 instead
-                    for(int i = lastWeek; i > 0; i--)
-                    {
-                        var transactions = await _sleeperApi.GetTransactionsForWeekAsync(league.LeagueId, i.ToString());
+            var json = await _http.GetStringAsync("/data/fleaflicker_trades_data.json");
+            var fleaflicker_trades = JsonSerializer.Deserialize<List<TransactionsModel>>(json);
 
-                        if (transactions is not null)
+            if (!IsLoaded || forceRefresh)
+            {
+                Transactions.Clear();
+                await _leagueState.EnsureLoadedAsync();
+                
+                foreach(var league in _leagueState.AllLeagues)
+                {
+                    if (league.Settings?.LastScoredLeg is not null && league.LeagueId is not null)
+                    {
+                        var lastWeek = Math.Max(1, league.Settings.LastScoredLeg); //If 0 use week 1 instead
+                        for(int i = lastWeek; i > 0; i--)
                         {
-                            Transactions.AddRange(transactions);
+                            var transactions = await _sleeperApi.GetTransactionsForWeekAsync(league.LeagueId, i.ToString());
+
+                            if (transactions is not null)
+                            {
+                                Transactions.AddRange(transactions);
+                            }
                         }
                     }
                 }
-            }
 
-            if (fleaflicker_trades is not null)
-            {
-                Transactions.AddRange(fleaflicker_trades);
+                if (fleaflicker_trades is not null)
+                {
+                    Transactions.AddRange(fleaflicker_trades);
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            _loadTask = null;
+            Console.WriteLine($"ERROR: {ex.Message}");
+            throw;
         }
     }
 

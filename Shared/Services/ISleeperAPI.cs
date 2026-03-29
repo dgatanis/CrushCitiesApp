@@ -32,7 +32,7 @@ public sealed class SleeperAPI(HttpClient http) : ISleeperAPI
     /// <returns></returns>
     private async Task<string?> GetResponseContentAsync(string path)
     {
-        var response = await _http.GetAsync(path);
+        using var response = await _http.GetAsync(path);
         response.EnsureSuccessStatusCode();
 
         if (response.Content is null)

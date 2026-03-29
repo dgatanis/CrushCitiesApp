@@ -89,27 +89,36 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
     /// <returns></returns>
     private async Task BuildLookupCachesAsync()
     {
-        await EnsureRequiredDataLoadedAsync();
+        try
+        {
+            await EnsureRequiredDataLoadedAsync();
         
-        TopScoringTeams.Clear();
-        LowScoringTeams.Clear();
-        TopScoringPlayers.Clear();
-        LowScoringPlayers.Clear();
-        RecordByRosterId.Clear();
-        HighScoringWeeksByRosterId.Clear();
-        LowScoringWeeksByRosterId.Clear();
-        LargestMarginOfVictory.Clear();
-        TightestMarginOfVictory.Clear();
+            TopScoringTeams.Clear();
+            LowScoringTeams.Clear();
+            TopScoringPlayers.Clear();
+            LowScoringPlayers.Clear();
+            RecordByRosterId.Clear();
+            HighScoringWeeksByRosterId.Clear();
+            LowScoringWeeksByRosterId.Clear();
+            LargestMarginOfVictory.Clear();
+            TightestMarginOfVictory.Clear();
 
-        BuildTopScoringTeams();
-        BuildLowScoringTeams();
-        BuildTopScoringPlayers();
-        BuildLowScoringPlayers();
-        BuildRecordByRosterId();
-        BuildHighScoringWeeksByRosterId();
-        BuildLowScoringWeeksByRosterId();
-        BuildLargestMarginOfVictory();
-        BuildTightestMarginOfVictory();
+            BuildTopScoringTeams();
+            BuildLowScoringTeams();
+            BuildTopScoringPlayers();
+            BuildLowScoringPlayers();
+            BuildRecordByRosterId();
+            BuildHighScoringWeeksByRosterId();
+            BuildLowScoringWeeksByRosterId();
+            BuildLargestMarginOfVictory();
+            BuildTightestMarginOfVictory();
+        }
+        catch (Exception ex)
+        {
+            _cacheTask = null;
+            Console.WriteLine($"ERROR: {ex.Message}");
+            throw;
+        }
     }
 
 

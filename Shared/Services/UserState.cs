@@ -47,16 +47,25 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
     /// <returns></returns>
     public async Task SetCurrentUsersAsync(bool forceRefresh = false)
     {
-        await _leagueState.EnsureLoadedAsync();
-        var currentLeagueId = _leagueState.CurrentLeagueId;
-        if (!IsLoaded || forceRefresh)
+        try
         {
-            var users = await _sleeperApi.GetUsersForLeagueAsync(currentLeagueId);
-            if (users is not null)
+            await _leagueState.EnsureLoadedAsync();
+            var currentLeagueId = _leagueState.CurrentLeagueId;
+            if (!IsLoaded || forceRefresh)
             {
-                Users = _normalizer.NormalizeUsers(users);
+                var users = await _sleeperApi.GetUsersForLeagueAsync(currentLeagueId);
+                if (users is not null)
+                {
+                    Users = _normalizer.NormalizeUsers(users);
+                }
+                await BuildLookupCachesAsync();
             }
-            await BuildLookupCachesAsync();
+        }
+        catch (Exception ex)
+        {
+            _loadTask = null;
+            Console.WriteLine($"ERROR: {ex.Message}");
+            throw;
         }
     }
 
@@ -83,42 +92,51 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
     /// <returns></returns>
     private async Task BuildLookupCachesAsync()
     {
-        await EnsureLoadedAsync();
-        TeamNameByUserId.Clear();
-        OwnerAvatarByUserId.Clear();
-
-        // Get teamname by userid
-        foreach (var user in Users ?? [])
+        try
         {
-            var teamName = $"Roster {user.UserId}";
+            await EnsureLoadedAsync();
+            TeamNameByUserId.Clear();
+            OwnerAvatarByUserId.Clear();
 
-            if (!string.IsNullOrWhiteSpace(user.UserId))
+            // Get teamname by userid
+            foreach (var user in Users ?? [])
             {
-                var fromUser = await GetTeamNameByUserIdAsync(user.UserId);
-                if (!string.IsNullOrWhiteSpace(fromUser))
-                    teamName = fromUser;
+                var teamName = $"Roster {user.UserId}";
 
-                TeamNameByUserId[user.UserId] = teamName;
+                if (!string.IsNullOrWhiteSpace(user.UserId))
+                {
+                    var fromUser = await GetTeamNameByUserIdAsync(user.UserId);
+                    if (!string.IsNullOrWhiteSpace(fromUser))
+                        teamName = fromUser;
+
+                    TeamNameByUserId[user.UserId] = teamName;
+                }
+            }
+
+            // Get owner avatar by userid
+            foreach (var user in Users ?? [])
+            {
+                if (string.IsNullOrWhiteSpace(user.UserId)) continue;
+
+                if (!string.IsNullOrWhiteSpace(user.Metadata?.Avatar))
+                {
+                    OwnerAvatarByUserId[user.UserId] = user.Metadata.Avatar;
+                }
+                else if (!string.IsNullOrWhiteSpace(user.Avatar))
+                {
+                    OwnerAvatarByUserId[user.UserId] = $"https://sleepercdn.com/avatars/thumbs/{user.Avatar}";
+                }
+                else
+                {
+                    OwnerAvatarByUserId[user.UserId] = "/images/question-mark.png";
+                }
             }
         }
-
-        // Get owner avatar by userid
-        foreach (var user in Users ?? [])
+        catch (Exception ex)
         {
-            if (string.IsNullOrWhiteSpace(user.UserId)) continue;
-
-            if (!string.IsNullOrWhiteSpace(user.Metadata?.Avatar))
-            {
-                OwnerAvatarByUserId[user.UserId] = user.Metadata.Avatar;
-            }
-            else if (!string.IsNullOrWhiteSpace(user.Avatar))
-            {
-                OwnerAvatarByUserId[user.UserId] = $"https://sleepercdn.com/avatars/thumbs/{user.Avatar}";
-            }
-            else
-            {
-                OwnerAvatarByUserId[user.UserId] = "/images/question-mark.png";
-            }
+            _cacheTask = null;
+            Console.WriteLine($"ERROR: {ex.Message}");
+            throw;
         }
     }
 

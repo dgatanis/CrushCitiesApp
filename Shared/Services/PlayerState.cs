@@ -61,7 +61,16 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
             var cachedJson = await _js.InvokeAsync<string?>("localStorage.getItem", NflPlayersCacheKey);
             if (!string.IsNullOrWhiteSpace(cachedJson))
             {
-                var cached = JsonSerializer.Deserialize<PlayersCacheModel>(cachedJson);
+                var cached = default(PlayersCacheModel);
+                try
+                {
+                    cached = JsonSerializer.Deserialize<PlayersCacheModel>(cachedJson);
+                }
+                catch (JsonException ex)
+                {
+                    Console.WriteLine($"Failed to deserialize cached player data: {ex.Message}");
+                }
+                
                 if (cached is not null &&
                     cached.Data is not null &&
                     cached.Expiration > DateTimeOffset.UtcNow)

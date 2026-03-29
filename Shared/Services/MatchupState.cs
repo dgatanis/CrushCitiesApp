@@ -29,90 +29,110 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
     /// <returns></returns>
     public async Task SetAllMatchupsAsync(bool forceRefresh = false)
     {
-        if(forceRefresh) ClearAllMatchups();
-        await _leagueState.EnsureLoadedAsync();
-
-        var playoffKeys = new HashSet<PlayoffKey>();
-        var playoffStartsByLeague = new Dictionary<string, int>();
-
-        foreach (var league in _leagueState.AllLeagues)
+        try
         {
-            if (league.LeagueId is null) continue;
-            if (league.Settings?.PlayoffWeekStart is int playoffStart)
+            if(!IsLoaded || forceRefresh)
             {
-                playoffStartsByLeague[league.LeagueId] = playoffStart;
-            }
+                ClearAllMatchups();
+                await _leagueState.EnsureLoadedAsync();
 
-            var winnersBracket = await _sleeperApi.GetPlayoffWinnersBracketAsync(league.LeagueId);
-            var losersBracket = await _sleeperApi.GetPlayoffLosersBracketAsync(league.LeagueId);
+                var playoffKeys = new HashSet<PlayoffKey>();
+                var playoffStartsByLeague = new Dictionary<string, int>();
 
-            void AddBracketKeys(List<PlayoffBracketsModel>? brackets)
-            {
-                if (brackets is null || brackets.Count == 0) return;
-                if (!playoffStartsByLeague.TryGetValue(league.LeagueId, out var start)) return;
-
-                foreach (var bracket in brackets)
+                foreach (var league in _leagueState.AllLeagues)
                 {
-                    if (bracket.Round is < 1 or > 3) continue;
-                    if (bracket.PlacementGame == 5 || bracket.PlacementGame == 3) continue;
-
-                    var week = (start + (bracket.Round - 1)).ToString();
-                    if (bracket.Team1 is int t1)
+                    if (league.LeagueId is null) continue;
+                    if (league.Settings?.PlayoffWeekStart is int playoffStart)
                     {
-                        playoffKeys.Add(new PlayoffKey(league.LeagueId, week, t1));
+                        playoffStartsByLeague[league.LeagueId] = playoffStart;
                     }
-                    if (bracket.Team2 is int t2)
+
+                    var winnersBracket = await _sleeperApi.GetPlayoffWinnersBracketAsync(league.LeagueId);
+                    var losersBracket = await _sleeperApi.GetPlayoffLosersBracketAsync(league.LeagueId);
+
+                    void AddBracketKeys(List<PlayoffBracketsModel>? brackets)
                     {
-                        playoffKeys.Add(new PlayoffKey(league.LeagueId, week, t2));
-                    }
-                }
-            }
+                        if (brackets is null || brackets.Count == 0) return;
+                        if (!playoffStartsByLeague.TryGetValue(league.LeagueId, out var start)) return;
 
-            AddBracketKeys(winnersBracket);
-            AddBracketKeys(losersBracket);
-        }
+                        foreach (var bracket in brackets)
+                        {
+                            if (bracket.Round is < 1 or > 3) continue;
+                            if (bracket.PlacementGame == 5 || bracket.PlacementGame == 3) continue;
 
-        foreach(var league in _leagueState.AllLeagues)
-        {
-            if (league.Settings?.LastScoredLeg is not null &&
-                league.LeagueId is not null)
-            {
-                var currentLeagueId = league.LeagueId;
-                var season = league.Season ?? "";
-                var lastWeek = league.Settings.LastScoredLeg;
-
-                for(int i = lastWeek; i > 0; i--)
-                {
-                    var matchups = await _sleeperApi.GetMatchupsForWeekAsync(league.LeagueId, i.ToString());
-                    
-                    if (matchups is not null)
-                    {
-                        AllMatchups?.AddRange(matchups
-                            .Where(m => !AllMatchups.Any(a => a.MatchupId == m.MatchupId && a.Season == m.Season && a.Week == m.Week))
-                            .Select(m =>
+                            var week = (start + (bracket.Round - 1)).ToString();
+                            if (bracket.Team1 is int t1)
                             {
-                                m.Season = season;
-                                m.Week = i.ToString();
-                                m.LeagueId = currentLeagueId;
-                                return m;
-                            }).OrderBy(m => m.MatchupId).ToList());
+                                playoffKeys.Add(new PlayoffKey(league.LeagueId, week, t1));
+                            }
+                            if (bracket.Team2 is int t2)
+                            {
+                                playoffKeys.Add(new PlayoffKey(league.LeagueId, week, t2));
+                            }
+                        }
                     }
+
+                    AddBracketKeys(winnersBracket);
+                    AddBracketKeys(losersBracket);
+                }
+
+                foreach(var league in _leagueState.AllLeagues)
+                {
+                    if (league.Settings?.LastScoredLeg is not null &&
+                        league.LeagueId is not null)
+                    {
+                        var currentLeagueId = league.LeagueId;
+                        var season = league.Season ?? "";
+                        var lastWeek = league.Settings.LastScoredLeg;
+
+                        for(int i = lastWeek; i > 0; i--)
+                        {
+                            var matchups = await _sleeperApi.GetMatchupsForWeekAsync(league.LeagueId, i.ToString());
+                            
+                            if (matchups is not null)
+                            {
+                                var existing = new HashSet<(string? Season, string? Week, int? MatchupId)>(
+                                    AllMatchups is not null && AllMatchups.Select(a => (a.Season, a.Week, a.MatchupId)) is not null 
+                                    ? AllMatchups.Select(a => (a.Season, a.Week, a.MatchupId)) 
+                                    : new List<(string?, string?, int?)>()
+                                );
+                                var newItems = matchups
+                                    .Select(m =>
+                                    {
+                                        m.Season = season;
+                                        m.Week = i.ToString();
+                                        m.LeagueId = currentLeagueId;
+                                        return m;
+                                    })
+                                    .Where(m => existing.Add((m.Season, m.Week, m.MatchupId)))
+                                    .OrderBy(m => m.MatchupId);
+
+                                AllMatchups?.AddRange(newItems);
+                            }
+                        }
+                    }
+                }
+
+                if (AllMatchups is not null && AllMatchups.Count > 0)
+                {
+                    AllMatchups = AllMatchups.Where(m =>
+                    {
+                        if (m.LeagueId is null) return false;
+                        if (!playoffStartsByLeague.TryGetValue(m.LeagueId, out var start)) return true;
+                        if (!int.TryParse(m.Week, out var week)) return true;
+
+                        if (week <= start) return true;
+
+                        return playoffKeys.Contains(new PlayoffKey(m.LeagueId, m.Week ?? "", m.RosterId));
+                    }).ToList();
                 }
             }
         }
-
-        if (AllMatchups is not null && AllMatchups.Count > 0)
+        catch (Exception ex)
         {
-            AllMatchups = AllMatchups.Where(m =>
-            {
-                if (m.LeagueId is null) return false;
-                if (!playoffStartsByLeague.TryGetValue(m.LeagueId, out var start)) return true;
-                if (!int.TryParse(m.Week, out var week)) return true;
-
-                if (week <= start) return true;
-
-                return playoffKeys.Contains(new PlayoffKey(m.LeagueId, m.Week ?? "", m.RosterId));
-            }).ToList();
+            _loadTask = null;
+            Console.WriteLine($"ERROR: {ex.Message}");
+            throw;
         }
     }
 

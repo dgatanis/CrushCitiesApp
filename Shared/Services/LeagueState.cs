@@ -33,23 +33,32 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
     /// <returns></returns>
     public async Task SetAllLeaguesDataAsync(bool forceRefresh = false)
     {
-        if (!IsLoaded || forceRefresh)
+        try
         {
-            var league_id = await GetCurrentLeagueIdAsync();
-            CurrentLeagueId = league_id ?? "-1";
-            while (!string.IsNullOrWhiteSpace(league_id))
+            if (!IsLoaded || forceRefresh)
             {
+                AllLeagues.Clear();
+                var league_id = await GetCurrentLeagueIdAsync();
+                CurrentLeagueId = league_id ?? "-1";
+                while (!string.IsNullOrWhiteSpace(league_id))
+                {
 
-                    var league = await _sleeperApi.GetLeagueAsync(league_id ?? string.Empty);
-                    if (league is not null)
-                    {
-                        AllLeagues.Add(league);
-                    }
-                
-                league_id = await GetPreviousLeagueIdAsync(league_id ?? string.Empty);
+                        var league = await _sleeperApi.GetLeagueAsync(league_id ?? string.Empty);
+                        if (league is not null)
+                        {
+                            AllLeagues.Add(league);
+                        }
+                    
+                    league_id = await GetPreviousLeagueIdAsync(league_id ?? string.Empty);
+                }
             }
         }
-            
+        catch (Exception ex)
+        {
+            _loadTask = null;
+            Console.WriteLine($"ERROR: {ex.Message}");
+            throw;
+        }
     }
 
 
