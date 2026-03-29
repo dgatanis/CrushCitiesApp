@@ -79,7 +79,6 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
 
         Matchups = _matchupState.AllMatchups;
         Transactions = _transactionState.GetFilterTransactionsData(["trade"]);
-        
     }
         
     

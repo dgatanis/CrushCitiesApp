@@ -8,7 +8,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
     private readonly LeagueState _leagueState = leagueState;
     private Task? _loadTask;
 
-    private sealed record PlayoffKey(string LeagueId, string Week, int RosterId);
+    private sealed record PlayoffKey(string LeagueId, string Week, int MatchupId);
 
     /// <summary>
     /// List of all Matchups.
@@ -38,7 +38,8 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
 
                 var playoffKeys = new HashSet<PlayoffKey>();
                 var playoffStartsByLeague = new Dictionary<string, int>();
-
+                
+                // Creates keys for playoff matchups based on the playoff brackets for each league
                 foreach (var league in _leagueState.AllLeagues)
                 {
                     if (league.LeagueId is null) continue;
@@ -76,6 +77,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
                     AddBracketKeys(losersBracket);
                 }
 
+                // Loops through each league and adds the matchups
                 foreach(var league in _leagueState.AllLeagues)
                 {
                     if (league.Settings?.LastScoredLeg is not null &&
@@ -91,11 +93,17 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
                             
                             if (matchups is not null)
                             {
-                                var existing = new HashSet<(string? Season, string? Week, int? MatchupId)>(
-                                    AllMatchups is not null && AllMatchups.Select(a => (a.Season, a.Week, a.MatchupId)) is not null 
-                                    ? AllMatchups.Select(a => (a.Season, a.Week, a.MatchupId)) 
-                                    : new List<(string?, string?, int?)>()
-                                );
+                                var seed = AllMatchups is not null
+                                    ? AllMatchups.Select(a => (
+                                        (string?)a.Season,
+                                        (string?)a.Week,
+                                        (int?)a.MatchupId,
+                                        (int?)a.RosterId
+                                    ))
+                                    : Enumerable.Empty<(string? Season, string? Week, int? MatchupId, int? RosterId)>();
+
+                                var existing = new HashSet<(string? Season, string? Week, int? MatchupId, int? RosterId)>(seed);
+
                                 var newItems = matchups
                                     .Select(m =>
                                     {
@@ -104,7 +112,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
                                         m.LeagueId = currentLeagueId;
                                         return m;
                                     })
-                                    .Where(m => existing.Add((m.Season, m.Week, m.MatchupId)))
+                                    .Where(m => existing.Add((m.Season, m.Week, m.MatchupId, m.RosterId)))
                                     .OrderBy(m => m.MatchupId);
 
                                 AllMatchups?.AddRange(newItems);
@@ -113,17 +121,25 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
                     }
                 }
 
+                // Filters out playoff matchups that are not in the playoff brackets we want
                 if (AllMatchups is not null && AllMatchups.Count > 0)
                 {
+                    var playoffMatchupIds = AllMatchups
+                        .Where(m => m.LeagueId is not null && m.Week is not null && m.MatchupId is not null)
+                        .Where(m => playoffKeys.Contains(new PlayoffKey(m.LeagueId!, m.Week!, m.RosterId)))
+                        .Select(m => (m.LeagueId!, m.Week!, m.MatchupId!.Value))
+                        .ToHashSet();
+                    
                     AllMatchups = AllMatchups.Where(m =>
                     {
-                        if (m.LeagueId is null) return false;
+                        if (m.LeagueId is null || m.Week is null) return false;
                         if (!playoffStartsByLeague.TryGetValue(m.LeagueId, out var start)) return true;
                         if (!int.TryParse(m.Week, out var week)) return true;
 
                         if (week <= start) return true;
-
-                        return playoffKeys.Contains(new PlayoffKey(m.LeagueId, m.Week ?? "", m.RosterId));
+                        if (m.MatchupId is null) return false;
+                        
+                        return playoffMatchupIds.Contains((m.LeagueId, m.Week, m.MatchupId.Value));                    
                     }).ToList();
                 }
             }
