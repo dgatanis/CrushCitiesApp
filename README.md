@@ -18,15 +18,15 @@ A fantasy football web application for viewing team rosters, league history, and
 - .NET 10 SDK
 
 ## Installation
-git clone https://github.com/dgatanis/CrushCitiesApp.git
-cd CrushCitiesApp/PublicFFL
-dotnet run
+- git clone https://github.com/dgatanis/CrushCitiesApp.git
+- cd CrushCitiesApp/PublicFFL
+- dotnet run
 
 ## What I learned
 - Building and structuring REST APIs in .NET
 - Deploying and managing an application in Azure cloud
 - Setting up CI/CD pipelines with Github Actions
-- Blazor WebAss
+- Working with Blazor WebAssembly for client-side applications
 
 ## Future Improvements
 - Migrate to server-side rendering for improved performance
