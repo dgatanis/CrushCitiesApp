@@ -2,7 +2,7 @@ A fantasy football web application for viewing team rosters, league history, and
 
 ## Features
 - REST API for getting league, team and player data
-- Interactive front-end built on Blazor WebAssembly 
+- Interactive front-end developed in C# with Blazor WebAssembly 
 - CI/CD with Github Actions
 - Cloud-hosted in Azure
 
