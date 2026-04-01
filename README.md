@@ -12,6 +12,9 @@ A fantasy football web application for viewing team rosters, league history, and
 - Azure (App Service)
 - Github Actions (CI/CD)
 
+## Demo
+Live: [https://gentle-smoke-09287550f.2.azurestaticapps.net](https://gentle-smoke-09287550f.2.azurestaticapps.net)
+
 ## Getting Started
 
 ## Prerequisites
@@ -32,6 +35,3 @@ A fantasy football web application for viewing team rosters, league history, and
 - Migrate to server-side rendering for improved performance
 - Wire in a database for persistent storage
 - Add user input features (trade ratings, player ratings..)
-
-## Demo
-Live: [https://gentle-smoke-09287550f.2.azurestaticapps.net](https://gentle-smoke-09287550f.2.azurestaticapps.net)
