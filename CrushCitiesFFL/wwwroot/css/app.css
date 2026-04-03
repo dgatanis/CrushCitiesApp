@@ -123,10 +123,13 @@ code {
     --RB: #00ceb8;
     --WR: #58a7ff;
     --TE: #ffae58;
+    --K: #bd66ff;
     --QB-faded: #ff2a6e73;
     --RB-faded: #00ceb96e;
     --WR-faded: #58a6ff85;
     --TE-faded: #ffae5896;
+    --added: #54c67b;
+    --dropped: #ff4d4dc4;
     --border-gray: #616161;
     --faded-background: #9595954a;
     --bg:   radial-gradient(120% 90% at 5% -20%,
@@ -158,6 +161,7 @@ code {
                                 radial-gradient(140% 110% at 50% 100%, rgba(11, 36, 48, 0.9) 0%, rgba(3, 9, 20, 1) 70%);
     --box-shadow: 0 0 24px rgb(0 0 0 / 32%); 
     --border-medium: rgba(110, 190, 210, 0.12);
+    --dark-container: radial-gradient(1200px 600px at 20% -10%, #10191f 0%, #010305 55%, #000000 100%);
 }
 
 :root[data-theme="dark"] {

@@ -1,4 +1,234 @@
-.matchup-team {
-    background-color: #131313;
-    color: whitesmoke;
+.inner-accordion-body {
+    background: transparent !important;
+}
+
+.frosty-bg {
+    border-color: #565656a6 !important;
+    background-image: none !important;
+    background-color: var(--faded-background) !important;
+}
+
+.matchup-team-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    margin-bottom: 0.5rem;
+    align-items: anchor-center;
+}
+
+.mb-3.p-2.border.rounded {
+    padding-bottom: 1rem !important;
+    border: unset !important;
+}
+
+.matchup-team-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+button.accordion-button.collapsed {
+    border-bottom: 1px solid var(--border-medium) !important;
+}
+
+.owner-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: 0 0 auto;
+}
+
+.matchup-team-name {
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.1;
+    word-break: break-word;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'F1';
+}
+
+.matchup-team-record {
+    padding: 0.12rem 0.4rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    white-space: nowrap;
+}
+
+.matchup-team-score {
+    font-weight: 800;
+    font-size: 1.05rem;
+    white-space: nowrap;
+    text-shadow:  0 1px 2px rgba(0, 0, 0, 0.7), 0 0 4px currentColor;
+}
+
+.player-row {
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.player-row:last-child {
+    border-bottom: none;
+}
+
+.player-position {
+    font-weight: 700;
+    font-size: 0.8rem;
+    min-width: 2.6rem;
+    text-align: left;
+    opacity: 0.9;
+}
+
+.player-image {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    flex: 0 0 auto;
+}
+
+.player-name {
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.player-points {
+    font-weight: 700;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.common-container.p-2.border-3.border.rounded {
+    border-color: var(--border-medium) !important;
+    box-shadow: unset !important;
+    margin-bottom: .5rem;
+}
+
+.matchup-row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.matchup-team-card {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.matchup-team-toggle {
+    width: 100%;
+    background: transparent;
+    color: inherit;
+    border: none;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+}
+
+.matchup-team-toggle:focus-visible {
+    outline: 2px solid rgba(110, 190, 210, 0.6);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
+.matchup-team-body {
+    padding-top: 0.35rem;
+}
+
+.matchup-vs-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.matchup-vs-wrap {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0;
+}
+
+.matchup-vs-img {
+    width: 180px;
+    height: auto;
+    opacity: 0.9;
+}
+
+@media (max-width: 576px) {
+    
+    .mb-3.p-2.border.rounded {
+        background: var(--dark-container) !important;
+    }
+    .matchup-team-header {
+        gap: 0.35rem;
+    }
+
+    .matchup-team-name {
+        font-size: 0.95rem;
+    }
+
+    .matchup-team-score {
+        font-size: 1rem;
+    }
+
+    .matchup-team-record {
+        font-size: 0.72rem;
+        padding: 0.1rem 0.35rem;
+    }
+
+    .player-row {
+        grid-template-columns: auto auto 1fr auto;
+        gap: 0.4rem;
+    }
+
+    .player-position {
+        min-width: 2.2rem;
+        font-size: 0.75rem;
+    }
+
+    .player-image {
+        width: 24px;
+        height: 24px;
+    }
+
+    .player-name {
+        font-size: 0.86rem;
+    }
+
+    .player-points {
+        font-size: 0.85rem;
+    }
+
+    .matchup-team-card {
+        max-width: 100%;
+    }
+
+    .matchup-vs-img {
+        width: 108px;
+    }
+
+    .accordion-body {
+        padding: unset;
+        padding-left: .2rem;
+        padding-right: .2rem;
+        padding-top: .4rem;
+    }
 }
