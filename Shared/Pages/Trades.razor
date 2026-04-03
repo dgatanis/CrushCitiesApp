@@ -88,12 +88,12 @@ else
         </div>
 
         <div class="d-flex gap-2 align-items-center">
-            <label class="form-label mb-0">From</label>
-            <input class="form-control" type="date" @bind="_fromDate" @bind:format="yyyy-MM-dd" @bind:after="() => _pageIndex = 0" />
+            <label for="FromDate" class="form-label mb-0">From</label>
+            <input id="FromDate" class="form-control" type="date" @bind="_fromDate" @bind:format="yyyy-MM-dd" @bind:after="() => _pageIndex = 0" />
         </div>
         <div class="d-flex gap-2 align-items-center">
-            <label class="form-label mb-0">To</label>
-            <input class="form-control" type="date" @bind="_toDate" @bind:format="yyyy-MM-dd" @bind:after="() => _pageIndex = 0" /> 
+            <label for="ToDate" class="form-label mb-0">To</label>
+            <input id="ToDate" class="form-control" type="date" @bind="_toDate" @bind:format="yyyy-MM-dd" @bind:after="() => _pageIndex = 0" /> 
         </div>
         <span class="bi-arrow-clockwise-icon" title="Reset all filters" @onclick="ResetFilters"></span>
     </div>
@@ -127,7 +127,7 @@ else
         @foreach (var trade in PagedTrades.Where(ShouldShowTrade))
         {
             var allTradeAdds = trade.Adds?.Keys.ToHashSet() ?? new HashSet<string>();
-                <div class="row g-2 mt-1 justify-content-center">
+                <div class="row g-2 mt-5 justify-content-center">
                     <div class="row align-items-stretch border-3 border rounded border common-container">
                     <div style="font-family: 'F1';" class="d-flex mt-3 justify-content-center">@(DateTimeOffset.FromUnixTimeMilliseconds(@trade.Created).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt"))</div>
                     @foreach (var team in trade.ConsenterIds ?? [])
@@ -231,7 +231,8 @@ else
                                                 <div class="d-flex align-items-center">
                                                     <div class="d-inline-block">
                                                         <span class="badge frosty-bg text-warning border border-warning d-inline-flex align-items-center gap-1">
-                                                            $@waiver.Amount
+                                                            <span>Waiver:</span>
+                                                            <span style="color: #d6d6d6;">$@waiver.Amount</span>
                                                         </span>
                                                     </div>
                                                 </div>

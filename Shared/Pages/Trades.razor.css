@@ -14,6 +14,7 @@ img.player-team-logo {
 
 img.owner-avatar {
     max-width: 2.5rem;
+    box-shadow: unset !important;
 }
 
 button.page-link {

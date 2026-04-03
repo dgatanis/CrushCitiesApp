@@ -111,41 +111,75 @@ else
                             {
                                 var week = weekGroup.Key;
                                 var weekCollapseId = $"collapseWeek{season}_{week}";
+                                var weekLabel = int.Parse(week ?? "0") == 15 ? "Playoffs Round 1" : int.Parse(week ?? "0") == 16 ? "Semifinals" : int.Parse(week ?? "0") == 17 ? "Finals" : $"Week {week}";
 
-                                <div class="accordion-item" style="background: transparent;">
+                                <div class="accordion-item" style="background: transparent;background: transparent;box-shadow: unset !important;border: unset !important;">
                                     <h2 class="accordion-header" id="@($"headingWeek{season}_{week}")">
                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="@($"#{weekCollapseId}")" aria-expanded="false" aria-controls="@weekCollapseId">
-                                            Week @week
+                                            @weekLabel
                                         </button>
                                     </h2>
                                     <div id="@weekCollapseId" class="accordion-collapse collapse" data-bs-parent="@($"#accordionWeeks{season}")">
-                                        <div class="accordion-body">
+                                        <div class="accordion-body inner-accordion-body">
                                             @foreach (var matchupPartition in weekGroup
                                                 .GroupBy(m => m.MatchupId)
                                                 .OrderBy(g => g.Key ?? int.MaxValue)
                                                 .Where(ShouldShowMatchup))
                                             {
                                                 var winnerRosterId = GetWinnerRosterId(matchupPartition);
-                                                <div class="mb-3 p-2 border rounded">
-                                                    <div><strong>Matchup @(matchupPartition.Key?.ToString() ?? "N/A")</strong></div>
-                                                    <div class="row g-2 mt-1">
-                                                        @foreach (var team in matchupPartition.OrderBy(m => m.RosterId))
-                                                        {
-                                                            <div class="col-12 col-md-6">
-                                                                <div class="matchup-team p-2 border-3 border rounded @(winnerRosterId.HasValue && winnerRosterId.Value == team.RosterId ? "border-success" : "border-danger")">
-                                                                <div>@team.Points</div>
-                                                                <div>@(RosterState.TeamNameByRosterId.TryGetValue(team.RosterId, out var name) ? name : $"Roster {team.RosterId}")</div>
-                                                                    @foreach(var playerId in team.Starters ?? [])
-                                                                    {
-                                                                        var player = PlayerState.PlayerById.TryGetValue(playerId, out var p) ? p : null;
+                                                var matchupKey = matchupPartition.Key?.ToString() ?? "na";
+                                                var teams = matchupPartition.OrderBy(m => m.RosterId).ToList();
 
-                                                                        <div>
-                                                                            <div>@(player is not null ? $"{player.Firstname} {player.Lastname}" : "")</div>
-                                                                            <div>@(team.PlayersPoints?.Count() > 0 ? team.PlayersPoints.FirstOrDefault(x => x.Key == playerId).Value : "")</div>
+                                                <div class="mb-3 p-2 border rounded">
+                                                    <div class="row g-2 mt-1 justify-content-center align-items-center matchup-row">
+                                                        @for (var i = 0; i < teams.Count; i++)
+                                                        {
+                                                            var team = teams[i];
+                                                            var roster = _rosters?.FirstOrDefault(r => r.RosterId == team.RosterId);
+                                                            var teamCollapseId = $"collapseTeam{season}_{week}_{matchupKey}";
+                                                            <div class="col-12 col-md-5 matchup-team-col">
+                                                                <div class="common-container matchup-team-card p-2 border-3 border rounded">
+                                                                    <button class="matchup-team-toggle" type="button" data-bs-toggle="collapse" data-bs-target="@($"#{teamCollapseId}")" aria-expanded="false" aria-controls="@teamCollapseId">
+                                                                        <div class="matchup-team-header">
+                                                                            <div class="matchup-team-header-left">
+                                                                                @if (roster is not null && !string.IsNullOrWhiteSpace(roster.OwnerId))
+                                                                                {
+                                                                                    <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
+                                                                                }
+                                                                                <div class="matchup-team-name">@(RosterState.TeamNameByRosterId.TryGetValue(team.RosterId, out var teamName) ? teamName : $"Roster {team.RosterId}")</div>
+                                                                                <div class="matchup-team-record badge text-warning border border-warning align-items-center text-nowrap">@GetRecordDisplay(season, week ?? "", team.RosterId)</div>
+                                                                            </div>
+                                                                            <div class="matchup-team-score" style="color: var(--@(winnerRosterId.HasValue && winnerRosterId.Value == team.RosterId ? "added" : "dropped"))">@team.Points</div>
                                                                         </div>
-                                                                    }
+                                                                    </button>
+                                                                    <div id="@teamCollapseId" class="collapse matchup-team-body">
+                                                                        @{
+                                                                            var slotIndex = 0;
+                                                                        }
+                                                                        @foreach(var playerId in team.Starters ?? [])
+                                                                        {
+                                                                            slotIndex++;
+                                                                            var player = PlayerState.PlayerById.TryGetValue(playerId, out var p) ? p : null;
+                                                                            var positionLabel = slotIndex == 7 || slotIndex == 8 ? "FLEX" : slotIndex == 9 ? "SF" : player?.Position;
+
+                                                                            <div class="player-row">
+                                                                                <div class="player-position" style="color:var(--@(player?.Position?.ToUpper()))">@positionLabel</div>
+                                                                                <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp); border-color:var(--@(player?.Position?.ToUpper()))"></div>
+                                                                                <div class="player-name">@((player is not null) ? $"{player.Firstname} {player.Lastname}" : "")</div>
+                                                                                <div class="player-points">@(team.PlayersPoints?.Count() > 0 ? team.PlayersPoints.FirstOrDefault(x => x.Key == playerId).Value : "")</div>
+                                                                            </div>
+                                                                        }
+                                                                    </div>
                                                                 </div>
                                                             </div>
+                                                            @if (i == 0 && teams.Count > 1)
+                                                            {
+                                                                <div class="col-12 col-md-2 matchup-vs-col">
+                                                                    <div class="matchup-vs-wrap">
+                                                                        <img class="matchup-vs-img" src="/images/matchup_versus.png" alt="Versus">
+                                                                    </div>
+                                                                </div>
+                                                            }
                                                         }
                                                     </div>
                                                 </div>
@@ -171,6 +205,7 @@ else
     private List<RostersModel>? _rosters = null;
     private int _selectedRosterId1 = -1;
     private int _selectedRosterId2 = -1;
+    private readonly Dictionary<string, SeasonRecord> _recordsBySeason = new();
 
 
 
@@ -212,6 +247,7 @@ else
     {
         await MatchupState.EnsureLoadedAsync();
         _matchups = MatchupState.AllMatchups ?? [];
+        BuildRecords();
     }
 
 
@@ -296,6 +332,125 @@ else
         MatchupState.ClearAllMatchups();
         await LoadMatchupsAsync();
         _matchups = MatchupState.AllMatchups ?? [];
+        BuildRecords();
         _isLoading = false;
     }
+
+    /// <summary>
+    /// Builds a lookup of records by season/ week / rosterid 
+    /// TODO: Put this in a service
+    /// </summary>
+    private void BuildRecords()
+    {
+        _recordsBySeason.Clear();
+        var seasonGroups = _matchups
+            .Where(m => !string.IsNullOrWhiteSpace(m.Season) && !string.IsNullOrWhiteSpace(m.Week))
+            .GroupBy(m => m.Season!);
+
+        foreach (var seasonGroup in seasonGroups)
+        {
+            var season = seasonGroup.Key;
+            var weekGroups = seasonGroup
+                .Select(m => new { Matchup = m, WeekNumber = int.TryParse(m.Week, out var num) ? num : -1 })
+                .Where(x => x.WeekNumber != -1)
+                .GroupBy(x => x.WeekNumber!)
+                .OrderBy(g => g.Key);
+
+            var cumulative = new Dictionary<int, Record>();
+            var seasonRecord = new SeasonRecord(season);
+
+            foreach (var weekGroup in weekGroups)
+            {
+                var matchupsThisWeek = weekGroup.Select(x => x.Matchup);
+                foreach (var matchupPartition in matchupsThisWeek.GroupBy(m => m.MatchupId))
+                {
+                    var winnerRosterId = GetWinnerRosterId(matchupPartition);
+                    foreach (var team in matchupPartition)
+                    {
+                        if (!cumulative.TryGetValue(team.RosterId, out var current))
+                        {
+                            current = new Record();
+                            cumulative[team.RosterId] = current;
+                        }
+                        if (!winnerRosterId.HasValue)
+                        {
+                            current.Ties += 1;
+                        }
+                        else if (winnerRosterId.Value == team.RosterId)
+                        {
+                            current.Wins += 1;
+                        }
+                        else
+                        {
+                            current.Losses += 1;
+                        }
+                    }
+                }
+
+                var weekRecord = new WeekRecord(weekGroup.Key);
+                foreach (var entry in cumulative)
+                {
+                    weekRecord.ByRoster[entry.Key] = new Record
+                    {
+                        Wins = entry.Value.Wins,
+                        Losses = entry.Value.Losses,
+                        Ties = entry.Value.Ties
+                    };
+                }
+
+                seasonRecord.WeeksByNumber[weekGroup.Key] = weekRecord;
+            }
+
+            _recordsBySeason[season] = seasonRecord;
+        }
+    }
+
+    private string GetRecordDisplay(string season, string week, int rosterId)
+    {
+        int? weekNumber = int.TryParse(week, out var weekNum) ? weekNum : null;
+        if (!weekNumber.HasValue)
+        {
+            return string.Empty;
+        }
+
+        if (_recordsBySeason.TryGetValue(season, out var seasonRecord) &&
+            seasonRecord.WeeksByNumber.TryGetValue(weekNumber.Value, out var weekRecord) &&
+            weekRecord.ByRoster.TryGetValue(rosterId, out var record))
+        {
+            return record.Display;
+        }
+
+        return string.Empty;
+    }
+
+    private sealed class Record
+    {
+        public int Wins { get; set; }
+        public int Losses { get; set; }
+        public int Ties { get; set; }
+        public string Display => Ties > 0 ? $"{Wins}-{Losses}-{Ties}" : $"{Wins}-{Losses}";
+    }
+
+    private sealed class WeekRecord
+    {
+        public WeekRecord(int weekNumber)
+        {
+            WeekNumber = weekNumber;
+        }
+
+        public int WeekNumber { get; }
+        public Dictionary<int, Record> ByRoster { get; } = new();
+    }
+
+    private sealed class SeasonRecord
+    {
+        public SeasonRecord(string season)
+        {
+            Season = season;
+        }
+
+        public string Season { get; }
+        public Dictionary<int, WeekRecord> WeeksByNumber { get; } = new();
+    }
+
 }
