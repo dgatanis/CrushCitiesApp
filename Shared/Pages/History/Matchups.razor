@@ -337,7 +337,8 @@ else
     }
 
     /// <summary>
-    /// Builds a lookup of records by season/ week / rosterid to avoid having to calculate records on the fly while rendering
+    /// Builds a lookup of records by season/ week / rosterid 
+    /// TODO: Put this in a service
     /// </summary>
     private void BuildRecords()
     {
@@ -420,11 +421,6 @@ else
         }
 
         return string.Empty;
-    }
-
-    private static int? ParseWeekNumber(string? week)
-    {
-        return int.TryParse(week, out var weekNumber) ? weekNumber : null;
     }
 
     private sealed class Record
