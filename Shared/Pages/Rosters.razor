@@ -12,6 +12,15 @@
     <h1>Rosters</h1>    
 </div>
 
+<div class="d-flex justify-content-center gap-2 mb-3">
+    <button type="button" class="btn btn-outline-secondary" @onclick="ExpandAll">
+        Expand All
+    </button>
+    <button type="button" class="btn btn-outline-secondary" @onclick="CollapseAll">
+        Collapse All
+    </button>
+</div>
+
 @if (_isLoading)
 {
     <div class="d-flex justify-content-center">
@@ -28,7 +37,7 @@ else
         
             @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
             {
-                <div class="owner-info d-flex flex-column align-items-center mb-1">
+                <div class="owner-info d-flex flex-column align-items-center mb-1" @onclick="() => ToggleRoster(roster.RosterId)">
                     <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
                     <span class="team-name">@(UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : "")</span>
                 </div>
@@ -40,7 +49,7 @@ else
                         Starters
                     </button>
                     </h2>
-                    <div id=@($"collapseStarters{roster.RosterId}") class="accordion-collapse collapse show" data-bs-parent="@($"#accordionStarters{roster.RosterId}")">
+                    <div id=@($"collapseStarters{roster.RosterId}") class="@GetCollapseClass(roster.RosterId, defaultExpanded: true)" data-bs-parent="@($"#accordionStarters{roster.RosterId}")">
                     <div class="accordion-body">
                         @foreach(var starter in roster.Starters ?? [])
                         {
@@ -85,7 +94,7 @@ else
                         Bench
                     </button>
                     </h2>
-                    <div id=@($"collapseBench{roster.RosterId}") class="accordion-collapse collapse" data-bs-parent="@($"#accordionBench{roster.RosterId}")">
+                    <div id=@($"collapseBench{roster.RosterId}") class="@GetCollapseClass(roster.RosterId, defaultExpanded: false)" data-bs-parent="@($"#accordionBench{roster.RosterId}")">
                     <div class="accordion-body">
                         @foreach(var bench in roster.Players ?? [])
                         {
@@ -130,7 +139,7 @@ else
                         Taxi
                     </button>
                     </h2>
-                    <div id=@($"collapseTaxi{roster.RosterId}") class="accordion-collapse collapse" data-bs-parent="@($"#accordionTaxi{roster.RosterId}")">
+                    <div id=@($"collapseTaxi{roster.RosterId}") class="@GetCollapseClass(roster.RosterId, defaultExpanded: false)" data-bs-parent="@($"#accordionTaxi{roster.RosterId}")">
                     <div class="accordion-body">
                         @foreach(var taxi in roster.Taxi ?? [])
                         {
@@ -173,24 +182,32 @@ else
 
 
 @code {
-    private List<RostersModel>? _rosters = new List<RostersModel>();
+    [Parameter, SupplyParameterFromQuery] public int? selectedRosterId { get; set; }
+    private int? _selectedRosterId;
     [CascadingParameter(Name = "AppBrand")]
     private string? AppBrand { get; set; }
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
     private bool _isLoading = true;
     private int _counter = 0;
+    private List<RostersModel>? _rosters = new List<RostersModel>();
+    private CollapseMode _collapseMode = CollapseMode.Default;
 
     protected override async Task OnInitializedAsync()
     {
-        if(!PlayerState.CacheLoaded)
-        {
-            await PlayerState.BuildLookupCachesAsync(); 
-        }
-        
+        await PlayerState.EnsureCacheLoadedAsync(); 
         await RosterState.EnsureLoadedAsync();
         await UserState.EnsureCacheLoadedAsync();
         _rosters = RosterState.Rosters;
         _isLoading = false;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Only take URL value when it exists
+        if (selectedRosterId.HasValue)
+        {
+            _selectedRosterId = selectedRosterId.Value;
+        }
     }
 
     /// <summary>
@@ -204,5 +221,49 @@ else
         int feet = int.Parse(heightInInches) / 12;
         int inches = int.Parse(heightInInches) % 12;
         return $"{feet}'{inches}\"";
+    }
+
+    private void ExpandAll()
+    {
+        _collapseMode = CollapseMode.ExpandAll;
+        _selectedRosterId = null;
+    }
+
+    private void CollapseAll()
+    {
+        _collapseMode = CollapseMode.CollapseAll;
+        _selectedRosterId = null;
+    }
+
+    private void ToggleRoster(int rosterId)
+    {
+        _selectedRosterId = _selectedRosterId == rosterId ? null : rosterId;
+        _collapseMode = CollapseMode.CollapseAll;
+    }
+
+    private string GetCollapseClass(int rosterId, bool defaultExpanded)
+    {
+        if (_selectedRosterId.HasValue)
+        {
+            return _selectedRosterId.Value == rosterId
+                ? "accordion-collapse collapse show"
+                : "accordion-collapse collapse";
+        }
+
+        var expanded = _collapseMode switch
+        {
+            CollapseMode.ExpandAll => true,
+            CollapseMode.CollapseAll => false,
+            _ => defaultExpanded
+        };
+
+        return expanded ? "accordion-collapse collapse show" : "accordion-collapse collapse";
+    }
+
+    private enum CollapseMode
+    {
+        Default,
+        ExpandAll,
+        CollapseAll
     }
 }

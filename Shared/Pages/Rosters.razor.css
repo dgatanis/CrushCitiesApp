@@ -105,3 +105,7 @@
     box-shadow: 0 0rem 0.1rem #5a5a5a94;
     border-color: #a0a0a0b0 !important;
 }
+
+.owner-info {
+    cursor: pointer;
+}

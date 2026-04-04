@@ -1,20 +1,212 @@
 @page "/history/current-season"
+@using Shared.Models
+@using Shared.Services
+@inject MatchupState MatchupState
+@inject LeagueState LeagueState
+@inject RosterState RosterState
+@inject UserState UserState
+@inject PlayerState PlayerState
+@inject StatsData StatsData
 
 <PageTitle>Current Season | @Brand</PageTitle>
 
 <div class="d-flex justify-content-center">
     <h1>Current Season</h1>
 </div>
-<div class="d-flex justify-content-center">
-    <div>Coming soon...</div>
-</div>
 
-
+@if (_isLoading)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Primary" Size="SpinnerSize.Large" />
+    </div>
+}
+else
+{
+    @if (_currentSeasonRows.Count == 0)
+    {
+        <div class="d-flex justify-content-center">
+            <div>No records available yet.</div>
+        </div>
+    }
+    else
+    {
+        <div class="current-season-grid gap-5">
+            <div class="current-season-table-wrap">
+                <div class="table-legend">Rankings</div>
+                <table class="table table-sm table-bordered align-middle current-season-table current-season-standings common-container">
+                    <tbody>
+                        @foreach (var row in _currentSeasonRows)
+                        {
+                            var rankPct = _currentSeasonRows.Count > 1
+                                ? (row.Rank - 1) / (double)(_currentSeasonRows.Count - 1)
+                                : 0;
+                            var rankPctCss = $"{rankPct * 100:0.##}%";
+                            <tr>
+                                <td class="rank-col" style="--rank-pct:@rankPctCss">@row.Rank</td>
+                                <td>
+                                    <div class="team-cell align-items-center">
+                                    <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(
+                                                                    RosterState.UserIdByRosterId.TryGetValue(
+                                                                        row.RosterId.ToString(), out var userId) ? userId : "" , out var name) 
+                                                                        ? name 
+                                                                        : $"Roster {row.RosterId}")>
+                                        <div class="team-name">@row.TeamName</div>
+                                        <div class="team-meta">
+                                            <span class="meta-label">Record</span>
+                                            <span class="meta-value">@row.Record.Display</span>
+                                            <span class="meta-sep">•</span>
+                                            <span class="meta-label">PF</span>
+                                            <span class="meta-value">@row.Record.PointsFor</span>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="current-season-table-wrap">
+                <div class="table-legend">High-Scoring Weeks</div>
+                <table class="table table-sm table-bordered text-center align-middle current-season-table common-container">
+                    <thead>
+                        <tr>
+                            <th scope="col">Team</th>
+                            <th scope="col">Weeks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _highScoringRows)
+                        {
+                            <tr>
+                                <td>@row.TeamName</td>
+                                <td>@row.Count</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
 
 @code {
     [CascadingParameter(Name = "AppBrand")]
     private string? AppBrand { get; set; }
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
+    private bool _isLoading = true;
+    private Dictionary<string, SeasonRecord> _recordsBySeason = new();
+    private Dictionary<string, Dictionary<int, int>> _highScoringWeeksByRosterId = new();
+    private readonly List<SeasonRow> _currentSeasonRows = new();
+    private readonly List<HighScoringRow> _highScoringRows = new();
 
+    protected override async Task OnInitializedAsync()
+    {
+        await RosterState.EnsureLoadedAsync();
+        await RosterState.EnsureCacheLoadedAsync();
+        await LoadStatsDataAsync(); 
+        await LeagueState.EnsureLoadedAsync();
+        BuildCurrentSeasonRows();
+        BuildHighScoringRows();
+        _isLoading = false;
+    }
 
+    private async Task LoadStatsDataAsync()
+    {
+        await StatsData.EnsureCacheLoadedAsync(); 
+        _recordsBySeason = StatsData.RecordsBySeason ?? new Dictionary<string, SeasonRecord>();
+        _highScoringWeeksByRosterId = StatsData.HighScoringWeeksByRosterId ?? new Dictionary<string, Dictionary<int, int>>();
+    }
+
+    private void BuildCurrentSeasonRows()
+    {
+        _currentSeasonRows.Clear();
+
+        var seasonKey = GetSeasonKey();
+        if (string.IsNullOrWhiteSpace(seasonKey)) return;
+
+        if (!_recordsBySeason.TryGetValue(seasonKey, out var seasonRecord)) return;
+
+        var league = LeagueState.AllLeagues.FirstOrDefault(l => l.Season == seasonKey)
+                     ?? LeagueState.AllLeagues.FirstOrDefault(l => l.LeagueId == LeagueState.CurrentLeagueId);
+        var playoffStart = league?.Settings?.PlayoffWeekStart ?? int.MaxValue;
+        var lastScored = league?.Settings?.LastScoredLeg ?? 0;
+
+        var cappedWeek = playoffStart > 0 ? Math.Min(lastScored, playoffStart - 1) : lastScored;
+        if (cappedWeek < 1) return;
+
+        var latestWeek = seasonRecord.WeeksByNumber.Keys
+            .Where(w => w <= cappedWeek)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        if (latestWeek == 0) return;
+
+        if (!seasonRecord.WeeksByNumber.TryGetValue(latestWeek, out var weekRecord)) return;
+
+        var ordered = weekRecord.ByRoster
+            .Select(kv => new
+            {
+                RosterId = kv.Key,
+                Record = kv.Value,
+                TeamName = RosterState.TeamNameByRosterId.TryGetValue(kv.Key, out var name)
+                    ? name
+                    : $"Roster {kv.Key}"
+            })
+            .OrderByDescending(x => x.Record.Wins)
+            .ThenByDescending(x => x.Record.PointsFor)
+            .ToList();
+
+        for (var i = 0; i < ordered.Count; i++)
+        {
+            var item = ordered[i];
+            _currentSeasonRows.Add(new SeasonRow(i + 1, item.TeamName, item.Record, item.RosterId));
+        }
+    }
+
+    private void BuildHighScoringRows()
+    {
+        _highScoringRows.Clear();
+
+        var seasonKey = GetSeasonKey();
+        if (string.IsNullOrWhiteSpace(seasonKey)) return;
+
+        _highScoringWeeksByRosterId.TryGetValue(seasonKey, out var seasonCounts);
+        seasonCounts ??= new Dictionary<int, int>();
+
+        var rosterIds = RosterState.TeamNameByRosterId.Keys
+            .Distinct()
+            .ToList();
+
+        foreach (var rosterId in rosterIds)
+        {
+            var teamName = RosterState.TeamNameByRosterId.TryGetValue(rosterId, out var name)
+                ? name
+                : $"Roster {rosterId}";
+            var count = seasonCounts.TryGetValue(rosterId, out var value) ? value : 0;
+            _highScoringRows.Add(new HighScoringRow(teamName, count));
+        }
+
+        _highScoringRows.Sort((a, b) =>
+        {
+            var countCompare = b.Count.CompareTo(a.Count);
+            if (countCompare != 0) return countCompare;
+            return string.Compare(a.TeamName, b.TeamName, StringComparison.OrdinalIgnoreCase);
+        });
+    }
+
+    private string GetSeasonKey()
+    {
+        var currentSeason = LeagueState.CurrentLeagueSeason;
+        if (!string.IsNullOrWhiteSpace(currentSeason) && _recordsBySeason.ContainsKey(currentSeason))
+        {
+            return currentSeason;
+        }
+
+        return _recordsBySeason.Keys
+            .OrderByDescending(k => k)
+            .FirstOrDefault() ?? string.Empty;
+    }
+
+    private sealed record SeasonRow(int Rank, string TeamName, Record Record, int RosterId);
+    private sealed record HighScoringRow(string TeamName, int Count);
 }

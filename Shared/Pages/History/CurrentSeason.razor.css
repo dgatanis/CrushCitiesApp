@@ -1,0 +1,125 @@
+.current-season-table-wrap {
+    width: min(720px, 100%);
+    margin-top: 1rem;
+}
+
+.current-season-grid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.current-season-grid .current-season-table-wrap {
+    width: min(540px, 100%);
+}
+
+.High-Scoring-Teams {
+    max-width: 420px;
+}
+
+.table-legend {
+    text-align: center;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: inherit;
+    margin-bottom: 0.5rem;
+}
+
+.current-season-table {
+    background: var(--dark-background) !important;
+    color: #e7e7e7;
+    border-radius: 1rem;
+    box-shadow: var(--box-shadow) !important;
+    overflow: hidden;
+    border-spacing: 0;
+    border-collapse: separate;
+    border: 1px solid;
+    border-color: var(--border-medium) !important;
+}
+
+.current-season-table thead th,
+.current-season-table tbody td {
+    background: transparent;
+    color: inherit;
+    border: unset;
+    padding: 0.8rem 0.9rem;
+}
+
+.current-season-table tbody tr:nth-child(odd) td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.current-season-standings .rank-col {
+    width: 4rem;
+    text-align: center;
+    font-weight: 700;
+    color: color-mix(in oklab, var(--added) calc(100% - var(--rank-pct, 0%)), var(--dropped) var(--rank-pct, 0%));
+}
+
+.team-cell {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.team-name {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.team-meta {
+    font-size: 0.85rem;
+    color: #b9b9b9;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.team-meta .meta-label {
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: #8c8c8c;
+}
+
+.team-meta .meta-value {
+    font-weight: 600;
+    color: #e3e3e3;
+}
+
+.team-meta .meta-sep {
+    color: #6a6a6a;
+}
+
+.owner-avatar {
+    width: 34px;
+    height: 34px;
+    object-fit: cover;
+}
+
+@media (min-width: 576px) {
+    .team-cell {
+        flex-direction: row;
+        align-items: baseline;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .owner-avatar {
+        width: 44px;
+        height: 44px;
+    }
+
+    .team-name {
+        font-size: 1rem;
+    }
+
+    .team-meta {
+        margin-top: 0;
+    }
+}

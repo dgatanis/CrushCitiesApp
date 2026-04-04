@@ -7,31 +7,42 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private Task? _loadTask;
+    private bool _dataLoaded = false;
 
     /// <summary>
-    /// List of all league details for this league.
-    /// Set via SetAllLeaguesDataAsync()
+    /// List of all league details for this league. Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
     public List<LeagueModel> AllLeagues { get; private set; } = new();
 
     /// <summary>
-    /// Ensures AllLeagues is loaded
-    /// </summary>
-    public bool IsLoaded => AllLeagues is not null && AllLeagues.Count > 0;
-
-    /// <summary>
     /// The current league_id for this league.
-    /// Set via SetAllLeaguesDataAsync()
     /// </summary>
     public string CurrentLeagueId { get; private set; } = "-1";
 
+    /// <summary>
+    /// The current league's season.
+    /// Set via the GetCurrentLeagueIdAsync() method.
+    /// </summary>
+    public string CurrentLeagueSeason { get; private set; } = "-1";
 
     /// <summary>
-    /// Sets all league dataq based starting from the currentleagueid and looping backwards
+    /// The current league's current week.
+    /// Set via the GetCurrentLeagueIdAsync() method.
+    /// </summary>
+    public string CurrentLeagueWeek { get; private set; } = "-1";
+
+    /// <summary>
+    /// Ensures AllLeagues data is loaded
+    /// </summary>
+    private bool IsLoaded => _dataLoaded;
+
+
+    /// <summary>
+    /// Sets all league data starting from the currentleagueid and looping backwards
     /// </summary>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetAllLeaguesDataAsync(bool forceRefresh = false)
+    private async Task SetAllLeaguesDataAsync(bool forceRefresh = false)
     {
         try
         {
@@ -42,20 +53,21 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
                 CurrentLeagueId = league_id ?? "-1";
                 while (!string.IsNullOrWhiteSpace(league_id))
                 {
-
-                        var league = await _sleeperApi.GetLeagueAsync(league_id ?? string.Empty);
-                        if (league is not null)
-                        {
-                            AllLeagues.Add(league);
-                        }
-                    
+                    var league = await _sleeperApi.GetLeagueAsync(league_id ?? string.Empty);
+                    if (league is not null)
+                    {
+                        AllLeagues.Add(league);
+                    }
                     league_id = await GetPreviousLeagueIdAsync(league_id ?? string.Empty);
                 }
             }
+            _dataLoaded = true;
+            
         }
         catch (Exception ex)
         {
             _loadTask = null;
+            _dataLoaded = false;
             Console.WriteLine($"ERROR: {ex.Message}");
             throw;
         }
@@ -69,8 +81,11 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
     public async Task<string?> GetCurrentLeagueIdAsync()
     {
         var nflState = await _sleeperApi.GetNFLState();
-        if (nflState?.LeagueSeason is not null)
+
+        if (nflState is not null && nflState?.LeagueSeason is not null)
         {
+            CurrentLeagueSeason = nflState.LeagueSeason;
+            CurrentLeagueWeek = nflState.Leg.ToString();
             var leagues = await _sleeperApi.GetLeagueBySeasonAsync(nflState.LeagueSeason);
             if (leagues is not null)
             {
@@ -104,7 +119,7 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
     }
 
     /// <summary>
-    /// Ensures that the All Leagues data is loaded
+    /// Ensures that the AllLeagues data is loaded
     /// </summary>
     /// <returns></returns>
     public Task EnsureLoadedAsync()

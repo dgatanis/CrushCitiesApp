@@ -84,7 +84,7 @@ else
                                     </div>
                                     <div class="player-college">@pickedPlayer?.College</div>
                                     <div class="player-nickname">
-                                        @GetPlayerNicknameByUserId(pick?.PickedBy ?? "", pick?.PlayerId ?? "")
+                                        @(RosterState.PlayerNicknameByRosterId.TryGetValue((RosterState.RosterIdByUserId.TryGetValue(pick?.PickedBy?.ToString() ?? "", out var rosterId) ? rosterId : 0, pick?.PlayerId ?? ""), out var nick) ? nick : "")
                                     </div>
                                 </div>
                             </td>
@@ -221,19 +221,5 @@ else
         return string.Equals(_selectedPickedBy, pick.PickedBy, StringComparison.Ordinal)
             ? "pick-highlight"
             : "pick-dim";
-    }
-
-
-    /// <summary>
-    /// Helper class to get nickname by userid
-    /// </summary>
-    /// <param name="userId"></param>
-    /// <param name="playerId"></param>
-    /// <returns></returns>
-    public string GetPlayerNicknameByUserId(string userId, string playerId)
-    {
-        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(playerId)) return "";
-        if (!RosterState.RosterIdByUserId.TryGetValue(userId, out var rosterId)) return "";
-        return RosterState.PlayerNicknameByRosterId.TryGetValue((rosterId, playerId), out var nick) ? nick : "";
     }
 }

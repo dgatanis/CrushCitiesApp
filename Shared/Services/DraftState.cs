@@ -8,47 +8,44 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
     private readonly LeagueState _leagueState = leagueState;
     private Task? _loadTask;
     private Task? _cacheTask;
+    private bool _cacheLoaded = false;
+    private bool _dataLoaded = false;
     
     /// <summary>
-    /// List of all drafts for a league (DraftsModel).
-    /// Set via SetAllDraftDataAsync()
+    /// List of all drafts for a league (DraftsModel). Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
     public List<DraftsModel>? AllDrafts { get; private set; } = new();
 
     /// <summary>
-    /// List of all draft picks for a league (DraftPicksModel).
-    /// Set via SetAllDraftDataAsync()
+    /// List of all draft picks for a league (DraftPicksModel). Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
     public List<DraftPicksModel>? AllDraftPicks { get; private set; }
 
     /// <summary>
     /// Lookup list for finding quick details about a draft.
     /// Stores Season, LeagueId, DraftId and a mapping between roster_id and draft_slot for that draft.
-    /// Set via BuildLookupCachesAsync()
+    /// Verify using EnsureCacheLoadedAsync() before accessing.
     /// </summary>
     public List<DraftPickSeasonSummary> DraftHistory { get; private set; } = new();
 
     /// <summary>
-    /// Ensures DraftHistory loaded
+    /// Ensures lookups are loaded
     /// </summary>
-    public bool IsCacheLoaded => DraftHistory is not null && DraftHistory.Count > 0;
-
-    
+    private bool IsCacheLoaded => _cacheLoaded;
 
     /// <summary>
     /// Ensures AllDrafts and AllDraftPicks is loaded
     /// </summary>
-    public bool IsLoaded => AllDrafts is not null && AllDrafts.Count > 0 && AllDraftPicks is not null && AllDraftPicks.Count > 0;
+    private bool IsLoaded => _dataLoaded;
 
 
 
     /// <summary>
-    /// Sets the draft data for the given leagueid
-    /// TODO: Change so it sets all Draft Data 
+    /// Sets all draft data beginning with the CurrentLeagueId
     /// </summary>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetAllDraftDataAsync(bool forceRefresh = false)
+    private async Task SetAllDraftDataAsync(bool forceRefresh = false)
     {
         try
         {
@@ -75,13 +72,16 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
                         }
                     }
                 }
-
             }
+
+            _dataLoaded = true;
             await BuildLookupCachesAsync();
+            
         }
         catch (Exception ex)
         {
             _loadTask = null;
+            _dataLoaded = false;
             Console.WriteLine($"ERROR: {ex.Message}");
             throw;
         }
@@ -112,10 +112,12 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
                     DraftOrder = slotToOwner
                 });
             }
+            _cacheLoaded = true;
         }
         catch (Exception ex)
         {
             _cacheTask = null;
+            _cacheLoaded = false;
             Console.WriteLine($"ERROR: {ex.Message}");
             throw;
         }

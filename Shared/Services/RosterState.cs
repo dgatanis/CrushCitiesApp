@@ -10,46 +10,47 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
     private readonly INormalizer _normalizer = normalizer;
     private Task? _loadTask;
     private Task? _cacheTask;
+    private bool _dataLoaded = false;
+    private bool _cacheLoaded = false;
 
     /// <summary>
-    /// List of all rosters. 
-    /// Set via SetCurrentRostersAsync(league_id)
+    /// List of all rosters. Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
     public List<RostersModel>? Rosters { get; private set; }
 
     /// <summary>
     /// Lookup dictionary for getting the team name by providing the roster_id.
-    /// Set via BuildLookupCachesAsync()
+    /// Verify using EnsureCacheLoadedAsync() before accessing.
     /// </summary>
     public readonly Dictionary<int, string> TeamNameByRosterId = new();
 
     /// <summary>
     /// Lookup dictionary for getting the player nickname by providing the roster_id and player_id.
-    /// Set via BuildLookupCachesAsync()
+    /// Verify using EnsureCacheLoadedAsync() before accessing.
     /// </summary>
-    public readonly Dictionary<(int rosterId, string playerId), string> PlayerNicknameByRosterId = new();
+    public readonly Dictionary<(int roster_id, string player_id), string> PlayerNicknameByRosterId = new();
 
     /// <summary>
     /// Lookup dictionary for getting the user_id (owner_id) by providing the roster_id.
-    /// Set via BuildLookupCachesAsync()
+    /// Verify using EnsureCacheLoadedAsync() before accessing.
     /// </summary>
     public readonly Dictionary<string, int> RosterIdByUserId = new();
 
     /// <summary>
     /// Lookup dictionary for getting a user_id by providing the roster_id.
-    /// Set via BuildLookupCachesAsync()
+    /// Verify using EnsureCacheLoadedAsync() before accessing.
     /// </summary>
     public readonly Dictionary<string, string> UserIdByRosterId = new();
 
     /// <summary>
     /// Ensures the cached lookups are loaded
     /// </summary>
-    public bool IsCacheLoaded => PlayerNicknameByRosterId.Count > 0 && TeamNameByRosterId.Count > 0 && RosterIdByUserId.Count > 0 && UserIdByRosterId.Count > 0;
+    private bool IsCacheLoaded => _cacheLoaded;
     
     /// <summary>
-    /// Esnures the rosters are loaded
+    /// Esnures the Rosters data is loaded
     /// </summary>
-    public bool IsLoaded => Rosters is not null && Rosters.Count > 0;
+    private bool IsLoaded => _dataLoaded;
     
 
 
@@ -59,7 +60,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
     /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetCurrentRostersAsync(bool forceRefresh = false)
+    private async Task SetCurrentRostersAsync(bool forceRefresh = false)
     {
         try
         {
@@ -74,11 +75,14 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
                     Rosters = _normalizer.NormalizeRosters(rosters);
                 }
             }
+            _dataLoaded = true;
             await BuildLookupCachesAsync();
+            
         }
         catch (Exception ex)
         {
             _loadTask = null;
+            _dataLoaded = false;
             Console.WriteLine($"ERROR: {ex.Message}");
             throw;
         }
@@ -156,10 +160,13 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
 
                 UserIdByRosterId[roster.RosterId.ToString()] = roster.OwnerId;
             }
+
+            _cacheLoaded = true;
         }
         catch (Exception ex)
         {
             _cacheTask = null;
+            _cacheLoaded = false;
             Console.WriteLine($"ERROR: {ex.Message}");
             throw;
         }
@@ -167,7 +174,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
     }
 
     /// <summary>
-    /// Ensures that the Rosters data is loaded.
+    /// Ensures Rosters data is loaded.
     /// </summary>
     /// <returns></returns>
     public Task EnsureLoadedAsync()
@@ -176,7 +183,6 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
         _loadTask ??= SetCurrentRostersAsync(forceRefresh: true);
         return _loadTask;
     }
-
 
     
     /// <summary>

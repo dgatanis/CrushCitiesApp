@@ -306,7 +306,7 @@ else
     {
         await TransactionState.EnsureLoadedAsync();
         
-        _trades = TransactionState.GetFilterTransactionsData(["trade"]);
+        _trades = TransactionState.GetFilteredTransactionsData(["trade"]);
     }
 
 
@@ -323,6 +323,7 @@ else
 
     /// <summary>
     /// Loads draft data for all available seasons in league history.
+    /// TODO: Move this to a service
     /// </summary>
     private async Task LoadDraftHistory()
     {

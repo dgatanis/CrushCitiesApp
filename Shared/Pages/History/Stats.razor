@@ -1,7 +1,6 @@
 @page "/history/stats"
 @using Shared.Models
 @using Shared.Services
-@using System.Security.Cryptography.X509Certificates
 @inject UserState UserState
 @inject RosterState RosterState
 @inject PlayerState PlayerState
@@ -264,17 +263,90 @@ else
     protected override async Task OnInitializedAsync()
     {
         await StatsData.EnsureCacheLoadedAsync();
+        await LeagueState.EnsureLoadedAsync();
 
-        _topScoringTeams = StatsData.TopScoringTeams;
-        _lowScoringTeams = StatsData.LowScoringTeams;
-        _topScoringPlayers = StatsData.TopScoringPlayers;
-        _lowScoringPlayers = StatsData.LowScoringPlayers;
-        _recordByRosterId = StatsData.RecordByRosterId;
-        _highScoringWeeksByRosterId = StatsData.HighScoringWeeksByRosterId;
+        _topScoringTeams = StatsData.TopScoringTeams.Take(10).ToList();
+        _lowScoringTeams = StatsData.LowScoringTeams.Take(10).ToList();
+        _topScoringPlayers = StatsData.TopScoringPlayers.Take(10).ToList();
+        _lowScoringPlayers = StatsData.LowScoringPlayers.Take(10).ToList();
+        _largestMarginOfVictory = StatsData.LargestMarginOfVictory.Take(10).ToList();
+        _tightestMarginOfVictory = StatsData.TightestMarginOfVictory.Take(10).ToList();
+        _recordByRosterId = SumRecords(StatsData.RecordsBySeason);
+        _highScoringWeeksByRosterId = SumHighScoringWeeks(StatsData.HighScoringWeeksByRosterId);
         _lowScoringWeeksByRosterId = StatsData.LowScoringWeeksByRosterId;
-        _largestMarginOfVictory = StatsData.LargestMarginOfVictory;
-        _tightestMarginOfVictory = StatsData.TightestMarginOfVictory;
+
         _isLoading = false;
     }
 
+    private Dictionary<int, string> SumRecords(Dictionary<string, SeasonRecord> season_records)
+    {
+        var totals = new Dictionary<int, Record>();
+
+        var playoffStartBySeason = LeagueState.AllLeagues
+            .Where(l => !string.IsNullOrWhiteSpace(l.Season) && l.Settings?.PlayoffWeekStart is int)
+            .GroupBy(l => l.Season!)
+            .ToDictionary(g => g.Key, g => g.First().Settings!.PlayoffWeekStart);
+
+        foreach (var seasonEntry in season_records)
+        {
+            var season = seasonEntry.Key;
+            var seasonRecord = seasonEntry.Value;
+
+            if (!playoffStartBySeason.TryGetValue(season, out var playoffStart))
+            {
+                continue;
+            }
+
+            var cutoffWeek = playoffStart > 0 ? playoffStart - 1 : int.MaxValue;
+            var latestWeek = seasonRecord.WeeksByNumber.Keys
+                .Where(w => w <= cutoffWeek)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            if (latestWeek == 0) continue;
+
+            if (!seasonRecord.WeeksByNumber.TryGetValue(latestWeek, out var weekRecord)) continue;
+
+            foreach (var kv in weekRecord.ByRoster)
+            {
+                if (!totals.TryGetValue(kv.Key, out var record))
+                {
+                    record = new Record();
+                    totals[kv.Key] = record;
+                }
+
+                record.Wins += kv.Value.Wins;
+                record.Losses += kv.Value.Losses;
+                record.Ties += kv.Value.Ties;
+            }
+        }
+
+        var result = new Dictionary<int, string>();
+        foreach (var kv in totals)
+        {
+            result[kv.Key] = kv.Value.Display;
+        }
+
+        return result;
+    }
+
+    private static Dictionary<int, int> SumHighScoringWeeks(Dictionary<string, Dictionary<int, int>> bySeason)
+    {
+        var totals = new Dictionary<int, int>();
+        foreach (var season in bySeason.Values)
+        {
+            foreach (var kv in season)
+            {
+                if (totals.TryGetValue(kv.Key, out var count))
+                {
+                    totals[kv.Key] = count + kv.Value;
+                }
+                else
+                {
+                    totals[kv.Key] = kv.Value;
+                }
+            }
+        }
+        return totals;
+    }
 }

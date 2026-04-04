@@ -7,19 +7,19 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
     private Task? _loadTask;
+    private bool _dataLoaded = false;
 
     private sealed record PlayoffKey(string LeagueId, string Week, int MatchupId);
 
     /// <summary>
-    /// List of all Matchups.
-    /// Set via SetAllMatchupsAsync()
+    /// List of MatchupModels. Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
     public List<MatchupModel>? AllMatchups { get; set; } = new();
 
     /// <summary>
     /// Ensures AllMatchups is loaded
     /// </summary>
-    public bool IsLoaded => AllMatchups is not null && AllMatchups.Count > 0;
+    private bool IsLoaded => _dataLoaded;
 
 
     /// <summary>
@@ -27,7 +27,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
     /// </summary>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetAllMatchupsAsync(bool forceRefresh = false)
+    private async Task SetAllMatchupsAsync(bool forceRefresh = false)
     {
         try
         {
@@ -143,10 +143,13 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
                     }).ToList();
                 }
             }
+
+            _dataLoaded = true;
         }
         catch (Exception ex)
         {
             _loadTask = null;
+            _dataLoaded = false;
             Console.WriteLine($"ERROR: {ex.Message}");
             throw;
         }

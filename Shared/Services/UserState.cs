@@ -9,34 +9,35 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
     private readonly INormalizer _normalizer = normalizer;
     private Task? _loadTask;
     private Task? _cacheTask;
+    private bool _dataLoaded = false;
+    private bool _cacheLoaded = false;
 
     /// <summary>
-    /// List of all users
-    /// Set via SetUsersAsync(league_id).
+    /// List of all users. Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
     public List<UsersModel>? Users { get; private set; } 
 
     /// <summary>
     /// Lookup dictionary for getting a users team name by providing their user_id (owner_id).
-    /// Set via BuildLookupCachesAsync()
+    /// Verify using EnsureCacheLoadedAsync() before accessing.
     /// </summary>
     public readonly Dictionary<string, string> TeamNameByUserId = new();
 
     /// <summary>
     /// Lookup dictionary for getting a users avatar by providing the user_id (owner_id).
-    /// Set via BuildLookupCachesAsync()
+    /// Verify using EnsureCacheLoadedAsync() before accessing.
     /// </summary>
     public readonly Dictionary<string, string> OwnerAvatarByUserId = new();
 
     /// <summary>
-    /// Ensures the lookups for this service are loaded
+    /// Ensures the lookups are loaded
     /// </summary>
-    public bool IsCacheLoaded => OwnerAvatarByUserId is not null && OwnerAvatarByUserId.Count > 0 && TeamNameByUserId.Count > 0 && TeamNameByUserId is not null;
+    private bool IsCacheLoaded => _cacheLoaded;
 
     /// <summary>
-    /// Verifies all users have been loaded
+    /// Ensures the Users data is loaded
     /// </summary>
-    public bool IsLoaded => Users is not null && Users.Count > 0;
+    private bool IsLoaded => _dataLoaded;
 
 
     /// <summary>
@@ -45,7 +46,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
     /// <param name="league_id"></param>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetCurrentUsersAsync(bool forceRefresh = false)
+    private async Task SetCurrentUsersAsync(bool forceRefresh = false)
     {
         try
         {
@@ -58,12 +59,15 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
                 {
                     Users = _normalizer.NormalizeUsers(users);
                 }
-                await BuildLookupCachesAsync();
             }
+
+            _dataLoaded = true;
+            await BuildLookupCachesAsync();
         }
         catch (Exception ex)
         {
             _loadTask = null;
+            _dataLoaded = false;
             Console.WriteLine($"ERROR: {ex.Message}");
             throw;
         }
@@ -131,10 +135,12 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
                     OwnerAvatarByUserId[user.UserId] = "/images/question-mark.png";
                 }
             }
+            _cacheLoaded = true;
         }
         catch (Exception ex)
         {
             _cacheTask = null;
+            _cacheLoaded = false;
             Console.WriteLine($"ERROR: {ex.Message}");
             throw;
         }

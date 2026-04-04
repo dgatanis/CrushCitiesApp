@@ -8,27 +8,19 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
-
     private readonly HttpClient _http = http;
-    
     private Task? _loadTask;
+    private bool _dataLoaded = false;
 
     /// <summary>
-    /// List of all transactions. 
-    /// Set via SetAllTransactionsDataAsync()
+    /// List of all transactions. Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
     public List<TransactionsModel> Transactions { get; private set; } = new();
 
     /// <summary>
-    /// List of filtered transactions filtered by using FilterTransactionsData(type). 
-    /// Can dynamically update list based on "type" needs.
+    /// Ensures Transactions data is loaded
     /// </summary>
-    public List<TransactionsModel> FilteredTransactions { get; private set; } = new();
-
-    /// <summary>
-    /// Ensures transactions are loaded
-    /// </summary>
-    public bool IsLoaded => Transactions is not null && Transactions.Count > 0;
+    private bool IsLoaded => _dataLoaded;
 
 
     /// <summary>
@@ -37,7 +29,7 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
     /// </summary>
     /// <param name="forceRefresh"></param>
     /// <returns></returns>
-    public async Task SetAllTransactionsDataAsync(bool forceRefresh = false)
+    private async Task SetAllTransactionsDataAsync(bool forceRefresh = false)
     {
         try
         {
@@ -71,10 +63,12 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
                     Transactions.AddRange(fleaflicker_trades);
                 }
             }
+            _dataLoaded = true;
         }
         catch (Exception ex)
         {
             _loadTask = null;
+            _dataLoaded = false;
             Console.WriteLine($"ERROR: {ex.Message}");
             throw;
         }
@@ -86,7 +80,7 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    public IReadOnlyList<TransactionsModel> GetFilterTransactionsData(string[] types)
+    public IReadOnlyList<TransactionsModel> GetFilteredTransactionsData(string[] types)
     {
         if (Transactions is null || types is null || types.Length == 0)
             return Transactions ?? [];
@@ -98,7 +92,7 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
     }
 
     /// <summary>
-    /// Ensures that the Transactions data is loaded.
+    /// Ensures Transactions data is loaded.
     /// </summary>
     /// <returns></returns>
     public Task EnsureLoadedAsync()

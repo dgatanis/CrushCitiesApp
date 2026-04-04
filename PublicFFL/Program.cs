@@ -33,10 +33,10 @@ var playerState = host.Services.GetRequiredService<PlayerState>();
 var userState = host.Services.GetRequiredService<UserState>();
 var rosterState = host.Services.GetRequiredService<RosterState>();
 var leagueState = host.Services.GetRequiredService<LeagueState>();
-await leagueState.SetAllLeaguesDataAsync(forceRefresh: true);
-await userState.SetCurrentUsersAsync(forceRefresh: true);
-await rosterState.SetCurrentRostersAsync(forceRefresh: true);
-await playerState.SetPlayersAsync(forceRefresh: true);
+await leagueState.EnsureLoadedAsync();
+await userState.EnsureLoadedAsync();
+await rosterState.EnsureLoadedAsync();
+await playerState.EnsureLoadedAsync();
 
 
 await host.RunAsync();

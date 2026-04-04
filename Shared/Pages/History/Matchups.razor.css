@@ -10,13 +10,11 @@
 
 .matchup-team-header {
     display: flex;
-    align-items: baseline;
     justify-content: space-between;
     gap: 0.5rem;
     padding-bottom: 0.35rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     margin-bottom: 0.5rem;
-    align-items: anchor-center;
+    align-items: center;
 }
 
 .mb-3.p-2.border.rounded {
@@ -175,8 +173,9 @@ button.accordion-button.collapsed {
 @media (max-width: 576px) {
     
     .mb-3.p-2.border.rounded {
-        background: var(--dark-container) !important;
+        background: rgba(99, 99, 99, 0.308) !important;
     }
+
     .matchup-team-header {
         gap: 0.35rem;
     }

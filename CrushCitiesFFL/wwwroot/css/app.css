@@ -173,7 +173,7 @@ code {
   --text: #d6d6d6;
   --light-text: #717171;
   --top-row: #d0d0d042;
-  --box-shadow: 0 0 24px rgba(70, 180, 200, 0.08);
+  --box-shadow: 0 0 12px rgba(70, 180, 200, 0.08);
 }
 
 .owner-avatar {
