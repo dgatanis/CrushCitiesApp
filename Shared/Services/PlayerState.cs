@@ -20,13 +20,13 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
 
     /// <summary>
     /// Lookup dictionary for getting a PlayerLite model by providing the player_id. 
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
     public readonly Dictionary<string, PlayerLiteModel> PlayerById = new();
     
     /// <summary>
     /// Lookup dictionary for getting a players nfl team image by providing the team_abbr (MIA, TEN, WAS...).
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
     public Dictionary<string, string> PlayerNFLTeamImageByAbbr = new();
 
@@ -89,7 +89,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
                         _memoryExpiration = cached.Expiration;
                         Players = cached.Data;
                         _dataLoaded = true;
-                        await BuildLookupCachesAsync();
+                        await BuildLookupsAsync();
                         return;
                     }
                     else
@@ -174,7 +174,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
             }
             
             _dataLoaded = true;
-            await BuildLookupCachesAsync();
+            await BuildLookupsAsync();
         }
         catch (Exception ex)
         {
@@ -190,7 +190,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    private async Task BuildLookupCachesAsync()
+    private async Task BuildLookupsAsync()
     {
         try
         {
@@ -248,13 +248,13 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
     }
 
     /// <summary>
-    /// Ensures the cached data is loaded.
+    /// Ensures the lookup data is loaded.
     /// </summary>
     /// <returns></returns>
-    public Task EnsureCacheLoadedAsync()
+    public Task EnsureLookupsLoadedAsync()
     {
         if (IsCacheLoaded) return Task.CompletedTask;
-        _cacheTask ??= BuildLookupCachesAsync();
+        _cacheTask ??= BuildLookupsAsync();
         return _cacheTask;
     }
 

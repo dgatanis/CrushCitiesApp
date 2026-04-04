@@ -1,19 +1,126 @@
 @page "/teams"
+@using Shared.Models
+@using Shared.Services
+@inject LeagueState LeagueState
+@inject RosterState RosterState
+@inject UserState UserState
+@inject StatsData StatsData
 
 <PageTitle>Teams | @Brand</PageTitle>
 
 <div class="d-flex justify-content-center">
     <h1>Teams</h1> 
 </div>
-<div class="d-flex justify-content-center">
-    <div>Coming soon...</div>
-</div>
 
+@if (_isLoading)
+{
+    <div class="d-flex justify-content-center">
+        <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Primary" Size="SpinnerSize.Large" />
+    </div>
+}
+else
+{
+    <div class="teams-page-container d-flex flex-column gap-3">
+        @foreach (var roster in _rosters ?? [])
+        {
+            var teamName = roster.OwnerId is not null && UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var name)
+                ? name
+                : $"Roster {roster.RosterId}";
+
+            var championships = StatsData.ChampionshipCountByRosterId.TryGetValue(roster.RosterId, out var champCount)
+                ? champCount
+                : 0;
+
+            var finalsAppearances = StatsData.FinalsAppearancesByRosterId.TryGetValue(roster.RosterId, out var finalsCount)
+                ? finalsCount
+                : 0;
+
+            var playoffAppearances = StatsData.PlayoffAppearancesByRosterId.TryGetValue(roster.RosterId, out var playoffCount)
+                ? playoffCount
+                : 0;
+
+            var lastPlaceFinishes = StatsData.LastPlaceFinishesByRosterId.TryGetValue(roster.RosterId, out var lastPlaceCount)
+                ? lastPlaceCount
+                : 0;
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                        <div class="d-flex flex-column">
+                            <div class="h5 mb-0">@teamName</div>
+                            <div class="text-muted">Roster @roster.RosterId</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column flex-md-row gap-3 mt-3">
+                        <div>
+                            <div class="text-muted">Championships</div>
+                            <div class="fw-semibold">@championships</div>
+                        </div>
+                        <div>
+                            <div class="text-muted">Finals Appearances</div>
+                            <div class="fw-semibold">@finalsAppearances</div>
+                        </div>
+                        <div>
+                            <div class="text-muted">Playoff Appearances</div>
+                            <div class="fw-semibold">@playoffAppearances</div>
+                        </div>
+                        <div>
+                            <div class="text-muted">Last Place Finishes</div>
+                            <div class="fw-semibold">@lastPlaceFinishes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
 
 
 @code {
     [CascadingParameter(Name = "AppBrand")]
     private string? AppBrand { get; set; }
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
+    private bool _isLoading = true;
+    private List<RostersModel>? _rosters = new List<RostersModel>();
+
+
+    protected override void OnInitialized()
+    {
+        _isLoading = true;
+        _ = LoadPageAsync();
+    }
+
+    /// <summary>
+    /// Loads all elements needed for the page
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoadPageAsync()
+    {
+        try 
+        {
+            await Task.Yield(); 
+            await StatsData.EnsureLookupsLoadedAsync();
+            await LoadRosters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading teams page: {ex.Message}");
+            _isLoading = false;
+        }
+        finally
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+
+    private async Task LoadRosters()
+    {
+        await RosterState.EnsureLoadedAsync();
+        _rosters = RosterState.Rosters;
+    }
 
 }
+

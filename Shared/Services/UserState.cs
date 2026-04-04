@@ -19,13 +19,13 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
 
     /// <summary>
     /// Lookup dictionary for getting a users team name by providing their user_id (owner_id).
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
     public readonly Dictionary<string, string> TeamNameByUserId = new();
 
     /// <summary>
     /// Lookup dictionary for getting a users avatar by providing the user_id (owner_id).
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
     public readonly Dictionary<string, string> OwnerAvatarByUserId = new();
 
@@ -62,7 +62,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
             }
 
             _dataLoaded = true;
-            await BuildLookupCachesAsync();
+            await BuildLookupsAsync();
         }
         catch (Exception ex)
         {
@@ -94,7 +94,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    private async Task BuildLookupCachesAsync()
+    private async Task BuildLookupsAsync()
     {
         try
         {
@@ -160,13 +160,13 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
 
 
     /// <summary>
-    /// Ensures the cached data is loaded.
+    /// Ensures the lookup data is loaded.
     /// </summary>
     /// <returns></returns>
-    public Task EnsureCacheLoadedAsync()
+    public Task EnsureLookupsLoadedAsync()
     {
         if (IsCacheLoaded) return Task.CompletedTask;
-        _cacheTask ??= BuildLookupCachesAsync();
+        _cacheTask ??= BuildLookupsAsync();
         return _cacheTask;
     }
 }

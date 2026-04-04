@@ -260,22 +260,44 @@ else
     private List<KeyValuePair<MatchupModel, double>> _tightestMarginOfVictory = new();
 
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await StatsData.EnsureCacheLoadedAsync();
-        await LeagueState.EnsureLoadedAsync();
+        _isLoading = true;
+        _ = LoadPageAsync();
+    }
 
-        _topScoringTeams = StatsData.TopScoringTeams.Take(10).ToList();
-        _lowScoringTeams = StatsData.LowScoringTeams.Take(10).ToList();
-        _topScoringPlayers = StatsData.TopScoringPlayers.Take(10).ToList();
-        _lowScoringPlayers = StatsData.LowScoringPlayers.Take(10).ToList();
-        _largestMarginOfVictory = StatsData.LargestMarginOfVictory.Take(10).ToList();
-        _tightestMarginOfVictory = StatsData.TightestMarginOfVictory.Take(10).ToList();
-        _recordByRosterId = SumRecords(StatsData.RecordsBySeason);
-        _highScoringWeeksByRosterId = SumHighScoringWeeks(StatsData.HighScoringWeeksByRosterId);
-        _lowScoringWeeksByRosterId = StatsData.LowScoringWeeksByRosterId;
+    /// <summary>
+    /// Loads all elements needed for the page
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoadPageAsync()
+    {
+        try
+        {
+            await Task.Yield();
+            await StatsData.EnsureLookupsLoadedAsync();
+            await LeagueState.EnsureLoadedAsync();
 
-        _isLoading = false;
+            _topScoringTeams = StatsData.TopScoringTeams.Take(10).ToList();
+            _lowScoringTeams = StatsData.LowScoringTeams.Take(10).ToList();
+            _topScoringPlayers = StatsData.TopScoringPlayers.Take(10).ToList();
+            _lowScoringPlayers = StatsData.LowScoringPlayers.Take(10).ToList();
+            _largestMarginOfVictory = StatsData.LargestMarginOfVictory.Take(10).ToList();
+            _tightestMarginOfVictory = StatsData.TightestMarginOfVictory.Take(10).ToList();
+            _recordByRosterId = SumRecords(StatsData.RecordsBySeason);
+            _highScoringWeeksByRosterId = SumHighScoringWeeks(StatsData.HighScoringWeeksByRosterId);
+            _lowScoringWeeksByRosterId = StatsData.LowScoringWeeksByRosterId;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading stats page: {ex.Message}");
+            _isLoading = false;
+        }
+        finally
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private Dictionary<int, string> SumRecords(Dictionary<string, SeasonRecord> season_records)
@@ -350,3 +372,4 @@ else
         return totals;
     }
 }
+

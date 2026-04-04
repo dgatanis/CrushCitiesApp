@@ -1,11 +1,9 @@
 @page "/history/current-season"
 @using Shared.Models
 @using Shared.Services
-@inject MatchupState MatchupState
 @inject LeagueState LeagueState
 @inject RosterState RosterState
 @inject UserState UserState
-@inject PlayerState PlayerState
 @inject StatsData StatsData
 
 <PageTitle>Current Season | @Brand</PageTitle>
@@ -99,20 +97,41 @@ else
     private readonly List<SeasonRow> _currentSeasonRows = new();
     private readonly List<HighScoringRow> _highScoringRows = new();
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await RosterState.EnsureLoadedAsync();
-        await RosterState.EnsureCacheLoadedAsync();
-        await LoadStatsDataAsync(); 
-        await LeagueState.EnsureLoadedAsync();
-        BuildCurrentSeasonRows();
-        BuildHighScoringRows();
-        _isLoading = false;
+        _isLoading = true;
+        _ = LoadPageAsync();
+    }
+
+    /// <summary>
+    /// Loads all elements needed for the page
+    /// </summary>
+    /// <returns></returns>
+    private  async Task LoadPageAsync()
+    {
+        try
+        {
+            await RosterState.EnsureLoadedAsync();
+            await LeagueState.EnsureLoadedAsync();
+            await LoadStatsDataAsync(); 
+            BuildCurrentSeasonRows();
+            BuildHighScoringRows();
+        }
+        catch (Exception ex)        
+        {
+            Console.WriteLine($"Error loading current season page: {ex.Message}");
+            _isLoading = false;
+        }
+        finally
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private async Task LoadStatsDataAsync()
     {
-        await StatsData.EnsureCacheLoadedAsync(); 
+        await StatsData.EnsureLookupsLoadedAsync(); 
         _recordsBySeason = StatsData.RecordsBySeason ?? new Dictionary<string, SeasonRecord>();
         _highScoringWeeksByRosterId = StatsData.HighScoringWeeksByRosterId ?? new Dictionary<string, Dictionary<int, int>>();
     }
@@ -210,3 +229,4 @@ else
     private sealed record SeasonRow(int Rank, string TeamName, Record Record, int RosterId);
     private sealed record HighScoringRow(string TeamName, int Count);
 }
+

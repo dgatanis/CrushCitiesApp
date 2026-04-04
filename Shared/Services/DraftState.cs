@@ -24,7 +24,7 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
     /// <summary>
     /// Lookup list for finding quick details about a draft.
     /// Stores Season, LeagueId, DraftId and a mapping between roster_id and draft_slot for that draft.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
     public List<DraftPickSeasonSummary> DraftHistory { get; private set; } = new();
 
@@ -75,7 +75,7 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
             }
 
             _dataLoaded = true;
-            await BuildLookupCachesAsync();
+            await BuildLookupsAsync();
             
         }
         catch (Exception ex)
@@ -91,7 +91,7 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    private async Task BuildLookupCachesAsync()
+    private async Task BuildLookupsAsync()
     {
         try
         {
@@ -137,13 +137,13 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
 
 
     /// <summary>
-    /// Ensures the cached data is loaded.
+    /// Ensures the lookup data is loaded.
     /// </summary>
     /// <returns></returns>
-    public Task EnsureCacheLoadedAsync()
+    public Task EnsureLookupsLoadedAsync()
     {
         if (IsCacheLoaded) return Task.CompletedTask;
-        _cacheTask ??= BuildLookupCachesAsync();
+        _cacheTask ??= BuildLookupsAsync();
         return _cacheTask;
     }
 }

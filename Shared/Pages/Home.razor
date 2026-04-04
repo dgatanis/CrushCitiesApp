@@ -37,7 +37,7 @@ else
             {
                 @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
                 {
-                    <button type="button" class="btn btn-outline-secondary common-container border-3" @onclick="@(() => Nav.NavigateTo($"/rosters?selectedRosterId={roster.RosterId}"))">
+                    <button type="button" title="View Roster" class="btn btn-outline-secondary common-container border-3" @onclick="@(() => Nav.NavigateTo($"/rosters?selectedRosterId={roster.RosterId}#roster_{roster.RosterId}"))">
                     <img class="owner-avatar" src="@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")">
                     <span class="team-name">@(UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : "Team Not Found")</span>
                 </button>
@@ -57,13 +57,41 @@ else
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
     private List<RostersModel> _rosters = new List<RostersModel>();
 
-    protected override async Task OnInitializedAsync()
+
+    protected override void OnInitialized()
+    {
+        _isLoading = true;
+        _ = LoadPageAsync();
+    }
+
+    /// <summary>
+    /// Loads all elements needed for the page
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoadPageAsync()
+    {
+        try
+        {
+            await Task.Yield();
+            await UserState.EnsureLoadedAsync();
+            await LoadRostersAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading home page: {ex.Message}");
+            _isLoading = false;
+        }
+        finally
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task LoadRostersAsync()
     {
         await RosterState.EnsureLoadedAsync();
-        await UserState.EnsureLoadedAsync();
-
         _rosters = RosterState.Rosters ?? [];
-        _isLoading = false;
     }
 
 }

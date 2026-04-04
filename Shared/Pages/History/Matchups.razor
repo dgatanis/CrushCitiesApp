@@ -229,6 +229,11 @@ else
             await LoadRostersAsync();
             await LoadStatsDataAsync();
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading matchups page: {ex.Message}");
+            _isLoading = false;
+        }
         finally
         {
             _isLoading = false;
@@ -253,7 +258,7 @@ else
     private async Task LoadRostersAsync()
     {
         await RosterState.EnsureLoadedAsync();
-        await RosterState.EnsureCacheLoadedAsync();
+        await RosterState.EnsureLookupsLoadedAsync();
         _rosters = RosterState.Rosters;
     }
 
@@ -263,7 +268,7 @@ else
     /// <returns></returns>
     private async Task  LoadStatsDataAsync()
     {
-        await StatsData.EnsureCacheLoadedAsync();
+        await StatsData.EnsureLookupsLoadedAsync();
         _recordsBySeason = StatsData.RecordsBySeason ?? new Dictionary<string, SeasonRecord>();
     }
 
@@ -347,3 +352,4 @@ else
     }
 
 }
+

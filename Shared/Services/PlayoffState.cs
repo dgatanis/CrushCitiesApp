@@ -26,13 +26,13 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
 
     /// <summary>
     /// List of the matchups that were part of the winner bracket playoffs. 
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
     public List<MatchupModel> WinnersBracketMatchups { get; private set; } = new();
 
     /// <summary>
     /// List of the matchups that were part of the loser bracket playoffs.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
     public List<MatchupModel> LosersBracketMatchups { get; private set; } = new();
     
@@ -77,7 +77,7 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
                 }
             }
             _dataLoaded = true;
-            await BuildLookupCachesAsync();
+            await BuildLookupsAsync();
         }
         catch (Exception ex)
         {
@@ -94,7 +94,7 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    private async Task BuildLookupCachesAsync()
+    private async Task BuildLookupsAsync()
     {
         try
         {
@@ -180,15 +180,14 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
     }
     
 
-
     /// <summary>
-    /// Ensures the cached data is loaded.
+    /// Ensures the lookup data is loaded.
     /// </summary>
     /// <returns></returns>
-    public Task EnsureCacheLoadedAsync()
+    public Task EnsureLookupsLoadedAsync()
     {
         if (IsCacheLoaded) return Task.CompletedTask;
-        _cacheTask ??= BuildLookupCachesAsync();
+        _cacheTask ??= BuildLookupsAsync();
         return _cacheTask;
     }
 }

@@ -111,9 +111,34 @@ else
     private string? _selectedDraftId;
     private string? _selectedPickedBy;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await LoadDraftHistory();
+        _isLoading = true;
+        _ = LoadPageAsync();
+    }
+
+    /// <summary>
+    /// Loads all elements needed for the page
+    /// </summary>
+    /// <returns></returns>
+    private  async Task LoadPageAsync()
+    {
+        try
+        {
+            await Task.Yield();
+            await LoadDraftHistory();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading drafts page: {ex.Message}");
+            _isLoading = false;
+        }
+        finally
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+        
     }
 
     /// <summary>

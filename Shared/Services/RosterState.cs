@@ -20,25 +20,25 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
 
     /// <summary>
     /// Lookup dictionary for getting the team name by providing the roster_id.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
     public readonly Dictionary<int, string> TeamNameByRosterId = new();
 
     /// <summary>
     /// Lookup dictionary for getting the player nickname by providing the roster_id and player_id.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
     public readonly Dictionary<(int roster_id, string player_id), string> PlayerNicknameByRosterId = new();
 
     /// <summary>
     /// Lookup dictionary for getting the user_id (owner_id) by providing the roster_id.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
     public readonly Dictionary<string, int> RosterIdByUserId = new();
 
     /// <summary>
     /// Lookup dictionary for getting a user_id by providing the roster_id.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
     public readonly Dictionary<string, string> UserIdByRosterId = new();
 
@@ -76,7 +76,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
                 }
             }
             _dataLoaded = true;
-            await BuildLookupCachesAsync();
+            await BuildLookupsAsync();
             
         }
         catch (Exception ex)
@@ -94,7 +94,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    private async Task BuildLookupCachesAsync()
+    private async Task BuildLookupsAsync()
     {
         try
         {
@@ -186,13 +186,13 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
 
     
     /// <summary>
-    /// Ensures the cached data is loaded.
+    /// Ensures the lookup data is loaded.
     /// </summary>
     /// <returns></returns>
-    public Task EnsureCacheLoadedAsync()
+    public Task EnsureLookupsLoadedAsync()
     {
         if (IsCacheLoaded) return Task.CompletedTask;
-        _cacheTask ??= BuildLookupCachesAsync();
+        _cacheTask ??= BuildLookupsAsync();
         return _cacheTask;
     }
 }

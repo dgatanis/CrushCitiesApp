@@ -114,18 +114,46 @@ else
     private Dictionary<string, List<PlayoffBracketsModel>> _losersBrackets = new();
     private Dictionary<string, int> _previousChamps = new ();
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
+    {
+        _isLoading = true;
+        _ = LoadPageAsync();
+    }
+
+    /// <summary>
+    /// Loads all elements needed for the page
+    /// </summary>
+    /// <returns></returns>
+    private  async Task LoadPageAsync()
+    {
+        try
+        {
+            await Task.Yield();
+            await RosterState.EnsureLoadedAsync();
+            await PlayerState.EnsureLookupsLoadedAsync();
+            await LoadPlayoffDataAsync();
+            LoadPreviousChamps();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading champs page: {ex.Message}");
+            _isLoading = false;
+        }
+        finally
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task LoadPlayoffDataAsync()
     {
         await PlayoffState.EnsureLoadedAsync();
-        await RosterState.EnsureLoadedAsync();
-
-        LoadPreviousChamps();
         _winnersMatchups = PlayoffState.WinnersBracketMatchups;
         _losersMatchups = PlayoffState.LosersBracketMatchups;
         _winnersBrackets = PlayoffState.AllWinnersBrackets;
         _losersBrackets = PlayoffState.AllLosersBrackets;
-        _isLoading = false;
-    }
+     }
 
 
     /// <summary>
