@@ -1,10 +1,13 @@
 @page "/teams"
+@using Microsoft.Extensions.Logging
 @using Shared.Models
 @using Shared.Services
+@inject ILogger<Teams> ILogger
 @inject LeagueState LeagueState
 @inject RosterState RosterState
 @inject UserState UserState
 @inject StatsData StatsData
+
 
 <PageTitle>Teams | @Brand</PageTitle>
 
@@ -20,7 +23,8 @@
 }
 else
 {
-    <div class="teams-page-container d-flex flex-column gap-3">
+    <div class="teams-page-container">
+        <div class="row g-3">
         @foreach (var roster in _rosters ?? [])
         {
             var teamName = roster.OwnerId is not null && UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var name)
@@ -43,36 +47,98 @@ else
                 ? lastPlaceCount
                 : 0;
 
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-                        <div class="d-flex flex-column">
-                            <div class="h5 mb-0">@teamName</div>
-                            <div class="text-muted">Roster @roster.RosterId</div>
-                        </div>
-                    </div>
+            var mostTradedWithRosterId = StatsData.MostTradedWithRosterId.TryGetValue(roster.RosterId, out var tradedWithRosterId)
+                ? tradedWithRosterId
+                : 0;
+            var mostTradedWithName = RosterState.TeamNameByRosterId.TryGetValue(mostTradedWithRosterId, out var mostTradedWithTeamName)
+                ? mostTradedWithTeamName
+                : "N/A";
 
-                    <div class="d-flex flex-column flex-md-row gap-3 mt-3">
-                        <div>
-                            <div class="text-muted">Championships</div>
-                            <div class="fw-semibold">@championships</div>
+            var tradeCount = StatsData.TradeCountsByRosterId.TryGetValue(roster.RosterId, out var tradeCountValue)
+                ? tradeCountValue
+                : 0;
+
+            var lowScoringWeeks = StatsData.LowScoringWeeksByRosterId.TryGetValue(roster.RosterId, out var lowWeeksCount)
+                ? lowWeeksCount
+                : 0;
+
+            var highScoringWeeks = StatsData.HighScoringWeeksByRosterId.Values
+                .SelectMany(d => d)
+                .Where(kv => kv.Key == roster.RosterId)
+                .Select(kv => kv.Value)
+                .DefaultIfEmpty(0)
+                .Sum();
+
+            var mostLossesAgainstRosterId = StatsData.MostLossesAgainstRosterId.TryGetValue(roster.RosterId, out var lossesAgainstRosterId)
+                ? lossesAgainstRosterId
+                : 0;
+            var mostLossesAgainstName = RosterState.TeamNameByRosterId.TryGetValue(mostLossesAgainstRosterId, out var mostLossesAgainstTeamName)
+                ? mostLossesAgainstTeamName
+                : "N/A";
+
+            var mostWinsAgainstRosterId = StatsData.MostWinsAgainstRosterId.TryGetValue(roster.RosterId, out var winsAgainstRosterId)
+                ? winsAgainstRosterId
+                : 0;
+            var mostWinsAgainstName = RosterState.TeamNameByRosterId.TryGetValue(mostWinsAgainstRosterId, out var mostWinsAgainstTeamName)
+                ? mostWinsAgainstTeamName
+                : "N/A";
+
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="card shadow-sm frosty-bg h-100">
+                    <div class="card-body">
+                        <div class="d-flex flex-column flex-md-row justify-content-center align-items-md-center gap-2">
+                            <div class="d-flex flex-column">
+                                <div class="h5 mb-0">@teamName</div>
+                            </div>
                         </div>
-                        <div>
-                            <div class="text-muted">Finals Appearances</div>
-                            <div class="fw-semibold">@finalsAppearances</div>
-                        </div>
-                        <div>
-                            <div class="text-muted">Playoff Appearances</div>
-                            <div class="fw-semibold">@playoffAppearances</div>
-                        </div>
-                        <div>
-                            <div class="text-muted">Last Place Finishes</div>
-                            <div class="fw-semibold">@lastPlaceFinishes</div>
+
+                        <div class="d-flex flex-column flex-md-row flex-wrap gap-3 mt-3 justify-content-center">
+                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
+                                <div class="text-muted small">Championships</div>
+                                <div class="fw-semibold">@championships</div>
+                            </div>
+                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
+                                <div class="text-muted small">Finals Appearances</div>
+                                <div class="fw-semibold">@finalsAppearances</div>
+                            </div>
+                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
+                                <div class="text-muted small">Playoff Appearances</div>
+                                <div class="fw-semibold">@playoffAppearances</div>
+                            </div>
+                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
+                                <div class="text-muted small">Last Place Finishes</div>
+                                <div class="fw-semibold">@lastPlaceFinishes</div>
+                            </div>
+                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
+                                <div class="text-muted small">Most Traded With</div>
+                                <div class="fw-semibold">@mostTradedWithName</div>
+                            </div>
+                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
+                                <div class="text-muted small">Total Trades</div>
+                                <div class="fw-semibold">@tradeCount</div>
+                            </div>
+                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
+                                <div class="text-muted small">Low Scoring Weeks</div>
+                                <div class="fw-semibold">@lowScoringWeeks</div>
+                            </div>
+                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
+                                <div class="text-muted small">High Scoring Weeks</div>
+                                <div class="fw-semibold">@highScoringWeeks</div>
+                            </div>
+                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
+                                <div class="text-muted small">Most L&apos;s</div>
+                                <div class="fw-semibold">@mostLossesAgainstName</div>
+                            </div>
+                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
+                                <div class="text-muted small">Most W&apos;s</div>
+                                <div class="fw-semibold">@mostWinsAgainstName</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         }
+        </div>
     </div>
 }
 
@@ -84,13 +150,11 @@ else
     private bool _isLoading = true;
     private List<RostersModel>? _rosters = new List<RostersModel>();
 
-
     protected override void OnInitialized()
     {
         _isLoading = true;
         _ = LoadPageAsync();
     }
-
     /// <summary>
     /// Loads all elements needed for the page
     /// </summary>
@@ -105,7 +169,7 @@ else
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading teams page: {ex.Message}");
+            ILogger.LogError(ex, "ERROR: {Message}", ex.Message);
             _isLoading = false;
         }
         finally
@@ -123,4 +187,3 @@ else
     }
 
 }
-

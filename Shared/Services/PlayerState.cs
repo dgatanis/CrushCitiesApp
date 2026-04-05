@@ -5,6 +5,14 @@ using Shared.Models;
 
 namespace Shared.Services;
 
+
+/// <summary>
+/// Service that stores the NFL player data for the current league and builds lookups for frequently accessed data.
+/// Utilizes localStorage to cache the player data and reduce load times on subsequent visits, with a TTL of 6 hours for cache invalidation.
+/// </summary>
+/// <param name="sleeperApi"></param>
+/// <param name="js"></param>
+/// <param name="logger"></param>
 public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, ILogger<PlayerState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
@@ -24,7 +32,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, ILogger<P
 
     /// <summary>
     /// Lookup dictionary for getting a PlayerLite model by providing the player_id. 
-    /// Verify using EnsureLookupsLoadedAsync() before accessing.
+    /// Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
     public IReadOnlyDictionary<string, PlayerLiteModel> PlayerById => _playerById;
     
@@ -55,12 +63,12 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, ILogger<P
         try
         {
             if (!forceRefresh &&
-            _memoryPlayers is not null &&
+            _memoryPlayers is not null && 
+            _memoryPlayers.Count > 0 &&
             _memoryExpiration > DateTimeOffset.UtcNow)
             {
                 _playerById = _memoryPlayers;
                 _dataLoaded = true;
-
                 return;
             }
 
@@ -194,14 +202,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, ILogger<P
         {
             if(_memoryPlayers is not null)
             {
-                _playerById.Clear();
                 _playerNFLTeamImageByAbbr.Clear();
-
-                //Get Player by id
-                foreach (var player in _memoryPlayers)
-                {
-                    _playerById[player.Key] = player.Value;
-                }
 
                 //Get nfl team image by abbreviation
                 foreach (var teamAbbr in _memoryPlayers.Values.Select(p => p.Team).Distinct()) 

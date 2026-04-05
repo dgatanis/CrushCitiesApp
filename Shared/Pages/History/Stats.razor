@@ -1,17 +1,22 @@
 @page "/history/stats"
+@using Microsoft.Extensions.Logging
 @using Shared.Models
 @using Shared.Services
+@inject ILogger<Stats> ILogger
 @inject UserState UserState
 @inject RosterState RosterState
 @inject PlayerState PlayerState
 @inject LeagueState LeagueState
 @inject StatsData StatsData
 
+
 <PageTitle>Stats | @Brand</PageTitle>
+
 
 <div class="d-flex justify-content-center">
     <h1>Stats</h1>
 </div>
+
 
 @if (_isLoading)
 {
@@ -43,6 +48,7 @@ else
                     </tbody>
                 </table>
             </div>
+
 
             <div class="col-12 col-lg-6">
                 <h3 class="h5 text-center mb-3">Top Scoring Teams</h3>
@@ -191,6 +197,7 @@ else
                 </table>
             </div>
 
+
             <div class="col-12 col-lg-6">
                 <h3 class="h5 text-center mb-3">Tightest Margins of Victory</h3>
                 <table class="table table-sm table-bordered text-center align-middle stats-table">
@@ -260,6 +267,7 @@ else
     private List<KeyValuePair<MatchupModel, double>> _tightestMarginOfVictory = new();
 
 
+
     protected override void OnInitialized()
     {
         _isLoading = true;
@@ -284,13 +292,13 @@ else
             _lowScoringPlayers = StatsData.LowScoringPlayers.Take(10).ToList() ?? [];
             _largestMarginOfVictory = StatsData.LargestMarginOfVictory.Take(10).ToList() ?? [];
             _tightestMarginOfVictory = StatsData.TightestMarginOfVictory.Take(10).ToList() ?? [];
-            _recordByRosterId = SumRecords(StatsData.RecordsBySeason) ?? new Dictionary<int, string>();
-            _highScoringWeeksByRosterId = SumHighScoringWeeks(StatsData.HighScoringWeeksByRosterId) ?? new Dictionary<int, int>();
+            _recordByRosterId = StatsData.SumRecords(StatsData.RecordsBySeason.ToDictionary()) ?? new Dictionary<int, string>();
+            _highScoringWeeksByRosterId = StatsData.SumHighScoringWeeks(StatsData.HighScoringWeeksByRosterId.ToDictionary()) ?? new Dictionary<int, int>();
             _lowScoringWeeksByRosterId = StatsData.LowScoringWeeksByRosterId?.ToDictionary() ?? new Dictionary<int, int>();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading stats page: {ex.Message}");
+            ILogger.LogError(ex, "ERROR: {Message}", ex.Message);
             _isLoading = false;
         }
         finally
@@ -299,77 +307,4 @@ else
             await InvokeAsync(StateHasChanged);
         }
     }
-
-    private Dictionary<int, string> SumRecords(IReadOnlyDictionary<string, SeasonRecord> season_records)
-    {
-        var totals = new Dictionary<int, Record>();
-
-        var playoffStartBySeason = LeagueState.AllLeagues
-            .Where(l => !string.IsNullOrWhiteSpace(l.Season) && l.Settings?.PlayoffWeekStart is int)
-            .GroupBy(l => l.Season!)
-            .ToDictionary(g => g.Key, g => g.First().Settings!.PlayoffWeekStart);
-
-        foreach (var seasonEntry in season_records)
-        {
-            var season = seasonEntry.Key;
-            var seasonRecord = seasonEntry.Value;
-
-            if (!playoffStartBySeason.TryGetValue(season, out var playoffStart))
-            {
-                continue;
-            }
-
-            var cutoffWeek = playoffStart > 0 ? playoffStart - 1 : int.MaxValue;
-            var latestWeek = seasonRecord.WeeksByNumber.Keys
-                .Where(w => w <= cutoffWeek)
-                .DefaultIfEmpty(0)
-                .Max();
-
-            if (latestWeek == 0) continue;
-
-            if (!seasonRecord.WeeksByNumber.TryGetValue(latestWeek, out var weekRecord)) continue;
-
-            foreach (var kv in weekRecord.ByRoster)
-            {
-                if (!totals.TryGetValue(kv.Key, out var record))
-                {
-                    record = new Record();
-                    totals[kv.Key] = record;
-                }
-
-                record.Wins += kv.Value.Wins;
-                record.Losses += kv.Value.Losses;
-                record.Ties += kv.Value.Ties;
-            }
-        }
-
-        var result = new Dictionary<int, string>();
-        foreach (var kv in totals)
-        {
-            result[kv.Key] = kv.Value.Display;
-        }
-
-        return result;
-    }
-
-    private static Dictionary<int, int> SumHighScoringWeeks(IReadOnlyDictionary<string, Dictionary<int, int>> bySeason)
-    {
-        var totals = new Dictionary<int, int>();
-        foreach (var season in bySeason.Values)
-        {
-            foreach (var kv in season)
-            {
-                if (totals.TryGetValue(kv.Key, out var count))
-                {
-                    totals[kv.Key] = count + kv.Value;
-                }
-                else
-                {
-                    totals[kv.Key] = kv.Value;
-                }
-            }
-        }
-        return totals;
-    }
 }
-

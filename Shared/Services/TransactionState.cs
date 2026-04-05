@@ -5,6 +5,14 @@ using Shared.Models;
 
 namespace Shared.Services;
 
+
+/// <summary>
+/// Service that stores the transactions for the current league and allows filtering by type (["trade", "waiver", or "free_agent"]).
+/// </summary>
+/// <param name="sleeperApi"></param>
+/// <param name="leagueState"></param>
+/// <param name="http"></param>
+/// <param name="logger"></param>
 public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueState, HttpClient http, ILogger<TransactionState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;

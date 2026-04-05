@@ -1,0 +1,15 @@
+.card.shadow-sm {
+    color: inherit !important;
+}
+
+.common-container {
+    border-color: rgb(216 227 88 / 13%) !important;
+}
+
+.text-muted {
+    color: rgb(126 126 126) !important;
+}
+
+:root[data-theme="dark"] .common-container {
+    box-shadow: unset !important;
+}

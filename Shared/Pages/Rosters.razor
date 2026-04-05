@@ -1,10 +1,13 @@
 @page "/rosters"
 @using Shared.Models
 @using Shared.Services
+@using Microsoft.Extensions.Logging
+@inject ILogger<Rosters> ILogger
 @inject UserState UserState
 @inject RosterState RosterState
 @inject PlayerState PlayerState
 @inject LeagueState LeagueState
+
 
 <PageTitle>Rosters | @Brand</PageTitle>
 
@@ -213,7 +216,7 @@ else
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading rosters page: {ex.Message}");
+            ILogger.LogError(ex, "ERROR: {Message}", ex.Message);
             _isLoading = false;
         }
         finally 

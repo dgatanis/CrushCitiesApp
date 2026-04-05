@@ -1,18 +1,23 @@
 @page "/history/drafts"
+@using Microsoft.Extensions.Logging
 @using Microsoft.VisualBasic
 @using Shared.Models
 @using Shared.Services
+@inject ILogger<Drafts> ILogger
 @inject LeagueState LeagueState
 @inject DraftState DraftState
 @inject PlayerState PlayerState
 @inject RosterState RosterState
 @inject UserState UserState
 
+
 <PageTitle>Drafts | @Brand</PageTitle>
+
 
 <div class="d-flex justify-content-center">
     <h1>Drafts</h1>    
 </div>
+
 
 @if (_isLoading)
 {
@@ -100,6 +105,7 @@ else
     </div>
 }
 
+
 @code {
     private  List<DraftPickSeasonSummary> _draftHistory = [];
     private  List<DraftPicksModel> _draftPicks = [];
@@ -107,15 +113,18 @@ else
     public string? AppBrand { get; set; }
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
 
+
     private bool _isLoading = true;
     private string? _selectedDraftId;
     private string? _selectedPickedBy;
+
 
     protected override void OnInitialized()
     {
         _isLoading = true;
         _ = LoadPageAsync();
     }
+
 
     /// <summary>
     /// Loads all elements needed for the page
@@ -130,7 +139,7 @@ else
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading drafts page: {ex.Message}");
+            ILogger.LogError(ex, "ERROR: {Message}", ex.Message);
             _isLoading = false;
         }
         finally
@@ -140,6 +149,7 @@ else
         }
         
     }
+
 
     /// <summary>
     /// Load draft history beginning from current season until previous leagueId is null/not found
@@ -164,6 +174,7 @@ else
     }
 
 
+
     /// <summary>
     /// Gets the selection label based on the pick of the draft (ie 1.01, 2.02, 3.06...)
     /// </summary>
@@ -182,6 +193,7 @@ else
     }
 
 
+
     /// <summary>
     /// When user icon selected on the front end, update _selectedDraftId/_selectedPickedBy
     /// </summary>
@@ -194,6 +206,7 @@ else
             return;
         }
 
+
         // Toggle off if user clicks the same header again.
         if (string.Equals(_selectedDraftId, draftId, StringComparison.Ordinal) &&
             string.Equals(_selectedPickedBy, pickedBy, StringComparison.Ordinal))
@@ -203,9 +216,11 @@ else
             return;
         }
 
+
         _selectedDraftId = draftId;
         _selectedPickedBy = pickedBy;
     }
+
 
     /// <summary>
     /// Toggles whether the userid in that draftId was selected for styling
@@ -220,9 +235,11 @@ else
             return false;
         }
 
+
         return string.Equals(_selectedDraftId, draftId, StringComparison.Ordinal) &&
                string.Equals(_selectedPickedBy, teamUserId, StringComparison.Ordinal);
     }
+
 
 
     /// <summary>
@@ -238,13 +255,18 @@ else
             return string.Empty;
         }
 
+
         if (!string.Equals(_selectedDraftId, pick.DraftId, StringComparison.Ordinal))
         {
             return string.Empty;
         }
+
 
         return string.Equals(_selectedPickedBy, pick.PickedBy, StringComparison.Ordinal)
             ? "pick-highlight"
             : "pick-dim";
     }
 }
+
+
+

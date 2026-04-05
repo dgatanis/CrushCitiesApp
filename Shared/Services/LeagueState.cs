@@ -4,6 +4,11 @@ using System.Net;
 
 namespace Shared.Services;
 
+/// <summary>
+/// Service that stores all-time league details.
+/// </summary>
+/// <param name="sleeperApi"></param>
+/// <param name="logger"></param>
 public sealed class LeagueState(ISleeperAPI sleeperApi, ILogger<LeagueState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;

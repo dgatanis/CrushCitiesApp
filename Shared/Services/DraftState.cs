@@ -3,6 +3,13 @@ using Shared.Models;
 
 namespace Shared.Services;
 
+
+/// <summary>
+/// Service that stores all-time draft information and builds lookups for frequently accessed data.
+/// </summary>
+/// <param name="sleeperApi"></param>
+/// <param name="leagueState"></param>
+/// <param name="logger"></param>
 public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState, ILogger<DraftState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;

@@ -3,6 +3,12 @@ using Shared.Models;
 
 namespace Shared.Services;
 
+/// <summary>
+/// Service that stores all-time matchup information.
+/// </summary>
+/// <param name="sleeperApi"></param>
+/// <param name="leagueState"></param>
+/// <param name="logger"></param>
 public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState, ILogger<MatchupState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;

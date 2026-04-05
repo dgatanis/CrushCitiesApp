@@ -3,6 +3,15 @@ using Shared.Models;
 
 namespace Shared.Services;
 
+
+/// <summary>
+/// Service that stores the roster information for the current league and builds lookups for frequently accessed data.
+/// </summary>
+/// <param name="sleeperApi"></param>
+/// <param name="userState"></param>
+/// <param name="leagueState"></param>
+/// <param name="normalizer"></param>
+/// <param name="logger"></param>
 public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, LeagueState leagueState, INormalizer normalizer, ILogger<RosterState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;

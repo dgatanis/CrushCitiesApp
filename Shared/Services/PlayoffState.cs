@@ -3,6 +3,14 @@ using Shared.Models;
 
 namespace Shared.Services;
 
+
+/// <summary>
+/// Service that stores the playoff brackets for the current league and builds lookups for frequently accessed data.
+/// </summary>
+/// <param name="sleeperApi"></param>
+/// <param name="leagueState"></param>
+/// <param name="matchupState"></param>
+/// <param name="logger"></param>
 public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState, MatchupState matchupState, ILogger<PlayoffState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
