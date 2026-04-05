@@ -154,8 +154,8 @@ else
         {       
             await DraftState.EnsureLoadedAsync();
             
-            _draftHistory = DraftState.DraftHistory;
-            _draftPicks = DraftState.AllDraftPicks ?? [];
+            _draftHistory = DraftState.DraftHistory?.ToList() ?? new List<DraftPickSeasonSummary>();
+            _draftPicks = DraftState.AllDraftPicks?.ToList() ?? new List<DraftPicksModel>();
         }
         finally
         {

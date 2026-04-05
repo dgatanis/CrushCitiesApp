@@ -92,8 +92,8 @@ else
     private string? AppBrand { get; set; }
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
     private bool _isLoading = true;
-    private Dictionary<string, SeasonRecord> _recordsBySeason = new();
-    private Dictionary<string, Dictionary<int, int>> _highScoringWeeksByRosterId = new();
+    private Dictionary<string, SeasonRecord> _recordsBySeason = new Dictionary<string, SeasonRecord>();
+    private IReadOnlyDictionary<string, Dictionary<int, int>> _highScoringWeeksByRosterId = new Dictionary<string, Dictionary<int, int>>();
     private readonly List<SeasonRow> _currentSeasonRows = new();
     private readonly List<HighScoringRow> _highScoringRows = new();
 
@@ -132,8 +132,8 @@ else
     private async Task LoadStatsDataAsync()
     {
         await StatsData.EnsureLookupsLoadedAsync(); 
-        _recordsBySeason = StatsData.RecordsBySeason ?? new Dictionary<string, SeasonRecord>();
-        _highScoringWeeksByRosterId = StatsData.HighScoringWeeksByRosterId ?? new Dictionary<string, Dictionary<int, int>>();
+        _recordsBySeason = StatsData.RecordsBySeason?.ToDictionary() ?? new Dictionary<string, SeasonRecord>();
+        _highScoringWeeksByRosterId = StatsData.HighScoringWeeksByRosterId?.ToDictionary() ?? new Dictionary<string, Dictionary<int, int>>();
     }
 
     private void BuildCurrentSeasonRows()

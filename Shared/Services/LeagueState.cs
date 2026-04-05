@@ -1,18 +1,22 @@
+using Microsoft.Extensions.Logging;
 using Shared.Models;
 using System.Net;
 
 namespace Shared.Services;
 
-public sealed class LeagueState(ISleeperAPI sleeperApi)
+public sealed class LeagueState(ISleeperAPI sleeperApi, ILogger<LeagueState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
+    private readonly ILogger<LeagueState> _logger = logger;
     private Task? _loadTask;
     private bool _dataLoaded = false;
+    
+    private List<LeagueModel> _allLeagues = new List<LeagueModel>();
 
     /// <summary>
     /// List of all league details for this league. Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
-    public List<LeagueModel> AllLeagues { get; private set; } = new();
+    public IReadOnlyList<LeagueModel> AllLeagues => _allLeagues;
 
     /// <summary>
     /// The current league_id for this league.
@@ -48,7 +52,7 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
         {
             if (!IsLoaded || forceRefresh)
             {
-                AllLeagues.Clear();
+                _allLeagues.Clear();
                 var league_id = await GetCurrentLeagueIdAsync();
                 CurrentLeagueId = league_id ?? "-1";
                 while (!string.IsNullOrWhiteSpace(league_id))
@@ -56,7 +60,7 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
                     var league = await _sleeperApi.GetLeagueAsync(league_id ?? string.Empty);
                     if (league is not null)
                     {
-                        AllLeagues.Add(league);
+                        _allLeagues.Add(league);
                     }
                     league_id = await GetPreviousLeagueIdAsync(league_id ?? string.Empty);
                 }
@@ -68,7 +72,7 @@ public sealed class LeagueState(ISleeperAPI sleeperApi)
         {
             _loadTask = null;
             _dataLoaded = false;
-            Console.WriteLine($"ERROR: {ex.Message}");
+            _logger.LogError(ex, "ERROR: {Message}", ex.Message);
             throw;
         }
     }

@@ -1,38 +1,44 @@
+using Microsoft.Extensions.Logging;
 using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, INormalizer normalizer)
+public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, INormalizer normalizer, ILogger<UserState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
     private readonly INormalizer _normalizer = normalizer;
+    private readonly ILogger<UserState> _logger = logger;
     private Task? _loadTask;
-    private Task? _cacheTask;
+    private Task? _lookupTask;
     private bool _dataLoaded = false;
-    private bool _cacheLoaded = false;
+    private bool _lookupsLoaded = false;
+    
+    private List<UsersModel> _users = new List<UsersModel>();
+    private Dictionary<string, string> _teamNameByUserId = new Dictionary<string, string>();
+    private Dictionary<string, string> _ownerAvatarByUserId = new Dictionary<string, string>();
 
     /// <summary>
     /// List of all users. Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
-    public List<UsersModel>? Users { get; private set; } 
+    public IReadOnlyList<UsersModel>? Users => _users;
 
     /// <summary>
     /// Lookup dictionary for getting a users team name by providing their user_id (owner_id).
     /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public readonly Dictionary<string, string> TeamNameByUserId = new();
+    public IReadOnlyDictionary<string, string> TeamNameByUserId => _teamNameByUserId;
 
     /// <summary>
     /// Lookup dictionary for getting a users avatar by providing the user_id (owner_id).
     /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public readonly Dictionary<string, string> OwnerAvatarByUserId = new();
+    public IReadOnlyDictionary<string, string> OwnerAvatarByUserId => _ownerAvatarByUserId;
 
     /// <summary>
     /// Ensures the lookups are loaded
     /// </summary>
-    private bool IsCacheLoaded => _cacheLoaded;
+    private bool IsLookupLoaded => _lookupsLoaded;
 
     /// <summary>
     /// Ensures the Users data is loaded
@@ -57,7 +63,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
                 var users = await _sleeperApi.GetUsersForLeagueAsync(currentLeagueId);
                 if (users is not null)
                 {
-                    Users = _normalizer.NormalizeUsers(users);
+                    _users = _normalizer.NormalizeUsers(users);
                 }
             }
 
@@ -68,7 +74,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
         {
             _loadTask = null;
             _dataLoaded = false;
-            Console.WriteLine($"ERROR: {ex.Message}");
+            _logger.LogError(ex, "ERROR: {Message}", ex.Message);
             throw;
         }
     }
@@ -99,8 +105,8 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
         try
         {
             await EnsureLoadedAsync();
-            TeamNameByUserId.Clear();
-            OwnerAvatarByUserId.Clear();
+            _teamNameByUserId.Clear();
+            _ownerAvatarByUserId.Clear();
 
             // Get teamname by userid
             foreach (var user in Users ?? [])
@@ -113,7 +119,7 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
                     if (!string.IsNullOrWhiteSpace(fromUser))
                         teamName = fromUser;
 
-                    TeamNameByUserId[user.UserId] = teamName;
+                    _teamNameByUserId[user.UserId] = teamName;
                 }
             }
 
@@ -124,24 +130,24 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
 
                 if (!string.IsNullOrWhiteSpace(user.Metadata?.Avatar))
                 {
-                    OwnerAvatarByUserId[user.UserId] = user.Metadata.Avatar;
+                    _ownerAvatarByUserId[user.UserId] = user.Metadata.Avatar;
                 }
                 else if (!string.IsNullOrWhiteSpace(user.Avatar))
                 {
-                    OwnerAvatarByUserId[user.UserId] = $"https://sleepercdn.com/avatars/thumbs/{user.Avatar}";
+                    _ownerAvatarByUserId[user.UserId] = $"https://sleepercdn.com/avatars/thumbs/{user.Avatar}";
                 }
                 else
                 {
-                    OwnerAvatarByUserId[user.UserId] = "/images/question-mark.png";
+                    _ownerAvatarByUserId[user.UserId] = "/images/question-mark.png";
                 }
             }
-            _cacheLoaded = true;
+            _lookupsLoaded = true;
         }
         catch (Exception ex)
         {
-            _cacheTask = null;
-            _cacheLoaded = false;
-            Console.WriteLine($"ERROR: {ex.Message}");
+            _lookupTask = null;
+            _lookupsLoaded = false;
+            _logger.LogError(ex, "ERROR: {Message}", ex.Message);
             throw;
         }
     }
@@ -165,8 +171,9 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
     /// <returns></returns>
     public Task EnsureLookupsLoadedAsync()
     {
-        if (IsCacheLoaded) return Task.CompletedTask;
-        _cacheTask ??= BuildLookupsAsync();
-        return _cacheTask;
+        if (IsLookupLoaded) return Task.CompletedTask;
+        _lookupTask ??= BuildLookupsAsync();
+        return _lookupTask;
     }
 }
+

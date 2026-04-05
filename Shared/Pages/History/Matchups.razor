@@ -248,7 +248,7 @@ else
     private async Task LoadMatchupsAsync()
     {
         await MatchupState.EnsureLoadedAsync();
-        _matchups = MatchupState.AllMatchups ?? [];
+        _matchups = MatchupState.AllMatchups?.ToList() ?? new List<MatchupModel>();
     }
 
     /// <summary>
@@ -259,7 +259,7 @@ else
     {
         await RosterState.EnsureLoadedAsync();
         await RosterState.EnsureLookupsLoadedAsync();
-        _rosters = RosterState.Rosters;
+        _rosters = RosterState.Rosters?.ToList() ?? new List<RostersModel>();
     }
 
     /// <summary>
@@ -269,7 +269,7 @@ else
     private async Task  LoadStatsDataAsync()
     {
         await StatsData.EnsureLookupsLoadedAsync();
-        _recordsBySeason = StatsData.RecordsBySeason ?? new Dictionary<string, SeasonRecord>();
+        _recordsBySeason = StatsData.RecordsBySeason?.ToDictionary() ?? new Dictionary<string, SeasonRecord>();
     }
 
     /// <summary>
@@ -322,7 +322,7 @@ else
         _isLoading = true;
         MatchupState.ClearAllMatchups();
         await LoadMatchupsAsync();
-        _matchups = MatchupState.AllMatchups ?? [];
+        _matchups = MatchupState.AllMatchups?.ToList() ?? new List<MatchupModel>();
         _isLoading = false;
     }
 

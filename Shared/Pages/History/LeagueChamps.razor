@@ -149,10 +149,10 @@ else
     private async Task LoadPlayoffDataAsync()
     {
         await PlayoffState.EnsureLoadedAsync();
-        _winnersMatchups = PlayoffState.WinnersBracketMatchups;
-        _losersMatchups = PlayoffState.LosersBracketMatchups;
-        _winnersBrackets = PlayoffState.AllWinnersBrackets;
-        _losersBrackets = PlayoffState.AllLosersBrackets;
+        _winnersMatchups = PlayoffState.WinnersBracketMatchups?.ToList() ?? new List<MatchupModel>();
+        _losersMatchups = PlayoffState.LosersBracketMatchups?.ToList() ?? new List<MatchupModel>();
+        _winnersBrackets = PlayoffState.AllWinnersBrackets?.ToDictionary() ?? new Dictionary<string, List<PlayoffBracketsModel>>();
+        _losersBrackets = PlayoffState.AllLosersBrackets?.ToDictionary() ?? new Dictionary<string, List<PlayoffBracketsModel>>();
      }
 
 

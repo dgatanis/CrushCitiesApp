@@ -235,7 +235,7 @@ else
     private async Task LoadRostersAsync()
     {
         await RosterState.EnsureLoadedAsync();
-        _rosters = RosterState.Rosters ?? [];
+        _rosters = RosterState.Rosters?.ToList() ?? new List<RostersModel>();
     }
 
     /// <summary>

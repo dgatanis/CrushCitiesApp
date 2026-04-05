@@ -253,9 +253,9 @@ else
     private List<MatchupModel> _lowScoringTeams = new();
     private List<MatchupModel> _topScoringPlayers = new();
     private List<MatchupModel> _lowScoringPlayers = new();
-    private Dictionary<int, string> _recordByRosterId = new();
-    private Dictionary<int, int> _highScoringWeeksByRosterId = new();
-    private Dictionary<int, int> _lowScoringWeeksByRosterId = new();
+    private Dictionary<int, string> _recordByRosterId = new Dictionary<int, string>();
+    private Dictionary<int, int> _highScoringWeeksByRosterId = new Dictionary<int, int>();
+    private Dictionary<int, int> _lowScoringWeeksByRosterId = new Dictionary<int, int>();
     private List<KeyValuePair<MatchupModel, double>> _largestMarginOfVictory = new();
     private List<KeyValuePair<MatchupModel, double>> _tightestMarginOfVictory = new();
 
@@ -278,15 +278,15 @@ else
             await StatsData.EnsureLookupsLoadedAsync();
             await LeagueState.EnsureLoadedAsync();
 
-            _topScoringTeams = StatsData.TopScoringTeams.Take(10).ToList();
-            _lowScoringTeams = StatsData.LowScoringTeams.Take(10).ToList();
-            _topScoringPlayers = StatsData.TopScoringPlayers.Take(10).ToList();
-            _lowScoringPlayers = StatsData.LowScoringPlayers.Take(10).ToList();
-            _largestMarginOfVictory = StatsData.LargestMarginOfVictory.Take(10).ToList();
-            _tightestMarginOfVictory = StatsData.TightestMarginOfVictory.Take(10).ToList();
-            _recordByRosterId = SumRecords(StatsData.RecordsBySeason);
-            _highScoringWeeksByRosterId = SumHighScoringWeeks(StatsData.HighScoringWeeksByRosterId);
-            _lowScoringWeeksByRosterId = StatsData.LowScoringWeeksByRosterId;
+            _topScoringTeams = StatsData.TopScoringTeams.Take(10).ToList() ?? [];
+            _lowScoringTeams = StatsData.LowScoringTeams.Take(10).ToList() ?? [];
+            _topScoringPlayers = StatsData.TopScoringPlayers.Take(10).ToList() ?? [];
+            _lowScoringPlayers = StatsData.LowScoringPlayers.Take(10).ToList() ?? [];
+            _largestMarginOfVictory = StatsData.LargestMarginOfVictory.Take(10).ToList() ?? [];
+            _tightestMarginOfVictory = StatsData.TightestMarginOfVictory.Take(10).ToList() ?? [];
+            _recordByRosterId = SumRecords(StatsData.RecordsBySeason) ?? new Dictionary<int, string>();
+            _highScoringWeeksByRosterId = SumHighScoringWeeks(StatsData.HighScoringWeeksByRosterId) ?? new Dictionary<int, int>();
+            _lowScoringWeeksByRosterId = StatsData.LowScoringWeeksByRosterId?.ToDictionary() ?? new Dictionary<int, int>();
         }
         catch (Exception ex)
         {
@@ -300,7 +300,7 @@ else
         }
     }
 
-    private Dictionary<int, string> SumRecords(Dictionary<string, SeasonRecord> season_records)
+    private Dictionary<int, string> SumRecords(IReadOnlyDictionary<string, SeasonRecord> season_records)
     {
         var totals = new Dictionary<int, Record>();
 
@@ -352,7 +352,7 @@ else
         return result;
     }
 
-    private static Dictionary<int, int> SumHighScoringWeeks(Dictionary<string, Dictionary<int, int>> bySeason)
+    private static Dictionary<int, int> SumHighScoringWeeks(IReadOnlyDictionary<string, Dictionary<int, int>> bySeason)
     {
         var totals = new Dictionary<int, int>();
         foreach (var season in bySeason.Values)
