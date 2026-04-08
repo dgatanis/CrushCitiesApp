@@ -16,7 +16,7 @@
 }
 
 .fw-semibold {
-    color: rgb(126 126 126) !important;
+    color: rgb(178 135 25 / 92%) !important;
 }
 
 span.rz-legend-item-text {
@@ -58,5 +58,5 @@ span.rz-legend-item-text {
 @media (max-width: 1199px) { .line-chart { min-width: 960px; } }
 @media (max-width: 991px)  { .line-chart { min-width: 840px; } }
 @media (max-width: 767px)  { .line-chart { min-width: 720px; } }
-@media (max-width: 599px)  { .line-chart { min-width: 600px; } }
+@media (max-width: 599px)  { .line-chart { min-width: 600px; } .fw-semibold{ font-size: .7rem; } }
 @media (max-width: 479px)  { .line-chart { min-width: 520px; } }
