@@ -172,7 +172,7 @@ else
                         <div class="d-flex justify-content-center w-100 mt-4">
                             <RadzenChart Style="width: 100%; max-width: 600px;">
                                 <RadzenLegend Visible="false" />
-                                <RadzenPieSeries Data="@GetRosterPlayerCounts(roster.Players)" Title="Position" CategoryProperty="Position" ValueProperty="Count" ShowTooltipOnLegend="true" Radius="80" Fills="@pieColors" >
+                                <RadzenPieSeries Data="@GetRosterPlayerCounts(roster.Players!)" Title="Position" CategoryProperty="Position" ValueProperty="Count" ShowTooltipOnLegend="true" Radius="80" Fills="@pieColors" >
                                 </RadzenPieSeries>
                             </RadzenChart>
                         </div>

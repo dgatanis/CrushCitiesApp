@@ -38,6 +38,10 @@ span.rz-legend-item-text {
     border-color: rgb(111 83 0) !important;
 }
 
+.card-body {
+    background: transparent;
+}
+
 .stats-section {
     background: linear-gradient(135deg, rgb(230 244 255 / 5%) 0%, rgb(17 73 65 / 0.12) 65%, rgb(183 216 255 / 8%) 100%), 
                 linear-gradient(315deg, rgb(230 244 255 / 20%) 0%, rgb(17 73 65 / 0.12) 65%, rgba(183, 216, 255, 0.10) 100%), 
