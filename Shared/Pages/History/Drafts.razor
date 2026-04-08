@@ -1,18 +1,23 @@
 @page "/history/drafts"
+@using Microsoft.Extensions.Logging
 @using Microsoft.VisualBasic
 @using Shared.Models
 @using Shared.Services
+@inject ILogger<Drafts> ILogger
 @inject LeagueState LeagueState
 @inject DraftState DraftState
 @inject PlayerState PlayerState
 @inject RosterState RosterState
 @inject UserState UserState
 
+
 <PageTitle>Drafts | @Brand</PageTitle>
+
 
 <div class="d-flex justify-content-center">
     <h1>Drafts</h1>    
 </div>
+
 
 @if (_isLoading)
 {
@@ -100,6 +105,7 @@ else
     </div>
 }
 
+
 @code {
     private  List<DraftPickSeasonSummary> _draftHistory = [];
     private  List<DraftPicksModel> _draftPicks = [];
@@ -107,14 +113,43 @@ else
     public string? AppBrand { get; set; }
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
 
+
     private bool _isLoading = true;
     private string? _selectedDraftId;
     private string? _selectedPickedBy;
 
-    protected override async Task OnInitializedAsync()
+
+    protected override void OnInitialized()
     {
-        await LoadDraftHistory();
+        _isLoading = true;
+        _ = LoadPageAsync();
     }
+
+
+    /// <summary>
+    /// Loads all elements needed for the page
+    /// </summary>
+    /// <returns></returns>
+    private  async Task LoadPageAsync()
+    {
+        try
+        {
+            await Task.Yield();
+            await LoadDraftHistory();
+        }
+        catch (Exception ex)
+        {
+            ILogger.LogError(ex, "ERROR: {Message}", ex.Message);
+            _isLoading = false;
+        }
+        finally
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+        
+    }
+
 
     /// <summary>
     /// Load draft history beginning from current season until previous leagueId is null/not found
@@ -129,14 +164,15 @@ else
         {       
             await DraftState.EnsureLoadedAsync();
             
-            _draftHistory = DraftState.DraftHistory;
-            _draftPicks = DraftState.AllDraftPicks ?? [];
+            _draftHistory = DraftState.DraftHistory?.ToList() ?? new List<DraftPickSeasonSummary>();
+            _draftPicks = DraftState.AllDraftPicks?.ToList() ?? new List<DraftPicksModel>();
         }
         finally
         {
             _isLoading = false;
         }
     }
+
 
 
     /// <summary>
@@ -157,6 +193,7 @@ else
     }
 
 
+
     /// <summary>
     /// When user icon selected on the front end, update _selectedDraftId/_selectedPickedBy
     /// </summary>
@@ -169,6 +206,7 @@ else
             return;
         }
 
+
         // Toggle off if user clicks the same header again.
         if (string.Equals(_selectedDraftId, draftId, StringComparison.Ordinal) &&
             string.Equals(_selectedPickedBy, pickedBy, StringComparison.Ordinal))
@@ -178,9 +216,11 @@ else
             return;
         }
 
+
         _selectedDraftId = draftId;
         _selectedPickedBy = pickedBy;
     }
+
 
     /// <summary>
     /// Toggles whether the userid in that draftId was selected for styling
@@ -195,9 +235,11 @@ else
             return false;
         }
 
+
         return string.Equals(_selectedDraftId, draftId, StringComparison.Ordinal) &&
                string.Equals(_selectedPickedBy, teamUserId, StringComparison.Ordinal);
     }
+
 
 
     /// <summary>
@@ -213,13 +255,18 @@ else
             return string.Empty;
         }
 
+
         if (!string.Equals(_selectedDraftId, pick.DraftId, StringComparison.Ordinal))
         {
             return string.Empty;
         }
+
 
         return string.Equals(_selectedPickedBy, pick.PickedBy, StringComparison.Ordinal)
             ? "pick-highlight"
             : "pick-dim";
     }
 }
+
+
+

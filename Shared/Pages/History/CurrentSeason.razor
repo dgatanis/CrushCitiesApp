@@ -1,18 +1,21 @@
 @page "/history/current-season"
+@using Microsoft.Extensions.Logging
 @using Shared.Models
 @using Shared.Services
-@inject MatchupState MatchupState
+@inject ILogger<CurrentSeason> ILogger
 @inject LeagueState LeagueState
 @inject RosterState RosterState
 @inject UserState UserState
-@inject PlayerState PlayerState
 @inject StatsData StatsData
 
+
 <PageTitle>Current Season | @Brand</PageTitle>
+
 
 <div class="d-flex justify-content-center">
     <h1>Current Season</h1>
 </div>
+
 
 @if (_isLoading)
 {
@@ -89,59 +92,93 @@ else
     }
 }
 
+
 @code {
     [CascadingParameter(Name = "AppBrand")]
     private string? AppBrand { get; set; }
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
     private bool _isLoading = true;
-    private Dictionary<string, SeasonRecord> _recordsBySeason = new();
-    private Dictionary<string, Dictionary<int, int>> _highScoringWeeksByRosterId = new();
+    private Dictionary<string, SeasonRecord> _recordsBySeason = new Dictionary<string, SeasonRecord>();
+    private IReadOnlyDictionary<string, Dictionary<int, int>> _highScoringWeeksByRosterId = new Dictionary<string, Dictionary<int, int>>();
     private readonly List<SeasonRow> _currentSeasonRows = new();
     private readonly List<HighScoringRow> _highScoringRows = new();
 
-    protected override async Task OnInitializedAsync()
+
+    protected override void OnInitialized()
     {
-        await RosterState.EnsureLoadedAsync();
-        await RosterState.EnsureCacheLoadedAsync();
-        await LoadStatsDataAsync(); 
-        await LeagueState.EnsureLoadedAsync();
-        BuildCurrentSeasonRows();
-        BuildHighScoringRows();
-        _isLoading = false;
+        _isLoading = true;
+        _ = LoadPageAsync();
     }
+
+
+    /// <summary>
+    /// Loads all elements needed for the page
+    /// </summary>
+    /// <returns></returns>
+    private  async Task LoadPageAsync()
+    {
+        try
+        {
+            await RosterState.EnsureLoadedAsync();
+            await LeagueState.EnsureLoadedAsync();
+            await LoadStatsDataAsync(); 
+            BuildCurrentSeasonRows();
+            BuildHighScoringRows();
+        }
+        catch (Exception ex)        
+        {
+            ILogger.LogError(ex, "ERROR: {Message}", ex.Message);
+            _isLoading = false;
+        }
+        finally
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
 
     private async Task LoadStatsDataAsync()
     {
-        await StatsData.EnsureCacheLoadedAsync(); 
-        _recordsBySeason = StatsData.RecordsBySeason ?? new Dictionary<string, SeasonRecord>();
-        _highScoringWeeksByRosterId = StatsData.HighScoringWeeksByRosterId ?? new Dictionary<string, Dictionary<int, int>>();
+        await StatsData.EnsureLookupsLoadedAsync(); 
+        _recordsBySeason = StatsData.RecordsBySeason?.ToDictionary() ?? new Dictionary<string, SeasonRecord>();
+        _highScoringWeeksByRosterId = StatsData.HighScoringWeeksByRosterId?.ToDictionary() ?? new Dictionary<string, Dictionary<int, int>>();
     }
+
 
     private void BuildCurrentSeasonRows()
     {
         _currentSeasonRows.Clear();
 
+
         var seasonKey = GetSeasonKey();
         if (string.IsNullOrWhiteSpace(seasonKey)) return;
 
+
         if (!_recordsBySeason.TryGetValue(seasonKey, out var seasonRecord)) return;
+
 
         var league = LeagueState.AllLeagues.FirstOrDefault(l => l.Season == seasonKey)
                      ?? LeagueState.AllLeagues.FirstOrDefault(l => l.LeagueId == LeagueState.CurrentLeagueId);
         var playoffStart = league?.Settings?.PlayoffWeekStart ?? int.MaxValue;
         var lastScored = league?.Settings?.LastScoredLeg ?? 0;
 
+
         var cappedWeek = playoffStart > 0 ? Math.Min(lastScored, playoffStart - 1) : lastScored;
         if (cappedWeek < 1) return;
+
 
         var latestWeek = seasonRecord.WeeksByNumber.Keys
             .Where(w => w <= cappedWeek)
             .DefaultIfEmpty(0)
             .Max();
 
+
         if (latestWeek == 0) return;
 
+
         if (!seasonRecord.WeeksByNumber.TryGetValue(latestWeek, out var weekRecord)) return;
+
 
         var ordered = weekRecord.ByRoster
             .Select(kv => new
@@ -156,6 +193,7 @@ else
             .ThenByDescending(x => x.Record.PointsFor)
             .ToList();
 
+
         for (var i = 0; i < ordered.Count; i++)
         {
             var item = ordered[i];
@@ -163,19 +201,24 @@ else
         }
     }
 
+
     private void BuildHighScoringRows()
     {
         _highScoringRows.Clear();
 
+
         var seasonKey = GetSeasonKey();
         if (string.IsNullOrWhiteSpace(seasonKey)) return;
+
 
         _highScoringWeeksByRosterId.TryGetValue(seasonKey, out var seasonCounts);
         seasonCounts ??= new Dictionary<int, int>();
 
+
         var rosterIds = RosterState.TeamNameByRosterId.Keys
             .Distinct()
             .ToList();
+
 
         foreach (var rosterId in rosterIds)
         {
@@ -186,6 +229,7 @@ else
             _highScoringRows.Add(new HighScoringRow(teamName, count));
         }
 
+
         _highScoringRows.Sort((a, b) =>
         {
             var countCompare = b.Count.CompareTo(a.Count);
@@ -193,6 +237,7 @@ else
             return string.Compare(a.TeamName, b.TeamName, StringComparison.OrdinalIgnoreCase);
         });
     }
+
 
     private string GetSeasonKey()
     {
@@ -202,11 +247,17 @@ else
             return currentSeason;
         }
 
+
         return _recordsBySeason.Keys
             .OrderByDescending(k => k)
             .FirstOrDefault() ?? string.Empty;
     }
 
+
     private sealed record SeasonRow(int Rank, string TeamName, Record Record, int RosterId);
     private sealed record HighScoringRow(string TeamName, int Count);
 }
+
+
+
+

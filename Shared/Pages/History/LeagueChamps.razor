@@ -1,17 +1,22 @@
 @page "/history/champs"
+@using Microsoft.Extensions.Logging
 @using Shared.Models
 @using Shared.Services
+@inject ILogger<LeagueChamps> ILogger
 @inject PlayoffState PlayoffState 
 @inject RosterState RosterState
 @inject LeagueState LeagueState
 @inject PlayerState PlayerState
 @inject UserState UserState
 
+
 <PageTitle>League Champs</PageTitle>
+
 
 <div class="d-flex justify-content-center">
     <h1>League Champs</h1>    
 </div>
+
 
 @if (_isLoading)
 {
@@ -83,6 +88,7 @@ else
                         ? user_id
                         : null;
 
+
                     <div class="mt-4">
                         <div class="row g-3 justify-content-center">
                             <div class="col-12 col-md-6 col-lg-4 d-flex">
@@ -106,6 +112,7 @@ else
     </div>
 }
 
+
 @code {
     private bool _isLoading = true;
     private List<MatchupModel> _winnersMatchups = new();
@@ -114,18 +121,50 @@ else
     private Dictionary<string, List<PlayoffBracketsModel>> _losersBrackets = new();
     private Dictionary<string, int> _previousChamps = new ();
 
-    protected override async Task OnInitializedAsync()
+
+    protected override void OnInitialized()
+    {
+        _isLoading = true;
+        _ = LoadPageAsync();
+    }
+
+
+    /// <summary>
+    /// Loads all elements needed for the page
+    /// </summary>
+    /// <returns></returns>
+    private  async Task LoadPageAsync()
+    {
+        try
+        {
+            await Task.Yield();
+            await RosterState.EnsureLoadedAsync();
+            await PlayerState.EnsureLookupsLoadedAsync();
+            await LoadPlayoffDataAsync();
+            LoadPreviousChamps();
+        }
+        catch (Exception ex)
+        {
+            ILogger.LogError(ex, "ERROR: {Message}", ex.Message);
+            _isLoading = false;
+        }
+        finally
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+
+    private async Task LoadPlayoffDataAsync()
     {
         await PlayoffState.EnsureLoadedAsync();
-        await RosterState.EnsureLoadedAsync();
+        _winnersMatchups = PlayoffState.WinnersBracketMatchups?.ToList() ?? new List<MatchupModel>();
+        _losersMatchups = PlayoffState.LosersBracketMatchups?.ToList() ?? new List<MatchupModel>();
+        _winnersBrackets = PlayoffState.AllWinnersBrackets?.ToDictionary() ?? new Dictionary<string, List<PlayoffBracketsModel>>();
+        _losersBrackets = PlayoffState.AllLosersBrackets?.ToDictionary() ?? new Dictionary<string, List<PlayoffBracketsModel>>();
+     }
 
-        LoadPreviousChamps();
-        _winnersMatchups = PlayoffState.WinnersBracketMatchups;
-        _losersMatchups = PlayoffState.LosersBracketMatchups;
-        _winnersBrackets = PlayoffState.AllWinnersBrackets;
-        _losersBrackets = PlayoffState.AllLosersBrackets;
-        _isLoading = false;
-    }
 
 
     /// <summary>
@@ -140,3 +179,6 @@ else
         _previousChamps.Add("2020", 7);
     }
 }
+
+
+

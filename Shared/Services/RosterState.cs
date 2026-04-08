@@ -1,51 +1,69 @@
+using Microsoft.Extensions.Logging;
 using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, LeagueState leagueState, INormalizer normalizer)
+
+/// <summary>
+/// Service that stores the roster information for the current league and builds lookups for frequently accessed data.
+/// </summary>
+/// <param name="sleeperApi"></param>
+/// <param name="userState"></param>
+/// <param name="leagueState"></param>
+/// <param name="normalizer"></param>
+/// <param name="logger"></param>
+public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, LeagueState leagueState, INormalizer normalizer, ILogger<RosterState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly UserState _userState = userState;
     private readonly LeagueState _leagueState = leagueState;
     private readonly INormalizer _normalizer = normalizer;
+    private readonly ILogger<RosterState> _logger = logger;
     private Task? _loadTask;
-    private Task? _cacheTask;
+    private Task? _lookupTask;
     private bool _dataLoaded = false;
-    private bool _cacheLoaded = false;
+    private bool _lookupsLoaded = false;
+    
+    private List<RostersModel>? _rosters = new List<RostersModel>();
+    private Dictionary<int, string> _teamNameByRosterId = new();
+    private Dictionary<(int roster_id, string player_id), string> _playerNicknameByRosterId = new();
+    private Dictionary<string, int> _rosterIdByUserId = new();
+    private Dictionary<string, string> _userIdByRosterId = new();
+
 
     /// <summary>
     /// List of all rosters. Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
-    public List<RostersModel>? Rosters { get; private set; }
+    public IReadOnlyList<RostersModel>? Rosters => _rosters;
 
     /// <summary>
     /// Lookup dictionary for getting the team name by providing the roster_id.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public readonly Dictionary<int, string> TeamNameByRosterId = new();
+    public IReadOnlyDictionary<int, string> TeamNameByRosterId => _teamNameByRosterId;
 
     /// <summary>
     /// Lookup dictionary for getting the player nickname by providing the roster_id and player_id.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public readonly Dictionary<(int roster_id, string player_id), string> PlayerNicknameByRosterId = new();
+    public IReadOnlyDictionary<(int roster_id, string player_id), string> PlayerNicknameByRosterId => _playerNicknameByRosterId;
 
     /// <summary>
     /// Lookup dictionary for getting the user_id (owner_id) by providing the roster_id.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public readonly Dictionary<string, int> RosterIdByUserId = new();
+    public IReadOnlyDictionary<string, int> RosterIdByUserId => _rosterIdByUserId;
 
     /// <summary>
     /// Lookup dictionary for getting a user_id by providing the roster_id.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public readonly Dictionary<string, string> UserIdByRosterId = new();
+    public IReadOnlyDictionary<string, string> UserIdByRosterId => _userIdByRosterId;
 
     /// <summary>
     /// Ensures the cached lookups are loaded
     /// </summary>
-    private bool IsCacheLoaded => _cacheLoaded;
+    private bool IsLookupLoaded => _lookupsLoaded;
     
     /// <summary>
     /// Esnures the Rosters data is loaded
@@ -72,18 +90,18 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
                 var rosters = await _sleeperApi.GetRostersForLeagueAsync(currentLeagueId);
                 if (rosters is {Count: > 0})
                 {
-                    Rosters = _normalizer.NormalizeRosters(rosters);
+                    _rosters = _normalizer.NormalizeRosters(rosters);
                 }
             }
             _dataLoaded = true;
-            await BuildLookupCachesAsync();
+            await BuildLookupsAsync();
             
         }
         catch (Exception ex)
         {
             _loadTask = null;
             _dataLoaded = false;
-            Console.WriteLine($"ERROR: {ex.Message}");
+            _logger.LogError(ex, "ERROR: {Message}", ex.Message);
             throw;
         }
 
@@ -94,15 +112,15 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    private async Task BuildLookupCachesAsync()
+    private async Task BuildLookupsAsync()
     {
         try
         {
             await _userState.EnsureLoadedAsync();
-            TeamNameByRosterId.Clear();
-            PlayerNicknameByRosterId.Clear();
-            RosterIdByUserId.Clear();
-            UserIdByRosterId.Clear();
+            _teamNameByRosterId.Clear();
+            _playerNicknameByRosterId.Clear();
+            _rosterIdByUserId.Clear();
+            _userIdByRosterId.Clear();
 
             var userIds = (_userState.Users ?? [])
                 .Where(u => !string.IsNullOrWhiteSpace(u?.UserId))
@@ -121,7 +139,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
                         teamName = fromUser;
                 }
                 
-                TeamNameByRosterId[roster.RosterId] = teamName;
+                _teamNameByRosterId[roster.RosterId] = teamName;
             }
 
 
@@ -141,7 +159,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
                     var nickname = kvp.Value ?? "";
                     if (nickname.Length == 0) continue;
 
-                    PlayerNicknameByRosterId[(roster.RosterId, playerId)] = nickname;
+                    _playerNicknameByRosterId[(roster.RosterId, playerId)] = nickname;
                 }
             }
 
@@ -149,7 +167,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
             foreach (var roster in Rosters ?? [])
             {
                 if (string.IsNullOrWhiteSpace(roster.OwnerId)) continue;
-                RosterIdByUserId[roster.OwnerId] = roster.RosterId;
+                _rosterIdByUserId[roster.OwnerId] = roster.RosterId;
             }
 
             // Get user_id by roster_id
@@ -158,16 +176,16 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
                 if (string.IsNullOrWhiteSpace(roster?.OwnerId)) continue;
                 if (!userIds.Contains(roster.OwnerId)) continue;
 
-                UserIdByRosterId[roster.RosterId.ToString()] = roster.OwnerId;
+                _userIdByRosterId[roster.RosterId.ToString()] = roster.OwnerId;
             }
 
-            _cacheLoaded = true;
+            _lookupsLoaded = true;
         }
         catch (Exception ex)
         {
-            _cacheTask = null;
-            _cacheLoaded = false;
-            Console.WriteLine($"ERROR: {ex.Message}");
+            _lookupTask = null;
+            _lookupsLoaded = false;
+            _logger.LogError(ex, "ERROR: {Message}", ex.Message);
             throw;
         }
 
@@ -186,13 +204,14 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
 
     
     /// <summary>
-    /// Ensures the cached data is loaded.
+    /// Ensures the lookup data is loaded.
     /// </summary>
     /// <returns></returns>
-    public Task EnsureCacheLoadedAsync()
+    public Task EnsureLookupsLoadedAsync()
     {
-        if (IsCacheLoaded) return Task.CompletedTask;
-        _cacheTask ??= BuildLookupCachesAsync();
-        return _cacheTask;
+        if (IsLookupLoaded) return Task.CompletedTask;
+        _lookupTask ??= BuildLookupsAsync();
+        return _lookupTask;
     }
 }
+

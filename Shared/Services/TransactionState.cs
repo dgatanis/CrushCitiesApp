@@ -1,21 +1,33 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic;
 using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueState, HttpClient http)
+
+/// <summary>
+/// Service that stores the transactions for the current league and allows filtering by type (["trade", "waiver", or "free_agent"]).
+/// </summary>
+/// <param name="sleeperApi"></param>
+/// <param name="leagueState"></param>
+/// <param name="http"></param>
+/// <param name="logger"></param>
+public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueState, HttpClient http, ILogger<TransactionState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
     private readonly HttpClient _http = http;
+    private readonly ILogger<TransactionState> _logger = logger;
     private Task? _loadTask;
     private bool _dataLoaded = false;
+    
+    private List<TransactionsModel> _transactions = new List<TransactionsModel>();
 
     /// <summary>
     /// List of all transactions. Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
-    public List<TransactionsModel> Transactions { get; private set; } = new();
+    public IReadOnlyList<TransactionsModel> Transactions => _transactions;
 
     /// <summary>
     /// Ensures Transactions data is loaded
@@ -38,7 +50,7 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
 
             if (!IsLoaded || forceRefresh)
             {
-                Transactions.Clear();
+                _transactions.Clear();
                 await _leagueState.EnsureLoadedAsync();
                 
                 foreach(var league in _leagueState.AllLeagues)
@@ -52,7 +64,7 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
 
                             if (transactions is not null)
                             {
-                                Transactions.AddRange(transactions);
+                                _transactions.AddRange(transactions);
                             }
                         }
                     }
@@ -60,7 +72,7 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
 
                 if (fleaflicker_trades is not null)
                 {
-                    Transactions.AddRange(fleaflicker_trades);
+                    _transactions.AddRange(fleaflicker_trades);
                 }
             }
             _dataLoaded = true;
@@ -69,7 +81,7 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
         {
             _loadTask = null;
             _dataLoaded = false;
-            Console.WriteLine($"ERROR: {ex.Message}");
+            _logger.LogError(ex, "ERROR: {Message}", ex.Message);
             throw;
         }
     }

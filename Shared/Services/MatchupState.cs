@@ -1,20 +1,29 @@
+using Microsoft.Extensions.Logging;
 using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState)
+/// <summary>
+/// Service that stores all-time matchup information.
+/// </summary>
+/// <param name="sleeperApi"></param>
+/// <param name="leagueState"></param>
+/// <param name="logger"></param>
+public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState, ILogger<MatchupState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
+    private readonly ILogger<MatchupState> _logger = logger;
+    private sealed record PlayoffKey(string LeagueId, string Week, int MatchupId);
     private Task? _loadTask;
     private bool _dataLoaded = false;
-
-    private sealed record PlayoffKey(string LeagueId, string Week, int MatchupId);
+    
+    private List<MatchupModel> _allMatchups = new List<MatchupModel>();
 
     /// <summary>
     /// List of MatchupModels. Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
-    public List<MatchupModel>? AllMatchups { get; set; } = new();
+    public IReadOnlyList<MatchupModel> AllMatchups => _allMatchups;
 
     /// <summary>
     /// Ensures AllMatchups is loaded
@@ -115,7 +124,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
                                     .Where(m => existing.Add((m.Season, m.Week, m.MatchupId, m.RosterId)))
                                     .OrderBy(m => m.MatchupId);
 
-                                AllMatchups?.AddRange(newItems);
+                                _allMatchups?.AddRange(newItems);
                             }
                         }
                     }
@@ -130,7 +139,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
                         .Select(m => (m.LeagueId!, m.Week!, m.MatchupId!.Value))
                         .ToHashSet();
                     
-                    AllMatchups = AllMatchups.Where(m =>
+                    _allMatchups = AllMatchups.Where(m =>
                     {
                         if (m.LeagueId is null || m.Week is null) return false;
                         if (!playoffStartsByLeague.TryGetValue(m.LeagueId, out var start)) return true;
@@ -150,7 +159,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
         {
             _loadTask = null;
             _dataLoaded = false;
-            Console.WriteLine($"ERROR: {ex.Message}");
+            _logger.LogError(ex, "ERROR: {Message}", ex.Message);
             throw;
         }
     }
@@ -161,7 +170,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
     /// </summary>
     public void ClearAllMatchups()
     {
-        AllMatchups = [];
+        _allMatchups = [];
     }
 
 

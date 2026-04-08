@@ -1,17 +1,22 @@
 @page "/history/matchups"
+@using Microsoft.Extensions.Logging
 @using Shared.Models
 @using Shared.Services
+@inject ILogger<Matchups> ILogger
 @inject MatchupState MatchupState
 @inject RosterState RosterState
 @inject UserState UserState
 @inject PlayerState PlayerState
 @inject StatsData StatsData
 
+
 <PageTitle>Matchups | @Brand</PageTitle>
+
 
 <div class="d-flex justify-content-center">
     <h1>Matchups</h1>    
 </div>
+
 
 @if (_isLoading)
 {
@@ -94,6 +99,7 @@ else
             var season = seasonGroup.Key;
             var seasonCollapseId = $"collapseSeason{season}";
 
+
             <div class="accordion-item" style="background: var(--faded-background);">
                 <h2 class="accordion-header" id="@($"headingSeason{season}")">
                     <button class="accordion-button collapsed faded show" type="button" data-bs-toggle="collapse" data-bs-target="@($"#{seasonCollapseId}")" aria-expanded="false" aria-controls="@seasonCollapseId">
@@ -113,6 +119,7 @@ else
                                 var weekCollapseId = $"collapseWeek{season}_{week}";
                                 var weekLabel = int.Parse(week ?? "0") == 15 ? "Playoffs Round 1" : int.Parse(week ?? "0") == 16 ? "Semifinals" : int.Parse(week ?? "0") == 17 ? "Finals" : $"Week {week}";
 
+
                                 <div class="accordion-item" style="background: transparent;background: transparent;box-shadow: unset !important;border: unset !important;">
                                     <h2 class="accordion-header" id="@($"headingWeek{season}_{week}")">
                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="@($"#{weekCollapseId}")" aria-expanded="false" aria-controls="@weekCollapseId">
@@ -129,6 +136,7 @@ else
                                                 var winnerRosterId = StatsData.GetWinnerRosterId(matchupPartition);
                                                 var matchupKey = matchupPartition.Key?.ToString() ?? "na";
                                                 var teams = matchupPartition.OrderBy(m => m.RosterId).ToList();
+
 
                                                 <div class="mb-3 p-2 border rounded">
                                                     <div class="row g-2 mt-1 justify-content-center align-items-center matchup-row">
@@ -161,6 +169,7 @@ else
                                                                             slotIndex++;
                                                                             var player = PlayerState.PlayerById.TryGetValue(playerId, out var p) ? p : null;
                                                                             var positionLabel = slotIndex == 7 || slotIndex == 8 ? "FLEX" : slotIndex == 9 ? "SF" : player?.Position;
+
 
                                                                             <div class="player-row">
                                                                                 <div class="player-position" style="color:var(--@(player?.Position?.ToUpper()))">@positionLabel</div>
@@ -196,6 +205,7 @@ else
     </div>
 }
 
+
 @code {
     [CascadingParameter(Name = "AppBrand")]
     public string? AppBrand { get; set; }
@@ -209,11 +219,14 @@ else
 
 
 
+
+
     protected override void OnInitialized()
     {
         _isLoading = true;
         _ = LoadPageAsync();
     }
+
 
     /// <summary>
     /// Loads all elements needed for the page
@@ -229,12 +242,18 @@ else
             await LoadRostersAsync();
             await LoadStatsDataAsync();
         }
+        catch (Exception ex)
+        {
+            ILogger.LogError(ex, "ERROR: {Message}", ex.Message);
+            _isLoading = false;
+        }
         finally
         {
             _isLoading = false;
             await InvokeAsync(StateHasChanged);
         }
     }
+
 
     /// <summary>
     /// Loads All Matchups 
@@ -243,8 +262,9 @@ else
     private async Task LoadMatchupsAsync()
     {
         await MatchupState.EnsureLoadedAsync();
-        _matchups = MatchupState.AllMatchups ?? [];
+        _matchups = MatchupState.AllMatchups?.ToList() ?? new List<MatchupModel>();
     }
+
 
     /// <summary>
     /// Loads Rosters 
@@ -253,9 +273,10 @@ else
     private async Task LoadRostersAsync()
     {
         await RosterState.EnsureLoadedAsync();
-        await RosterState.EnsureCacheLoadedAsync();
-        _rosters = RosterState.Rosters;
+        await RosterState.EnsureLookupsLoadedAsync();
+        _rosters = RosterState.Rosters?.ToList() ?? new List<RostersModel>();
     }
+
 
     /// <summary>
     /// Loads Stats data
@@ -263,9 +284,10 @@ else
     /// <returns></returns>
     private async Task  LoadStatsDataAsync()
     {
-        await StatsData.EnsureCacheLoadedAsync();
-        _recordsBySeason = StatsData.RecordsBySeason ?? new Dictionary<string, SeasonRecord>();
+        await StatsData.EnsureLookupsLoadedAsync();
+        _recordsBySeason = StatsData.RecordsBySeason?.ToDictionary() ?? new Dictionary<string, SeasonRecord>();
     }
+
 
     /// <summary>
     /// Gets the roster names for dropdowns 
@@ -280,6 +302,7 @@ else
             : $"Roster {rosterId}";
     }
 
+
     /// <summary>
     /// Based on the selections in the dropdowns (neither dropdown is required) show matchups for those _selectedRosterId/s
     /// </summary>
@@ -291,12 +314,15 @@ else
         if (_selectedRosterId1 == -1 && _selectedRosterId2 == -1)
             return true;
 
+
         // one roster selected -> show if week has that roster anywhere
         if (_selectedRosterId1 != -1 && _selectedRosterId2 == -1)
             return group.Any(m => m.RosterId == _selectedRosterId1);
 
+
         if (_selectedRosterId1 == -1 && _selectedRosterId2 != -1)
             return group.Any(m => m.RosterId == _selectedRosterId2);
+
 
         // show only if at least one matchup in this week has both rosters
         return group
@@ -308,6 +334,7 @@ else
             });
     }
 
+
     /// <summary>
     /// Reload all of the matchups
     /// </summary>
@@ -317,9 +344,10 @@ else
         _isLoading = true;
         MatchupState.ClearAllMatchups();
         await LoadMatchupsAsync();
-        _matchups = MatchupState.AllMatchups ?? [];
+        _matchups = MatchupState.AllMatchups?.ToList() ?? new List<MatchupModel>();
         _isLoading = false;
     }
+
 
     /// <summary>
     /// Shows the record of the team for the given season/week/roster_id
@@ -336,6 +364,7 @@ else
             return string.Empty;
         }
 
+
         if (_recordsBySeason.TryGetValue(season, out var seasonRecord) &&
             seasonRecord.WeeksByNumber.TryGetValue(weekNumber.Value, out var weekRecord) &&
             weekRecord.ByRoster.TryGetValue(rosterId, out var record))
@@ -343,7 +372,13 @@ else
             return record.Display;
         }
 
+
         return string.Empty;
     }
 
+
 }
+
+
+
+

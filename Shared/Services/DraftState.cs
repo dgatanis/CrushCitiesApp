@@ -1,37 +1,50 @@
+using Microsoft.Extensions.Logging;
 using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
+
+/// <summary>
+/// Service that stores all-time draft information and builds lookups for frequently accessed data.
+/// </summary>
+/// <param name="sleeperApi"></param>
+/// <param name="leagueState"></param>
+/// <param name="logger"></param>
+public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState, ILogger<DraftState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly LeagueState _leagueState = leagueState;
+    private readonly ILogger<DraftState> _logger = logger;
     private Task? _loadTask;
-    private Task? _cacheTask;
-    private bool _cacheLoaded = false;
+    private Task? _lookupTask;
+    private bool _lookupsLoaded = false;
     private bool _dataLoaded = false;
+    
+    private List<DraftsModel>? _allDrafts = new List<DraftsModel>();
+    private List<DraftPicksModel>? _allDraftPicks = new List<DraftPicksModel>();
+    private List<DraftPickSeasonSummary> _draftHistory = new List<DraftPickSeasonSummary>();
     
     /// <summary>
     /// List of all drafts for a league (DraftsModel). Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
-    public List<DraftsModel>? AllDrafts { get; private set; } = new();
+    public IReadOnlyList<DraftsModel>? AllDrafts => _allDrafts;
 
     /// <summary>
     /// List of all draft picks for a league (DraftPicksModel). Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
-    public List<DraftPicksModel>? AllDraftPicks { get; private set; }
+    public IReadOnlyList<DraftPicksModel>? AllDraftPicks => _allDraftPicks;
 
     /// <summary>
     /// Lookup list for finding quick details about a draft.
     /// Stores Season, LeagueId, DraftId and a mapping between roster_id and draft_slot for that draft.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public List<DraftPickSeasonSummary> DraftHistory { get; private set; } = new();
+    public IReadOnlyList<DraftPickSeasonSummary> DraftHistory => _draftHistory;
 
     /// <summary>
     /// Ensures lookups are loaded
     /// </summary>
-    private bool IsCacheLoaded => _cacheLoaded;
+    private bool IsLookupLoaded => _lookupsLoaded;
 
     /// <summary>
     /// Ensures AllDrafts and AllDraftPicks is loaded
@@ -52,8 +65,8 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
             if (!IsLoaded || forceRefresh)
             {
                 await _leagueState.EnsureLoadedAsync();
-                AllDrafts = new();
-                AllDraftPicks = new();
+                _allDrafts = new();
+                _allDraftPicks = new();
 
                 foreach(var league in _leagueState.AllLeagues)
                 {
@@ -61,28 +74,28 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
 
                     if (drafts is { Count: > 0 })
                     {
-                        AllDrafts.AddRange(drafts.ToList());
+                        _allDrafts.AddRange(drafts.ToList());
                         var Draft = drafts.FirstOrDefault();
 
                         var draftId = Draft?.DraftId;
                         if (!string.IsNullOrWhiteSpace(draftId))
                         {
                             var picks = await _sleeperApi.GetDraftPicksForDraftAsync(draftId);
-                            AllDraftPicks.AddRange(picks?.Where(p => p is not null).Select(p => p!).ToList() ?? []);
+                            _allDraftPicks?.AddRange(picks?.Where(p => p is not null).Select(p => p!).ToList() ?? []);
                         }
                     }
                 }
             }
 
             _dataLoaded = true;
-            await BuildLookupCachesAsync();
+            await BuildLookupsAsync();
             
         }
         catch (Exception ex)
         {
             _loadTask = null;
             _dataLoaded = false;
-            Console.WriteLine($"ERROR: {ex.Message}");
+            _logger.LogError(ex, "ERROR: {Message}", ex.Message);
             throw;
         }
     }
@@ -91,11 +104,11 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    private async Task BuildLookupCachesAsync()
+    private async Task BuildLookupsAsync()
     {
         try
         {
-            DraftHistory.Clear();
+            _draftHistory.Clear();
 
             // Draft History
             foreach(var draft in AllDrafts ?? [])
@@ -104,7 +117,7 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
                                                                 kvp.Value, kvp => kvp.Key)
                                                                 ?? new Dictionary<int, string>();
 
-                DraftHistory.Add(new DraftPickSeasonSummary
+                _draftHistory.Add(new DraftPickSeasonSummary
                 {
                     Season = draft.Season,
                     LeagueId = draft.LeagueId,
@@ -112,13 +125,13 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
                     DraftOrder = slotToOwner
                 });
             }
-            _cacheLoaded = true;
+            _lookupsLoaded = true;
         }
         catch (Exception ex)
         {
-            _cacheTask = null;
-            _cacheLoaded = false;
-            Console.WriteLine($"ERROR: {ex.Message}");
+            _lookupTask = null;
+            _lookupsLoaded = false;
+            _logger.LogError(ex, "ERROR: {Message}", ex.Message);
             throw;
         }
     }
@@ -137,13 +150,14 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState)
 
 
     /// <summary>
-    /// Ensures the cached data is loaded.
+    /// Ensures the lookup data is loaded.
     /// </summary>
     /// <returns></returns>
-    public Task EnsureCacheLoadedAsync()
+    public Task EnsureLookupsLoadedAsync()
     {
-        if (IsCacheLoaded) return Task.CompletedTask;
-        _cacheTask ??= BuildLookupCachesAsync();
-        return _cacheTask;
+        if (IsLookupLoaded) return Task.CompletedTask;
+        _lookupTask ??= BuildLookupsAsync();
+        return _lookupTask;
     }
 }
+

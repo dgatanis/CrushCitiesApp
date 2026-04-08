@@ -1,40 +1,46 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using Shared.Models;
 
 namespace Shared.Services;
 
-public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
+
+/// <summary>
+/// Service that stores the NFL player data for the current league and builds lookups for frequently accessed data.
+/// Utilizes localStorage to cache the player data and reduce load times on subsequent visits, with a TTL of 6 hours for cache invalidation.
+/// </summary>
+/// <param name="sleeperApi"></param>
+/// <param name="js"></param>
+/// <param name="logger"></param>
+public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, ILogger<PlayerState> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly IJSRuntime _js = js;
+    private readonly ILogger<PlayerState> _logger = logger;
     private const string NflPlayersCacheKey = "sleeper:nfl:players-lite:v1";
     private static readonly TimeSpan NflPlayersCacheTtl = TimeSpan.FromHours(6);
     private Dictionary<string, PlayerLiteModel>? _memoryPlayers;
     private DateTimeOffset _memoryExpiration;
-    private Task? _cacheTask;
-    
+    private Task? _lookupTask;
     private Task? _loadTask;
     private bool _dataLoaded = false;
-    private bool _cacheLoaded = false;
+    private bool _lookupsLoaded = false;
+    
+    private Dictionary<string, PlayerLiteModel> _playerById = new();
+    private Dictionary<string, string> _playerNFLTeamImageByAbbr = new();
 
     /// <summary>
     /// Lookup dictionary for getting a PlayerLite model by providing the player_id. 
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLoadedAsync() before accessing.
     /// </summary>
-    public readonly Dictionary<string, PlayerLiteModel> PlayerById = new();
+    public IReadOnlyDictionary<string, PlayerLiteModel> PlayerById => _playerById;
     
     /// <summary>
     /// Lookup dictionary for getting a players nfl team image by providing the team_abbr (MIA, TEN, WAS...).
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public Dictionary<string, string> PlayerNFLTeamImageByAbbr = new();
-
-    /// <summary>
-    /// Dictionary to store the player_id by the PlayerLiteModel. 
-    /// Verify using EnsureLoadedAsync() before accessing.
-    /// </summary>
-    public Dictionary<string, PlayerLiteModel>? Players { get; private set; }
+    public IReadOnlyDictionary<string, string> PlayerNFLTeamImageByAbbr => _playerNFLTeamImageByAbbr;
 
     /// <summary>
     /// Ensures that the Players data is loaded
@@ -44,7 +50,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
     /// <summary>
     /// Ensures the lookups are loaded
     /// </summary>
-    private bool IsCacheLoaded => _cacheLoaded;
+    private bool IsLookupLoaded => _lookupsLoaded;
 
 
     /// <summary>
@@ -57,12 +63,12 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
         try
         {
             if (!forceRefresh &&
-            _memoryPlayers is not null &&
-            _memoryExpiration > DateTimeOffset.UtcNow - NflPlayersCacheTtl)
+            _memoryPlayers is not null && 
+            _memoryPlayers.Count > 0 &&
+            _memoryExpiration > DateTimeOffset.UtcNow)
             {
-                Players = _memoryPlayers;
+                _playerById = _memoryPlayers;
                 _dataLoaded = true;
-
                 return;
             }
 
@@ -78,7 +84,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
                     }
                     catch (JsonException ex)
                     {
-                        Console.WriteLine($"Failed to deserialize cached player data: {ex.Message}");
+                        _logger.LogWarning(ex, "Failed to deserialize cached player data");
                     }
                     
                     if (cached is not null &&
@@ -87,9 +93,9 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
                     {
                         _memoryPlayers = cached.Data;
                         _memoryExpiration = cached.Expiration;
-                        Players = cached.Data;
+                        _playerById = cached.Data;
                         _dataLoaded = true;
-                        await BuildLookupCachesAsync();
+                        await BuildLookupsAsync();
                         return;
                     }
                     else
@@ -120,7 +126,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
 
                             _memoryPlayers = liteData;
                             _memoryExpiration = DateTimeOffset.UtcNow + NflPlayersCacheTtl;
-                            Players = liteData;
+                            _playerById = liteData;
 
                             var payload = new PlayersCacheModel
                             {
@@ -160,7 +166,7 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
 
                         _memoryPlayers = liteData;
                         _memoryExpiration = DateTimeOffset.UtcNow + NflPlayersCacheTtl;
-                        Players = liteData;
+                        _playerById = liteData;
 
                         var payload = new PlayersCacheModel
                         {
@@ -174,12 +180,12 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
             }
             
             _dataLoaded = true;
-            await BuildLookupCachesAsync();
+            await BuildLookupsAsync();
         }
         catch (Exception ex)
         {
             _dataLoaded = false;
-            Console.WriteLine($"ERROR: {ex.Message}");
+            _logger.LogError(ex, "ERROR: {Message}", ex.Message);
             throw;
         }
 
@@ -190,20 +196,13 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    private async Task BuildLookupCachesAsync()
+    private async Task BuildLookupsAsync()
     {
         try
         {
             if(_memoryPlayers is not null)
             {
-                PlayerById.Clear();
-                PlayerNFLTeamImageByAbbr.Clear();
-
-                //Get Player by id
-                foreach (var player in _memoryPlayers)
-                {
-                    PlayerById[player.Key] = player.Value;
-                }
+                _playerNFLTeamImageByAbbr.Clear();
 
                 //Get nfl team image by abbreviation
                 foreach (var teamAbbr in _memoryPlayers.Values.Select(p => p.Team).Distinct()) 
@@ -212,25 +211,25 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
 
                     if (teamAbbr != "FA")
                     {
-                        PlayerNFLTeamImageByAbbr[teamAbbr] =
+                        _playerNFLTeamImageByAbbr[teamAbbr] =
                             $"https://sleepercdn.com/images/team_logos/nfl/{teamAbbr.ToLower()}.png";
                     }
                     else
                     {
-                        PlayerNFLTeamImageByAbbr[teamAbbr] = "/images/question-mark.png";
+                        _playerNFLTeamImageByAbbr[teamAbbr] = "/images/question-mark.png";
                     }
                 }
-                _cacheLoaded = true;
+                _lookupsLoaded = true;
                 return;
             }
             
-            _cacheLoaded = false;
+            _lookupsLoaded = false;
         }
         catch (Exception ex)
         {
-            _cacheLoaded = false;
-            _cacheTask = null;
-            Console.WriteLine($"ERROR: {ex.Message}");
+            _lookupsLoaded = false;
+            _lookupTask = null;
+            _logger.LogError(ex, "ERROR: {Message}", ex.Message);
             throw;
         }
 
@@ -248,14 +247,14 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
     }
 
     /// <summary>
-    /// Ensures the cached data is loaded.
+    /// Ensures the lookup data is loaded.
     /// </summary>
     /// <returns></returns>
-    public Task EnsureCacheLoadedAsync()
+    public Task EnsureLookupsLoadedAsync()
     {
-        if (IsCacheLoaded) return Task.CompletedTask;
-        _cacheTask ??= BuildLookupCachesAsync();
-        return _cacheTask;
+        if (IsLookupLoaded) return Task.CompletedTask;
+        _lookupTask ??= BuildLookupsAsync();
+        return _lookupTask;
     }
 
 
@@ -268,3 +267,4 @@ public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js)
         public Dictionary<string, PlayerLiteModel>? Data { get; set; }
     }
 }
+

@@ -1,10 +1,13 @@
 @page "/rosters"
 @using Shared.Models
 @using Shared.Services
+@using Microsoft.Extensions.Logging
+@inject ILogger<Rosters> ILogger
 @inject UserState UserState
 @inject RosterState RosterState
 @inject PlayerState PlayerState
 @inject LeagueState LeagueState
+
 
 <PageTitle>Rosters | @Brand</PageTitle>
 
@@ -33,7 +36,7 @@ else
     @foreach (var roster in _rosters ?? [])
     {
         _counter = 0;
-        <div class="roster-container">
+        <div id="roster_@roster.RosterId" class="roster-container">
         
             @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
             {
@@ -192,13 +195,35 @@ else
     private List<RostersModel>? _rosters = new List<RostersModel>();
     private CollapseMode _collapseMode = CollapseMode.Default;
 
-    protected override async Task OnInitializedAsync()
+
+    protected override void OnInitialized()
     {
-        await PlayerState.EnsureCacheLoadedAsync(); 
-        await RosterState.EnsureLoadedAsync();
-        await UserState.EnsureCacheLoadedAsync();
-        _rosters = RosterState.Rosters;
-        _isLoading = false;
+        _isLoading = true;
+        _ = LoadPageAsync();
+    }
+
+    /// <summary>
+    /// Loads all elements needed for the page
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoadPageAsync()
+    {
+        try
+        {
+            await PlayerState.EnsureLookupsLoadedAsync(); 
+            await UserState.EnsureLookupsLoadedAsync();
+            await LoadRostersAsync();
+        }
+        catch (Exception ex)
+        {
+            ILogger.LogError(ex, "ERROR: {Message}", ex.Message);
+            _isLoading = false;
+        }
+        finally 
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     protected override void OnParametersSet()
@@ -208,6 +233,12 @@ else
         {
             _selectedRosterId = selectedRosterId.Value;
         }
+    }
+
+    private async Task LoadRostersAsync()
+    {
+        await RosterState.EnsureLoadedAsync();
+        _rosters = RosterState.Rosters?.ToList() ?? new List<RostersModel>();
     }
 
     /// <summary>
@@ -267,3 +298,4 @@ else
         CollapseAll
     }
 }
+

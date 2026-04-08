@@ -1,85 +1,173 @@
+using Microsoft.Extensions.Logging;
+using Radzen;
 using Shared.Models;
+using Shared.Pages;
 using System.Globalization;
 
 namespace Shared.Services;
 
-public sealed class StatsData(LeagueState leagueState, MatchupState matchupState, TransactionState transactionState)
+// TODO: Turn this into multiple services its getting too large
+
+/// <summary>
+/// Service that calculates and builds lookups for frequently accessed data.
+/// </summary>
+/// <param name="leagueState"></param>
+/// <param name="matchupState"></param>
+/// <param name="transactionState"></param>
+/// <param name="playoffState"></param>
+/// <param name="logger"></param>
+public sealed class StatsData(LeagueState leagueState, MatchupState matchupState, TransactionState transactionState, PlayoffState playoffState, ILogger<StatsData> logger)
 {
     private readonly LeagueState _leagueState = leagueState;
     private readonly MatchupState _matchupState = matchupState;
     private readonly TransactionState _transactionState = transactionState;
+    private readonly PlayoffState _playoffState = playoffState;
+    private readonly ILogger<StatsData> _logger = logger;
+    private Task? _lookupTask;
+    private bool _lookupsLoaded = false;
+ 
+    private IReadOnlyList<MatchupModel>? Matchups;
+    private IReadOnlyList<TransactionsModel>? Trades;
+    private List<MatchupModel> _topScoringTeams = new();
+    private List<MatchupModel> _lowScoringTeams = new();
+    private List<MatchupModel> _topScoringPlayers = new();
+    private List<MatchupModel> _lowScoringPlayers = new();
+    private Dictionary<string, Dictionary<int, int>> _highScoringWeeksByRosterId = new();
+    private Dictionary<int, int> _lowScoringWeeksByRosterId = new();
+    private List<KeyValuePair<MatchupModel, double>> _largestMarginOfVictory = new();
+    private List<KeyValuePair<MatchupModel, double>> _tightestMarginOfVictory = new();
+    private Dictionary<string, SeasonRecord> _recordsBySeason = new();
+    private Dictionary<int, int> _championshipCountByRosterId = new();
+    private Dictionary<int, int> _finalsAppearancesByRosterId = new();
+    private Dictionary<int, int> _playoffAppearancesByRosterId = new();
+    private Dictionary<int, int> _lastPlaceFinishesByRosterId = new();
+    private Dictionary<int, int> _mostTradedWithRosterId = new();
+    private Dictionary<int, int> _tradeCountsByRosterId = new();
+    private Dictionary<int, int> _mostLossesAgainstRosterId = new();
+    private Dictionary<int, int> _mostWinsAgainstRosterId = new();
+    private List<(string,Dictionary<int,int>)> _endOfSeasonFinishes = new();
 
-    private List<MatchupModel>? Matchups = new();
-    private IReadOnlyList<TransactionsModel>? Transactions;
-    private Task? _cacheTask;
-    private bool _cacheLoaded = false;
 
     /// <summary>
     /// List of MatchupModels of highest scoring teams ordered by points.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public List<MatchupModel> TopScoringTeams = new();
+    public IReadOnlyList<MatchupModel> TopScoringTeams => _topScoringTeams;
 
     /// <summary>
     /// List of MatchupModels of lowest scoring teams ordered by points.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public List<MatchupModel> LowScoringTeams = new();
+    public IReadOnlyList<MatchupModel> LowScoringTeams => _lowScoringTeams;
 
     /// <summary>
     /// List of MatchupModels of highest scoring players order by player points.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public List<MatchupModel> TopScoringPlayers = new();
+    public IReadOnlyList<MatchupModel> TopScoringPlayers => _topScoringPlayers;
 
     /// <summary>
     /// List of MatchupModels of lowest scoring players order by player points.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public List<MatchupModel> LowScoringPlayers = new();
+    public IReadOnlyList<MatchupModel> LowScoringPlayers => _lowScoringPlayers;
 
     /// <summary>
     /// Dictionary of total weeks with highest score by roster id, grouped by season.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public Dictionary<string, Dictionary<int, int>> HighScoringWeeksByRosterId = new();
+    public IReadOnlyDictionary<string, Dictionary<int, int>> HighScoringWeeksByRosterId => _highScoringWeeksByRosterId;
 
     /// <summary>
     /// Dictionary of total weeks with lowest score by roster id.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public Dictionary<int, int> LowScoringWeeksByRosterId = new();
+    public IReadOnlyDictionary<int, int> LowScoringWeeksByRosterId => _lowScoringWeeksByRosterId;
 
     /// <summary>
     /// List of MatchupModels and margin for the top 10 largest margins of victory.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public List<KeyValuePair<MatchupModel, double>> LargestMarginOfVictory = new();
+    public IReadOnlyList<KeyValuePair<MatchupModel, double>> LargestMarginOfVictory => _largestMarginOfVictory;
 
     /// <summary>
     /// List of MatchupModels and margin for the top 10 tightest margins of victory.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// </summary>
-    public List<KeyValuePair<MatchupModel, double>> TightestMarginOfVictory = new();
+    public IReadOnlyList<KeyValuePair<MatchupModel, double>> TightestMarginOfVictory => _tightestMarginOfVictory;
 
     /// <summary>
     /// Lookup dictionary for records per team, per season.
     /// Key is season and the value is a SeasonRecord. 
     /// SeasonRecord contains a dictionary with key of week number and a value of a WeekRecord which contains records per roster id.
-    /// Verify using EnsureCacheLoadedAsync() before accessing.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
     /// <br />
     /// Example: 
     /// <c>
     /// RecordsBySeason["2024"].WeeksByNumber[9].ByRoster[1]
     /// </c>
     /// </summary>
-    public Dictionary<string, SeasonRecord> RecordsBySeason = new();
+    public IReadOnlyDictionary<string, SeasonRecord> RecordsBySeason => _recordsBySeason;
+
+    /// <summary>
+    /// Lookup dictionary for championship count by roster id.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
+    /// </summary>
+    public IReadOnlyDictionary<int, int> ChampionshipCountByRosterId => _championshipCountByRosterId;
+
+    /// <summary>
+    /// Lookup dictionary for finals appearances by roster id.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
+    /// </summary>
+    public IReadOnlyDictionary<int, int> FinalsAppearancesByRosterId => _finalsAppearancesByRosterId;
+
+    /// <summary>
+    /// Lookup dictionary for finals appearances by roster id.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
+    /// </summary>
+    public IReadOnlyDictionary<int, int> PlayoffAppearancesByRosterId => _playoffAppearancesByRosterId;
+
+    /// <summary>
+    /// Lookup dictionary for last place finishes (at end of regular season) by roster id.
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
+    /// </summary>
+    public IReadOnlyDictionary<int, int> LastPlaceFinishesByRosterId => _lastPlaceFinishesByRosterId;
+
+    /// <summary>
+    /// Lookup dictionary for most traded with by roster id (roster_id, roster_id they have traded with the most).
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
+    /// </summary>
+    public IReadOnlyDictionary<int, int> MostTradedWithRosterId => _mostTradedWithRosterId;
+    
+    /// <summary>
+    /// Lookup dictionary for most traded with by roster id (roster_id, roster_id they have traded with the most).
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
+    /// </summary>
+    public IReadOnlyDictionary<int, int> TradeCountsByRosterId => _tradeCountsByRosterId;
+
+    /// <summary>
+    /// Lookup dictionary for most losses against a roster_id (roster_id, roster_id they lost to the most).
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
+    /// </summary>
+    public IReadOnlyDictionary<int, int> MostLossesAgainstRosterId => _mostLossesAgainstRosterId;
+
+    /// <summary>
+    /// Lookup dictionary for most losses against a roster_id (roster_id, roster_id they lost to the most).
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
+    /// </summary>
+    public IReadOnlyDictionary<int, int> MostWinsAgainstRosterId => _mostWinsAgainstRosterId;
+
+    /// <summary>
+    /// Lookup list of season (key) and Dictionary(rank, roster_id).
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
+    /// </summary>
+    public IReadOnlyList<(string,Dictionary<int,int>)> EndOfSeasonFinishes => _endOfSeasonFinishes;
 
 
     /// <summary>
     /// Ensures the lookups are loaded
     /// </summary>
-    private bool IsCacheLoaded => _cacheLoaded;
+    private bool IsLookupLoaded => _lookupsLoaded;
     
 
 
@@ -94,9 +182,10 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
         await _leagueState.EnsureLoadedAsync();
         await _transactionState.EnsureLoadedAsync();
         await _matchupState.EnsureLoadedAsync();
+        await _playoffState.EnsureLoadedAsync();
 
-        Matchups = _matchupState.AllMatchups;
-        Transactions = _transactionState.GetFilteredTransactionsData(["trade"]);
+        Matchups = _matchupState.AllMatchups?.ToList() ?? new List<MatchupModel>();
+        Trades = _transactionState.GetFilteredTransactionsData(["trade"]);
     }
         
     
@@ -104,22 +193,11 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
     /// Builds dictionaries to be used for quicker lookups on pages
     /// </summary>
     /// <returns></returns>
-    private async Task BuildLookupCachesAsync()
+    private async Task BuildLookupsAsync()
     {
         try
         {
             await EnsureRequiredDataLoadedAsync();
-        
-            TopScoringTeams.Clear();
-            LowScoringTeams.Clear();
-            TopScoringPlayers.Clear();
-            LowScoringPlayers.Clear();
-            HighScoringWeeksByRosterId.Clear();
-            LowScoringWeeksByRosterId.Clear();
-            LargestMarginOfVictory.Clear();
-            TightestMarginOfVictory.Clear();
-            RecordsBySeason.Clear();
-
             BuildTopScoringTeams();
             BuildLowScoringTeams();
             BuildTopScoringPlayers();
@@ -129,13 +207,20 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
             BuildLargestMarginOfVictory();
             BuildTightestMarginOfVictory();
             BuildRecordsBySeason();
-            _cacheLoaded = true;
+            BuildChampionshipCountersByRosterId();
+            BuildPlayoffAppearancesByRosterId();
+            BuildLastPlaceFinishesByRosterId();
+            BuildMostTradedWithRosterId();
+            BuildTradeCountsByRosterId();
+            BuildMostWinsLossesAgainstRosterId();
+            BuildEndOfSeasonFinishes();
+            _lookupsLoaded = true;
         }
         catch (Exception ex)
         {
-            _cacheTask = null;
-            _cacheLoaded = false;
-            Console.WriteLine($"ERROR: {ex.Message}");
+            _lookupTask = null;
+            _lookupsLoaded = false;
+            _logger.LogError(ex, "ERROR: {Message}", ex.Message);
             throw;
         }
     }
@@ -146,7 +231,8 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
     /// </summary>
     private void BuildTopScoringTeams()
     {
-        TopScoringTeams = (Matchups ?? Enumerable.Empty<MatchupModel>())
+        _topScoringTeams.Clear();
+        _topScoringTeams = (Matchups ?? Enumerable.Empty<MatchupModel>())
                         .OrderByDescending(m => m.Points)
                         .ToList();
     }
@@ -157,7 +243,8 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
     /// </summary>
     private void BuildLowScoringTeams()
     {
-        LowScoringTeams = (Matchups ?? Enumerable.Empty<MatchupModel>())
+        _lowScoringTeams.Clear();
+        _lowScoringTeams = (Matchups ?? Enumerable.Empty<MatchupModel>())
                         .OrderBy(m => m.Points)
                         .ToList();
     }
@@ -168,7 +255,8 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
     /// </summary>
     private void BuildTopScoringPlayers()
     {
-        TopScoringPlayers = (Matchups ?? Enumerable.Empty<MatchupModel>())
+        _topScoringPlayers.Clear();
+        _topScoringPlayers = (Matchups ?? Enumerable.Empty<MatchupModel>())
                         .Select(m => new
                             {
                                 Matchup = m,
@@ -191,7 +279,8 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
     /// </summary>
     private void BuildLowScoringPlayers()
     {
-        LowScoringPlayers = (Matchups ?? Enumerable.Empty<MatchupModel>())
+        _lowScoringPlayers.Clear();
+        _lowScoringPlayers = (Matchups ?? Enumerable.Empty<MatchupModel>())
                         .Select(m => new
                             {
                                 Matchup = m,
@@ -208,11 +297,13 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
                         .ToList();
     }
 
+
     /// <summary>
     /// Calculates and sets HighScoringWeeksByRosterId per season.
     /// </summary>
     private void BuildHighScoringWeeksByRosterId()
     {
+        _highScoringWeeksByRosterId.Clear();
         var playoffStartByLeagueId = _leagueState.AllLeagues
             .Where(l => l.LeagueId is not null && l.Settings?.PlayoffWeekStart is int)
             .ToDictionary(l => l.LeagueId!, l => l.Settings!.PlayoffWeekStart);
@@ -231,10 +322,10 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
 
         foreach (var season in seasons)
         {
-            if (!HighScoringWeeksByRosterId.TryGetValue(season, out var rosterCounts))
+            if (!_highScoringWeeksByRosterId.TryGetValue(season, out var rosterCounts))
             {
                 rosterCounts = new Dictionary<int, int>();
-                HighScoringWeeksByRosterId[season] = rosterCounts;
+                _highScoringWeeksByRosterId[season] = rosterCounts;
             }
 
             foreach (var rosterId in allRosterIds)
@@ -261,10 +352,10 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
             var maxPoints = group.Max(m => m.Points);
             foreach (var winner in group.Where(m => m.Points == maxPoints))
             {
-                if (!HighScoringWeeksByRosterId.TryGetValue(group.Key.Season, out var rosterCounts))
+                if (!_highScoringWeeksByRosterId.TryGetValue(group.Key.Season, out var rosterCounts))
                 {
                     rosterCounts = new Dictionary<int, int>();
-                    HighScoringWeeksByRosterId[group.Key.Season] = rosterCounts;
+                    _highScoringWeeksByRosterId[group.Key.Season] = rosterCounts;
                 }
 
                 if (rosterCounts.TryGetValue(winner.RosterId, out var count))
@@ -279,11 +370,13 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
         }
     }
 
+
     /// <summary>
     /// Calculates and sets LowScoringWeeksByRosterId.
     /// </summary>
     private void BuildLowScoringWeeksByRosterId()
     {
+        _lowScoringWeeksByRosterId.Clear();
         var playoffStartByLeagueId = _leagueState.AllLeagues
             .Where(l => l.LeagueId is not null && l.Settings?.PlayoffWeekStart is int)
             .ToDictionary(l => l.LeagueId!, l => l.Settings!.PlayoffWeekStart);
@@ -294,7 +387,7 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
 
         foreach (var rosterId in allRosterIds)
         {
-            LowScoringWeeksByRosterId[rosterId] = 0;
+            _lowScoringWeeksByRosterId[rosterId] = 0;
         }
 
         var groupedByWeek = (Matchups ?? Enumerable.Empty<MatchupModel>())
@@ -316,23 +409,25 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
             var minPoints = group.Min(m => m.Points);
             foreach (var loser in group.Where(m => m.Points == minPoints))
             {
-                if (LowScoringWeeksByRosterId.TryGetValue(loser.RosterId, out var count))
+                if (_lowScoringWeeksByRosterId.TryGetValue(loser.RosterId, out var count))
                 {
-                    LowScoringWeeksByRosterId[loser.RosterId] = count + 1;
+                    _lowScoringWeeksByRosterId[loser.RosterId] = count + 1;
                 }
                 else
                 {
-                    LowScoringWeeksByRosterId[loser.RosterId] = 1;
+                    _lowScoringWeeksByRosterId[loser.RosterId] = 1;
                 }
             }
         }
     }
+
 
     /// <summary>
     /// Calculates and sets the top 10 largest margins of victory.
     /// </summary>
     private void BuildLargestMarginOfVictory()
     {
+        _largestMarginOfVictory.Clear();
         var groupedMatchups = (Matchups ?? Enumerable.Empty<MatchupModel>())
             .Where(m => m.LeagueId is not null && m.Week is not null && m.MatchupId is not null)
             .GroupBy(m => new { m.LeagueId, m.Week, m.MatchupId });
@@ -354,16 +449,18 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
             }
         }
 
-        LargestMarginOfVictory = winnersWithMargin
+        _largestMarginOfVictory = winnersWithMargin
             .OrderByDescending(x => x.Value)
             .ToList();
     }
+
 
     /// <summary>
     /// Calculates and sets the top 10 tightest margins of victory.
     /// </summary>
     private void BuildTightestMarginOfVictory()
     {
+        _tightestMarginOfVictory.Clear();
         var groupedMatchups = (Matchups ?? Enumerable.Empty<MatchupModel>())
             .Where(m => m.LeagueId is not null && m.Week is not null && m.MatchupId is not null)
             .GroupBy(m => new { m.LeagueId, m.Week, m.MatchupId });
@@ -385,7 +482,7 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
             }
         }
 
-        TightestMarginOfVictory = winnersWithMargin
+        _tightestMarginOfVictory = winnersWithMargin
             .OrderBy(x => x.Value)
             .ToList();
     }
@@ -396,7 +493,7 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
     /// </summary>
     private void BuildRecordsBySeason()
     {
-        RecordsBySeason.Clear();
+        _recordsBySeason.Clear();
         if(Matchups is null || Matchups.Count == 0) return;
 
         var seasonGroups = Matchups 
@@ -467,8 +564,489 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
                 seasonRecord.WeeksByNumber[weekGroup.Key] = weekRecord;
             }
 
-            RecordsBySeason[season] = seasonRecord;
+            _recordsBySeason[season] = seasonRecord;
         }
+    }
+
+
+    /// <summary>
+    /// Builds a lookup of a count of championships and finals appearances per roster_id.
+    /// </summary>
+    private void BuildChampionshipCountersByRosterId()
+    {
+        _championshipCountByRosterId.Clear();
+        _finalsAppearancesByRosterId.Clear();
+
+        _championshipCountByRosterId = new ()
+        {
+            { 1, 0 },
+            { 2, 1 },
+            { 3, 0 },
+            { 4, 1 },
+            { 5, 0 },
+            { 6, 0 },
+            { 7, 1 },
+            { 8, 0 },
+            { 9, 0 },
+            { 10, 1 }
+        };
+        _finalsAppearancesByRosterId = new()
+        {
+            { 1, 0 },
+            { 2, 1 },
+            { 3, 2 }, 
+            { 4, 1 },
+            { 5, 0 },
+            { 6, 0 },
+            { 7, 1 },
+            { 8, 0 },
+            { 9, 0 },
+            { 10, 3 }
+        };
+        
+        foreach(var bracket in _playoffState.AllWinnersBrackets)
+        {
+            foreach(var playoff in bracket.Value)
+            {
+                if(playoff.Round != 3 || playoff.PlacementGame != 1 || !playoff.WinnerId.HasValue || !playoff.LoserId.HasValue ) continue;
+            
+                var winnerId = playoff.WinnerId.Value;
+                var loserId = playoff.LoserId.Value;
+
+                // Finals appearance: both winner and loser made the finals
+                _finalsAppearancesByRosterId[winnerId] = _finalsAppearancesByRosterId.TryGetValue(winnerId, out var wFinals)
+                    ? wFinals + 1
+                    : 1;
+
+                _finalsAppearancesByRosterId[loserId] = _finalsAppearancesByRosterId.TryGetValue(loserId, out var lFinals)
+                    ? lFinals + 1
+                    : 1;
+
+                // Championship count: only winner
+                _championshipCountByRosterId[winnerId] = _championshipCountByRosterId.TryGetValue(winnerId, out var champs)
+                    ? champs + 1
+                    : 1;
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// Builds a lookup of a count of playoff appearances per roster_id.
+    /// </summary>
+    private void BuildPlayoffAppearancesByRosterId()
+    {
+        _playoffAppearancesByRosterId.Clear();
+
+        _playoffAppearancesByRosterId = new ()
+        {
+            { 1, 3 },
+            { 2, 4 },
+            { 3, 3 }, 
+            { 4, 2 },
+            { 5, 1 },
+            { 6, 1 },
+            { 7, 2 },
+            { 8, 3 },
+            { 9, 1 },
+            { 10, 4 }
+        };
+
+        foreach (var bracket in _playoffState.AllWinnersBrackets)
+        {
+            if (string.IsNullOrWhiteSpace(bracket.Key))
+            {
+                continue;
+            }
+
+            var rosterIdsThisSeason = new HashSet<int>();
+
+            foreach (var playoff in bracket.Value)
+            {
+                if(!playoff.WinnerId.HasValue) continue;
+                if (playoff.Team1.HasValue)
+                {
+                    rosterIdsThisSeason.Add(playoff.Team1.Value);
+                }
+
+                if (playoff.Team2.HasValue)
+                {
+                    rosterIdsThisSeason.Add(playoff.Team2.Value);
+                }
+            }
+
+            // Count each roster once per season
+            foreach (var rosterId in rosterIdsThisSeason)
+            {
+                _playoffAppearancesByRosterId[rosterId] = _playoffAppearancesByRosterId.TryGetValue(rosterId, out var count)
+                    ? count + 1
+                    : 1;
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// Builds a lookup of a count of last place finishes per roster_id.
+    /// </summary>
+    private void BuildLastPlaceFinishesByRosterId()
+    {
+        _lastPlaceFinishesByRosterId.Clear();
+
+        _lastPlaceFinishesByRosterId = new ()
+        {
+            { 1, 0 },
+            { 2, 0 },
+            { 3, 0 },
+            { 4, 2 },
+            { 5, 0 },
+            { 6, 0 },
+            { 7, 1 },
+            { 8, 1 },
+            { 9, 0 },
+            { 10, 0}
+        };
+
+        var playoffStartByLeagueId = _leagueState.AllLeagues
+            .Where(l => l.LeagueId is not null && l.Settings?.PlayoffWeekStart is int)
+            .ToDictionary(l => l.LeagueId!, l => l.Settings!.PlayoffWeekStart);
+
+        var records = _recordsBySeason ?? new Dictionary<string, SeasonRecord>();
+
+        foreach (var seasonRecord in records.Values)
+        {
+            foreach (var weekRecord in seasonRecord.WeeksByNumber.Values)
+            {
+                var leagueId = _leagueState.AllLeagues.FirstOrDefault(l => l.Season == seasonRecord.Season)?.LeagueId;
+                if (leagueId is null || !playoffStartByLeagueId.TryGetValue(leagueId, out var playoffWeekStart))
+                {
+                    continue;
+                }
+
+                if (weekRecord.WeekNumber >= playoffWeekStart)
+                {
+                    continue;
+                }
+                
+                if(weekRecord.WeekNumber == playoffWeekStart -1)
+                {
+                    var bottomEntry = weekRecord.ByRoster
+                                    .OrderBy(kv => kv.Value.Wins)
+                                    .ThenBy(kv => double.TryParse(kv.Value.PointsFor, NumberStyles.Any, CultureInfo.InvariantCulture, out var pf)
+                                        ? pf
+                                        : double.MaxValue)
+                                    .First();
+
+
+                    _lastPlaceFinishesByRosterId[bottomEntry.Key] = _lastPlaceFinishesByRosterId.TryGetValue(bottomEntry.Key, out var count)
+                    ? count + 1
+                    : 1;
+                }
+            }
+        }
+
+    }
+
+
+    /// <summary>
+    /// Builds a lookup of rosters that have been traded with the most per roster_id.
+    /// </summary>
+    private void BuildMostTradedWithRosterId()
+    {
+        _mostTradedWithRosterId.Clear();
+        var partnersByRoster = new Dictionary<int, Dictionary<int, int>>();
+        var tradeCounts = new Dictionary<(int, int), int>();
+
+        foreach (var transaction in Trades ?? new List<TransactionsModel>())
+        {
+            if (transaction.ConsenterIds is null || transaction.ConsenterIds.Count < 2) continue;
+
+            var consenters = transaction.ConsenterIds
+                .Distinct()
+                .OrderBy(id => id)
+                .ToList();
+
+            for (var i = 0; i < consenters.Count - 1; i++)
+            {
+                for (var j = i + 1; j < consenters.Count; j++)
+                {
+                    var pair = (consenters[i], consenters[j]);
+                    tradeCounts[pair] = tradeCounts.TryGetValue(pair, out var count) ? count + 1 : 1;
+                }
+            }
+        }
+
+        foreach (var kv in tradeCounts)
+        {
+            var a = kv.Key.Item1;
+            var b = kv.Key.Item2;
+            var count = kv.Value;
+
+            if (!partnersByRoster.TryGetValue(a, out var aPartners))
+                partnersByRoster[a] = aPartners = new Dictionary<int, int>();
+            if (!partnersByRoster.TryGetValue(b, out var bPartners))
+                partnersByRoster[b] = bPartners = new Dictionary<int, int>();
+
+            aPartners[b] = count;
+            bPartners[a] = count;
+        }
+
+        foreach (var roster in partnersByRoster)
+        {
+            var bestPartner = roster.Value
+                .OrderByDescending(p => p.Value)
+                .First().Key;
+
+            _mostTradedWithRosterId[roster.Key] = bestPartner;
+        }
+
+
+    }
+
+
+    /// <summary>
+    /// Builds a lookup of count of trades per roster_id.
+    /// </summary>
+    private void BuildTradeCountsByRosterId()
+    {
+        _tradeCountsByRosterId.Clear();
+        var tradeCounts = new Dictionary<int, int>();
+
+        foreach (var transaction in Trades ?? new List<TransactionsModel>())
+        {
+            if (transaction.ConsenterIds is null) continue;
+
+            foreach (var consenter in transaction.ConsenterIds)
+            {
+                tradeCounts[consenter] = tradeCounts.TryGetValue(consenter, out var count) ? count + 1 : 1;
+            }
+        }
+
+        foreach (var kv in tradeCounts)
+        {
+            _tradeCountsByRosterId[kv.Key] = kv.Value;
+        }
+    }
+
+    
+    /// <summary>
+    /// Builds a lookup of most losses against a roster_id.
+    /// </summary>
+    private void BuildMostWinsLossesAgainstRosterId()
+    {
+        _mostLossesAgainstRosterId.Clear();
+        _mostWinsAgainstRosterId.Clear();
+
+        var lossesByRoster = new Dictionary<int, Dictionary<int, int>>();
+        var winsByRoster = new Dictionary<int, Dictionary<int, int>>();
+
+        var groupedMatchups = (Matchups ?? Enumerable.Empty<MatchupModel>())
+            .Where(m => m.MatchupId is not null)
+            .GroupBy(m => (m.LeagueId, m.Season, m.Week, m.MatchupId));
+
+        foreach (var group in groupedMatchups)
+        {
+            var teams = group.ToList();
+            if (teams.Count < 2) continue;
+
+            var winnerId = GetWinnerRosterId(teams);
+            if (!winnerId.HasValue) continue;
+
+            foreach (var team in teams)
+            {
+                if (team.RosterId == winnerId.Value) continue;
+
+                if (!lossesByRoster.TryGetValue(team.RosterId, out var opponentCounts))
+                {
+                    opponentCounts = new Dictionary<int, int>();
+                    lossesByRoster[team.RosterId] = opponentCounts;
+                }
+
+                opponentCounts[winnerId.Value] = opponentCounts.TryGetValue(winnerId.Value, out var count)
+                    ? count + 1
+                    : 1;
+            }
+
+            var winnerOpponents = teams.Where(t => t.RosterId != winnerId.Value).ToList();
+            if (winnerOpponents.Count > 0)
+            {
+                if (!winsByRoster.TryGetValue(winnerId.Value, out var opponentCounts))
+                {
+                    opponentCounts = new Dictionary<int, int>();
+                    winsByRoster[winnerId.Value] = opponentCounts;
+                }
+
+                foreach (var loser in winnerOpponents)
+                {
+                    opponentCounts[loser.RosterId] = opponentCounts.TryGetValue(loser.RosterId, out var count)
+                        ? count + 1
+                        : 1;
+                }
+            }
+        }
+
+        foreach (var roster in lossesByRoster)
+        {
+            var mostLossesOpponent = roster.Value
+                .OrderByDescending(kv => kv.Value)
+                .First().Key;
+
+            _mostLossesAgainstRosterId[roster.Key] = mostLossesOpponent;
+        }
+
+        foreach (var roster in winsByRoster)
+        {
+            var mostWinsOpponent = roster.Value
+                .OrderByDescending(kv => kv.Value)
+                .First().Key;
+
+            _mostWinsAgainstRosterId[roster.Key] = mostWinsOpponent;
+        }
+    }
+
+    private void BuildEndOfSeasonFinishes()
+    {
+        _endOfSeasonFinishes.Clear();
+
+        var playoffStartBySeason = _leagueState.AllLeagues
+            .Where(l => !string.IsNullOrWhiteSpace(l.Season) && l.Settings?.PlayoffWeekStart is int)
+            .GroupBy(l => l.Season!)
+            .ToDictionary(g => g.Key, g => g.First().Settings!.PlayoffWeekStart);
+
+        
+        foreach (var seasonEntry in RecordsBySeason)
+        {
+            var season = seasonEntry.Key;
+            var seasonRecord = seasonEntry.Value;
+
+            if (!playoffStartBySeason.TryGetValue(season, out var playoffStart) || playoffStart <= 0)
+            {
+                continue;
+            }
+
+            var latestWeek = seasonRecord.WeeksByNumber.Keys
+                .Where(w => w < playoffStart)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            if (latestWeek == 0 || !seasonRecord.WeeksByNumber.TryGetValue(latestWeek, out var weekRecord))
+            {
+                continue;
+            }
+
+            var ordered = weekRecord.ByRoster
+                .Select(kv =>
+                {
+                    var pointsFor = double.TryParse(
+                        kv.Value.PointsFor,
+                        out var pf)
+                        ? pf
+                        : double.MinValue;
+
+                    return new
+                    {
+                        RosterId = kv.Key,
+                        Record = kv.Value,
+                        PointsFor = pointsFor
+                    };
+                })
+                .OrderByDescending(x => x.Record.Wins)
+                .ThenByDescending(x => x.PointsFor)
+                .ToList();
+
+            var rankByRoster = new Dictionary<int, int>();
+            var rank = 1;
+
+            foreach (var entry in ordered)
+            {
+                rankByRoster[rank] = entry.RosterId;
+                rank++;
+            }
+
+            _endOfSeasonFinishes.Add((season, rankByRoster));
+        }
+    }
+
+    /// <summary>
+    /// Sums the amount of high scoring weeks per roster_id.
+    /// </summary>
+    /// <param name="bySeason">IReadOnlyDictionary<season, Dictionary<roster_id, total_high_scoring_weeks>></param>
+    /// <returns>Dictionary(roster_id,count)</returns>
+    public Dictionary<int, int> SumHighScoringWeeks(Dictionary<string, Dictionary<int, int>> weeks_by_season)
+    {
+        var totals = new Dictionary<int, int>();
+        foreach (var season in weeks_by_season.Values)
+        {
+            foreach (var kv in season)
+            {
+                if (totals.TryGetValue(kv.Key, out var count))
+                {
+                    totals[kv.Key] = count + kv.Value;
+                }
+                else
+                {
+                    totals[kv.Key] = kv.Value;
+                }
+            }
+        }
+        return totals;
+    }
+
+    /// <summary>
+    /// Sums the records for each roster_id.
+    /// </summary>
+    /// <param name="season_records">Dictionary<season, SeasonRecord>. See StatsModel for more information on SeasonRecord.</param>
+    /// <returns>Dictionary<roster_id, "W-L-T"></returns>
+    public Dictionary<int, string> SumRecords(Dictionary<string, SeasonRecord> season_records)
+    {
+        var totals = new Dictionary<int, Record>();
+
+        var playoffStartBySeason = _leagueState.AllLeagues
+            .Where(l => !string.IsNullOrWhiteSpace(l.Season) && l.Settings?.PlayoffWeekStart is int)
+            .GroupBy(l => l.Season!)
+            .ToDictionary(g => g.Key, g => g.First().Settings!.PlayoffWeekStart);
+
+        foreach (var seasonEntry in season_records)
+        {
+            var season = seasonEntry.Key;
+            var seasonRecord = seasonEntry.Value;
+
+            if (!playoffStartBySeason.TryGetValue(season, out var playoffStart))
+            {
+                continue;
+            }
+
+            var cutoffWeek = playoffStart > 0 ? playoffStart - 1 : int.MaxValue;
+            var latestWeek = seasonRecord.WeeksByNumber.Keys
+                .Where(w => w <= cutoffWeek)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            if (latestWeek == 0) continue;
+
+            if (!seasonRecord.WeeksByNumber.TryGetValue(latestWeek, out var weekRecord)) continue;
+
+            foreach (var kv in weekRecord.ByRoster)
+            {
+                if (!totals.TryGetValue(kv.Key, out var record))
+                {
+                    record = new Record();
+                    totals[kv.Key] = record;
+                }
+
+                record.Wins += kv.Value.Wins;
+                record.Losses += kv.Value.Losses;
+                record.Ties += kv.Value.Ties;
+            }
+        }
+
+        var result = new Dictionary<int, string>();
+        foreach (var kv in totals)
+        {
+            result[kv.Key] = kv.Value.Display;
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -489,14 +1067,15 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
         return topCount > 1 ? null : ordered[0].RosterId;
     }
 
+
     /// <summary>
-    /// Ensures the cached data is loaded.
+    /// Ensures the lookup data is loaded.
     /// </summary>
     /// <returns></returns>
-    public Task EnsureCacheLoadedAsync()
+    public Task EnsureLookupsLoadedAsync()
     {
-        if (IsCacheLoaded) return Task.CompletedTask;
-        _cacheTask ??= BuildLookupCachesAsync();
-        return _cacheTask;
+        if (IsLookupLoaded) return Task.CompletedTask;
+        _lookupTask ??= BuildLookupsAsync();
+        return _lookupTask;
     }
 }
