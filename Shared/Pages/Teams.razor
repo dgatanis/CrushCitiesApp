@@ -1,12 +1,17 @@
 @page "/teams"
 @using Microsoft.Extensions.Logging
+@using Microsoft.JSInterop
 @using Shared.Models
 @using Shared.Services
+@using Radzen
+@using Radzen.Blazor
+
 @inject ILogger<Teams> ILogger
 @inject LeagueState LeagueState
 @inject RosterState RosterState
 @inject UserState UserState
 @inject StatsData StatsData
+@inject PlayerState PlayerState
 
 
 <PageTitle>Teams | @Brand</PageTitle>
@@ -24,9 +29,10 @@
 else
 {
     <div class="teams-page-container">
-        <div class="row g-3">
+        <div class="row g-4 justify-content-center align-items-start gap-4">
         @foreach (var roster in _rosters ?? [])
         {
+            var statsCollapseId = $"teamStatsCollapse_{roster.RosterId}";
             var teamName = roster.OwnerId is not null && UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var name)
                 ? name
                 : $"Roster {roster.RosterId}";
@@ -82,63 +88,122 @@ else
             var mostWinsAgainstName = RosterState.TeamNameByRosterId.TryGetValue(mostWinsAgainstRosterId, out var mostWinsAgainstTeamName)
                 ? mostWinsAgainstTeamName
                 : "N/A";
+            var ownerImage = UserState.OwnerAvatarByUserId.TryGetValue(RosterState.UserIdByRosterId.TryGetValue(roster.RosterId.ToString() ?? "", out var userId) ? userId : "", out var url) 
+                ? url 
+                : "";
 
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div class="card shadow-sm frosty-bg h-100">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 d-flex">
+                <div class="card shadow-sm common-container h-100 w-100">
                     <div class="card-body">
-                        <div class="d-flex flex-column flex-md-row justify-content-center align-items-md-center gap-2">
-                            <div class="d-flex flex-column">
-                                <div class="h5 mb-0">@teamName</div>
+                        <button class="stats-team-toggle w-100" type="button" data-bs-toggle="collapse" data-bs-target="@($"#{statsCollapseId}")" aria-expanded="false" aria-controls="@statsCollapseId">
+                            <span style="color: grey; font-size:.6rem;">Click to open team details</span>
+                            <div class="d-flex flex-column flex-md-row justify-content-center align-items-md-center gap-2">
+                                <div class="d-flex flex-column align-items-center">
+                                    <img class="owner-avatar" src=@ownerImage>
+                                    <div class="h5 mb-0 team-name">@teamName</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <div id="@statsCollapseId" class="collapse" data-bs-parent="@($"#{statsCollapseId}")">
+                            <div class="row row-cols-2 g-3 mt-3 justify-content-center text-center">
+                            <div class="col d-flex">
+                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label small">Championships</div>
+                                    <div class="fw-semibold">@championships</div>
+                                </div>
+                            </div>
+                            <div class="col d-flex">
+                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label small">Finals Appearances</div>
+                                    <div class="fw-semibold">@finalsAppearances</div>
+                                </div>
+                            </div>
+                            <div class="col d-flex">
+                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label small">Playoff Appearances</div>
+                                    <div class="fw-semibold">@playoffAppearances</div>
+                                </div>
+                            </div>
+                            <div class="col d-flex">
+                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label small">Last Place Finishes</div>
+                                    <div class="fw-semibold">@lastPlaceFinishes</div>
+                                </div>
+                            </div>
+                            <div class="col d-flex">
+                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label small">Most Traded With</div>
+                                    <div class="fw-semibold">@mostTradedWithName</div>
+                                </div>
+                            </div>
+                            <div class="col d-flex">
+                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label small">Total Trades</div>
+                                    <div class="fw-semibold">@tradeCount</div>
+                                </div>
+                            </div>
+                            <div class="col d-flex">
+                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label small">Low Scoring Weeks</div>
+                                    <div class="fw-semibold">@lowScoringWeeks</div>
+                                </div>
+                            </div>
+                            <div class="col d-flex">
+                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label small">High Scoring Weeks</div>
+                                    <div class="fw-semibold">@highScoringWeeks</div>
+                                </div>
+                            </div>
+                            <div class="col d-flex">
+                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label small">Most L&apos;s</div>
+                                    <div class="fw-semibold">@mostLossesAgainstName</div>
+                                </div>
+                            </div>
+                            <div class="col d-flex">
+                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label small">Most W&apos;s</div>
+                                    <div class="fw-semibold">@mostWinsAgainstName</div>
+                                </div>
+                            </div>
                             </div>
                         </div>
-
-                        <div class="d-flex flex-column flex-md-row flex-wrap gap-3 mt-3 justify-content-center">
-                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
-                                <div class="text-muted small">Championships</div>
-                                <div class="fw-semibold">@championships</div>
-                            </div>
-                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
-                                <div class="text-muted small">Finals Appearances</div>
-                                <div class="fw-semibold">@finalsAppearances</div>
-                            </div>
-                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
-                                <div class="text-muted small">Playoff Appearances</div>
-                                <div class="fw-semibold">@playoffAppearances</div>
-                            </div>
-                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
-                                <div class="text-muted small">Last Place Finishes</div>
-                                <div class="fw-semibold">@lastPlaceFinishes</div>
-                            </div>
-                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
-                                <div class="text-muted small">Most Traded With</div>
-                                <div class="fw-semibold">@mostTradedWithName</div>
-                            </div>
-                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
-                                <div class="text-muted small">Total Trades</div>
-                                <div class="fw-semibold">@tradeCount</div>
-                            </div>
-                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
-                                <div class="text-muted small">Low Scoring Weeks</div>
-                                <div class="fw-semibold">@lowScoringWeeks</div>
-                            </div>
-                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
-                                <div class="text-muted small">High Scoring Weeks</div>
-                                <div class="fw-semibold">@highScoringWeeks</div>
-                            </div>
-                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
-                                <div class="text-muted small">Most L&apos;s</div>
-                                <div class="fw-semibold">@mostLossesAgainstName</div>
-                            </div>
-                            <div class="align-items-center common-container d-flex flex-column border rounded-3 px-3 py-2">
-                                <div class="text-muted small">Most W&apos;s</div>
-                                <div class="fw-semibold">@mostWinsAgainstName</div>
-                            </div>
+                        <div class="d-flex justify-content-center w-100 mt-4">
+                            <RadzenChart Style="width: 100%; max-width: 600px;">
+                                <RadzenLegend Visible="false" />
+                                <RadzenPieSeries Data="@GetRosterPlayerCounts(roster.Players)" Title="Position" CategoryProperty="Position" ValueProperty="Count" ShowTooltipOnLegend="true" Radius="80" Fills="@pieColors" >
+                                </RadzenPieSeries>
+                            </RadzenChart>
                         </div>
                     </div>
                 </div>
             </div>
         }
         </div>
+    </div>
+    <div class="container-fluid d-flex justify-content-center mt-3">
+        <span style="font-size:1.2rem;">End of Regular Seasons Rankings</span>
+    </div>
+    <div class="container-fluid d-flex justify-content-start w-100 mt-4 chart-scroll">
+        <RadzenChart class="line-chart" Style="width: 100%; min-width: 900px; height: 380px;">
+            <RadzenValueAxis Min="@_maxRank" Max="1" />
+            <RadzenCategoryAxis Padding="2" />
+            <RadzenChartTooltipOptions Visible="true" Shared="true" />
+            
+            @foreach (var series in _endOfSeasonSeries)
+            {
+                <RadzenLineSeries Data="@series.Points"
+                                  CategoryProperty="Season"
+                                  ValueProperty="Rank"
+                                  Title="@series.Name"
+                                  Stroke="@series.Color"
+                                  StrokeWidth="3">
+                    <RadzenMarkers MarkerType="MarkerType.Circle" Visible="true"/>
+                    <RadzenSeriesDataLabels Visible="true" OffsetY="2" />
+                </RadzenLineSeries>
+            }
+        </RadzenChart>
     </div>
 }
 
@@ -149,12 +214,18 @@ else
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
     private bool _isLoading = true;
     private List<RostersModel>? _rosters = new List<RostersModel>();
+    private List<(string Season, Dictionary<int, int>)> _endOfSeasonFinishes = new ();
+    private List<RosterSeasonSeries> _endOfSeasonSeries = new ();
+    private int _maxRank = 10;
+    string[] pieColors = { "#ff2a6d", "#00ceb8", "#ffae58", "#58a7ff" }; // maps to position by index
+
 
     protected override void OnInitialized()
     {
         _isLoading = true;
         _ = LoadPageAsync();
     }
+
     /// <summary>
     /// Loads all elements needed for the page
     /// </summary>
@@ -166,6 +237,7 @@ else
             await Task.Yield(); 
             await StatsData.EnsureLookupsLoadedAsync();
             await LoadRosters();
+            await LoadScatterPlot();
         }
         catch (Exception ex)
         {
@@ -178,12 +250,199 @@ else
             await InvokeAsync(StateHasChanged);
         }
     }
-
+    
 
     private async Task LoadRosters()
     {
         await RosterState.EnsureLoadedAsync();
         _rosters = RosterState.Rosters?.ToList() ?? new List<RostersModel>();
+        _maxRank = Math.Max(1, _rosters.Count);
     }
+
+    private List<RosterPositions> GetRosterPlayerCounts(List<string> players)
+    {
+        List<RosterPositions> _rosterPlayers = new ();
+
+        foreach(var playerId in players)
+        {
+            var player = PlayerState.PlayerById.TryGetValue(playerId, out var thisPlayer) ? thisPlayer : null;
+            if(player is null || player.Position is null) continue;
+
+            var index = _rosterPlayers.FindIndex(x => x.Position == player.Position);
+
+            if(index >= 0)
+            {
+                var current = _rosterPlayers[index];
+                _rosterPlayers[index] = current with { Count = current.Count + 1 };
+            }
+            else
+            {
+                _rosterPlayers.Add(new RosterPositions(player.Position,1));            
+            }
+        }
+
+        return _rosterPlayers.OrderBy(x => x.Position).ToList();
+    }
+
+    private Task LoadScatterPlot()
+    {
+        _endOfSeasonFinishes = StatsData.EndOfSeasonFinishes.ToList();
+        BuildEndOfSeasonSeries();
+        return Task.CompletedTask;   
+    }
+
+    private void BuildEndOfSeasonSeries()
+    {
+        _endOfSeasonSeries.Clear();
+
+        if (_endOfSeasonFinishes.Count == 0)
+        {
+            return;
+        }
+
+        var orderedSeasons = _endOfSeasonFinishes
+            .OrderBy(s => int.TryParse(s.Season, out var seasonNumber) ? seasonNumber : int.MaxValue)
+            .ToList();
+
+        var seasonLabels = orderedSeasons.Select(s => s.Season).ToList();
+        var rankByRosterId = new Dictionary<int, Dictionary<string, int>>();
+
+        foreach (var seasonEntry in orderedSeasons)
+        {
+            var season = seasonEntry.Season;
+            foreach (var ranking in seasonEntry.Item2)
+            {
+                var rank = ranking.Key;
+                var rosterId = ranking.Value;
+
+                if (!rankByRosterId.TryGetValue(rosterId, out var seasonRanks))
+                {
+                    seasonRanks = new Dictionary<string, int>();
+                    rankByRosterId[rosterId] = seasonRanks;
+                }
+
+                seasonRanks[season] = rank;
+            }
+        }
+        
+        foreach (var rosterEntry in rankByRosterId.OrderBy(k => k.Key))
+        {
+            var rosterId = rosterEntry.Key;
+            var seasonRanks = rosterEntry.Value;
+            var c = ColorUtility.CategoricalTwelveColors[rosterId > 0 && rosterId <= 12 ? rosterId : 0].ToColor();
+
+            var series = new RosterSeasonSeries
+            {
+                RosterId = rosterId,
+                Name = RosterState.TeamNameByRosterId.TryGetValue(rosterId, out var name)
+                    ? name
+                    : $"Team {rosterId}",
+                Color = c.ToRgbString()
+            };
+
+            foreach (var season in seasonLabels)
+            {
+                series.Points.Add(new SeasonRankPoint(
+                    season,
+                    seasonRanks.TryGetValue(season, out var rank) ? rank : -1));
+            }
+
+            _endOfSeasonSeries.Add(series);
+        }
+        AddPreviousSeasonFinishes();
+    }
+
+    private void AddPreviousSeasonFinishes() 
+    {
+        foreach(var roster in _rosters ?? Enumerable.Empty<RostersModel>())
+        {
+            var rosterSeasonSeries = _endOfSeasonSeries.FirstOrDefault(x => x.RosterId == roster.RosterId);
+            if(rosterSeasonSeries is not null)
+            {
+                switch (roster.RosterId)
+                {
+                    case 1:
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2020", 8));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2021", 6));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2022", 3));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2023", 5));
+                        break;
+                    case 2:
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2020", 6));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2021", 2));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2022", 2));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2023", 4));
+                        break;
+                    case 3:
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2020", 2));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2021", 9));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2022", 4));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2023", 2));
+                        break;
+                    case 4:
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2020", 1));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2021", 3));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2022", 10));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2023", 10));
+                        break;
+                    case 5:
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2020", 7));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2021", 8));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2022", 6));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2023", 8));
+                        break;
+                    case 6:
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2020", 3));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2021", 7));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2022", 9));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2023", 9));
+                        break;
+                    case 7:
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2020", 5));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2021", 10));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2022", 7));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2023", 1));
+                        break;
+                    case 8:
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2020", 10));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2021", 4));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2022", 5));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2023", 3));
+                        break;
+                    case 9:
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2020", 9));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2021", 5));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2022", 8));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2023", 7));
+                        break;
+                    case 10:
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2020", 4));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2021", 1));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2022", 1));
+                        rosterSeasonSeries.Points.Add(new SeasonRankPoint("2023", 6));
+                        break;
+                    default:
+                        break;
+                }
+                rosterSeasonSeries.Points.Sort((a, b) =>
+                {
+                    var aSeason = int.TryParse(a.Season, out var an) ? an : int.MaxValue;
+                    var bSeason = int.TryParse(b.Season, out var bn) ? bn : int.MaxValue;
+                    return aSeason.CompareTo(bSeason);
+                });
+            }
+        }
+    }
+
+    public class RosterSeasonSeries
+    {
+        public int RosterId { get; init; }
+        public string Name { get; init; } = string.Empty;
+        public string Color { get; init; } = "#000000";
+        public List<SeasonRankPoint> Points { get; } = new();
+    }
+
+    public record SeasonRankPoint(string Season, int Rank);
+    public record RosterPositions(string Position, int Count);
 
 }

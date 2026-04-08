@@ -1,6 +1,8 @@
 @using Microsoft.JSInterop
 @using Shared.Models
 @using Shared.Services
+@using Radzen.Blazor
+@using Radzen
 @inherits LayoutComponentBase
 @inject IJSRuntime JS
 @inject TransactionState TransactionState
@@ -28,6 +30,7 @@
             </div>
         </div>
     </main>
+    <RadzenComponents />
 </div>
 
 @code {

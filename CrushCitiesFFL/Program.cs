@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using CrushCitiesFFL;
+using Radzen;
 using Shared.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -26,6 +27,7 @@ builder.Services.AddScoped<PlayoffState>();
 builder.Services.AddScoped<StatsData>();
 builder.Services.AddScoped<INormalizer, Normalizer>();
 builder.Services.AddBlazorBootstrap();
+builder.Services.AddRadzenComponents();
 
 var host = builder.Build();
 //Set initial state for models 

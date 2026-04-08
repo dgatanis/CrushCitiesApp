@@ -1,76 +1,27 @@
 @page "/not-found"
 @using Microsoft.Extensions.Logging
+@using Radzen
+@using Radzen.Blazor
 @inject ILogger<NotFound> ILogger
-
-<ScatterChart @ref="scatterChart" Width="560" Height="480" />
-
+<RadzenChart Style="height: 380px;">
+    <RadzenChartTooltipOptions Visible="true" Shared="true" />
+    <RadzenLineSeries Data="@_series1" CategoryProperty="Season" ValueProperty="Rank" Title="Team A">
+        <RadzenMarkers MarkerType="MarkerType.Circle" Visible="true" />
+    </RadzenLineSeries>
+    <RadzenLineSeries Data="@_series2" CategoryProperty="Season" ValueProperty="Rank" Title="Team B">
+        <RadzenMarkers MarkerType="MarkerType.Circle" Visible="true" />
+    </RadzenLineSeries>
+</RadzenChart>
 
 @code {
-    private ScatterChart scatterChart = default!;
-    private ScatterChartOptions scatterChartOptions = default!;
-    private ChartData chartData = default!;
+    record Point(string Season, int Rank);
 
-    private Random random = new();
+    List<Point> _series1 = new() {
+        new("2021", 1), new("2022", 3), new("2023", 2)
+    };
 
-    protected override void OnInitialized()
-    {
-        chartData = new ChartData
-            {
-                Datasets = new()
-                {
-                    GetRandomRadarChartDataset(0),
-                    GetRandomRadarChartDataset(1),
-                    GetRandomRadarChartDataset(2)
-                }
-            };
-
-        scatterChartOptions = new() { };
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        try {
-        if (firstRender)
-        {
-            await scatterChart.InitializeAsync(chartData, scatterChartOptions);
-        }
-        await base.OnAfterRenderAsync(firstRender);
-        }
-        catch (Exception ex)
-        {
-            ILogger.LogError(ex, "ERROR: {Message}", ex.Message);
-        }
-
-    }
-
-    #region Data Preparation
-
-    private ScatterChartDataset GetRandomRadarChartDataset(int recordIndex)
-    {
-        var c = ColorUtility.CategoricalTwelveColors[recordIndex].ToColor();
-
-        return new ScatterChartDataset
-            {
-                Label = $"Team {recordIndex + 1}",
-                Data = GetRandomData(),
-                BackgroundColor = c.ToRgbaString(), // RGBA
-                BorderColor = c.ToRgbString(), // RGB
-                BorderWidth = 2,
-                HoverBorderWidth = 4,
-            };
-    }
-
-    private List<ScatterChartDataPoint?> GetRandomData()
-    {
-        var data = new List<ScatterChartDataPoint?>();
-        for (var index = 0; index < 10; index++)
-        {
-            data.Add(new(random.Next(200), random.Next(200)));
-        }
-
-        return data;
-    }
-
-    #endregion Data Preparation
+    List<Point> _series2 = new() {
+        new("2021", 4), new("2022", 2), new("2023", 5)
+    };
 }
 

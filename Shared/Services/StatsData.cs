@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Radzen;
 using Shared.Models;
 using Shared.Pages;
 using System.Globalization;
@@ -44,6 +45,7 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
     private Dictionary<int, int> _tradeCountsByRosterId = new();
     private Dictionary<int, int> _mostLossesAgainstRosterId = new();
     private Dictionary<int, int> _mostWinsAgainstRosterId = new();
+    private List<(string,Dictionary<int,int>)> _endOfSeasonFinishes = new();
 
 
     /// <summary>
@@ -155,6 +157,12 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
     /// </summary>
     public IReadOnlyDictionary<int, int> MostWinsAgainstRosterId => _mostWinsAgainstRosterId;
 
+    /// <summary>
+    /// Lookup list of season (key) and Dictionary(rank, roster_id).
+    /// Verify using EnsureLookupsLoadedAsync() before accessing.
+    /// </summary>
+    public IReadOnlyList<(string,Dictionary<int,int>)> EndOfSeasonFinishes => _endOfSeasonFinishes;
+
 
     /// <summary>
     /// Ensures the lookups are loaded
@@ -205,6 +213,7 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
             BuildMostTradedWithRosterId();
             BuildTradeCountsByRosterId();
             BuildMostWinsLossesAgainstRosterId();
+            BuildEndOfSeasonFinishes();
             _lookupsLoaded = true;
         }
         catch (Exception ex)
@@ -895,6 +904,68 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
         }
     }
 
+    private void BuildEndOfSeasonFinishes()
+    {
+        _endOfSeasonFinishes.Clear();
+
+        var playoffStartBySeason = _leagueState.AllLeagues
+            .Where(l => !string.IsNullOrWhiteSpace(l.Season) && l.Settings?.PlayoffWeekStart is int)
+            .GroupBy(l => l.Season!)
+            .ToDictionary(g => g.Key, g => g.First().Settings!.PlayoffWeekStart);
+
+        
+        foreach (var seasonEntry in RecordsBySeason)
+        {
+            var season = seasonEntry.Key;
+            var seasonRecord = seasonEntry.Value;
+
+            if (!playoffStartBySeason.TryGetValue(season, out var playoffStart) || playoffStart <= 0)
+            {
+                continue;
+            }
+
+            var latestWeek = seasonRecord.WeeksByNumber.Keys
+                .Where(w => w < playoffStart)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            if (latestWeek == 0 || !seasonRecord.WeeksByNumber.TryGetValue(latestWeek, out var weekRecord))
+            {
+                continue;
+            }
+
+            var ordered = weekRecord.ByRoster
+                .Select(kv =>
+                {
+                    var pointsFor = double.TryParse(
+                        kv.Value.PointsFor,
+                        out var pf)
+                        ? pf
+                        : double.MinValue;
+
+                    return new
+                    {
+                        RosterId = kv.Key,
+                        Record = kv.Value,
+                        PointsFor = pointsFor
+                    };
+                })
+                .OrderByDescending(x => x.Record.Wins)
+                .ThenByDescending(x => x.PointsFor)
+                .ToList();
+
+            var rankByRoster = new Dictionary<int, int>();
+            var rank = 1;
+
+            foreach (var entry in ordered)
+            {
+                rankByRoster[rank] = entry.RosterId;
+                rank++;
+            }
+
+            _endOfSeasonFinishes.Add((season, rankByRoster));
+        }
+    }
 
     /// <summary>
     /// Sums the amount of high scoring weeks per roster_id.
@@ -920,7 +991,6 @@ public sealed class StatsData(LeagueState leagueState, MatchupState matchupState
         }
         return totals;
     }
-
 
     /// <summary>
     /// Sums the records for each roster_id.

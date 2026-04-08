@@ -157,7 +157,7 @@ code {
                               radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%),
                               radial-gradient(140% 110% at 50% 100%, rgba(8, 4, 24, 0.9) 0%, rgba(3, 0, 17, 1) 70%);
 
-    --box-shadow: 0 0 24px rgb(0 0 0 / 32%);
+    --box-shadow: 0 0 12px rgb(0 0 0 / 32%);
     --border-medium: rgba(126, 160, 230, 0.22);
     --dark-container: radial-gradient(1200px 600px at 20% -10%, #120a3f 0%, #010102 55%, #030207 100%);
 }
@@ -175,9 +175,8 @@ code {
 .owner-avatar {
     max-width: 3.5rem;
     border-radius: 50%;
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 4px 12px rgba(0, 0, 0, 0.35);
-    background: var(--dark-owner-background);
-    padding: 3px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 0 8px rgb(69 13 111 / 35%);
+    border: 2px solid #050018;
 }
 
 .owner-avatar-xsmall {
