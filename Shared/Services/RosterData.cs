@@ -8,17 +8,17 @@ namespace Shared.Services;
 /// Service that stores the roster information for the current league and builds lookups for frequently accessed data.
 /// </summary>
 /// <param name="sleeperApi"></param>
-/// <param name="userState"></param>
-/// <param name="leagueState"></param>
+/// <param name="userData"></param>
+/// <param name="leagueData"></param>
 /// <param name="normalizer"></param>
 /// <param name="logger"></param>
-public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, LeagueState leagueState, INormalizer normalizer, ILogger<RosterState> logger)
+public sealed class RosterData(ISleeperAPI sleeperApi, UserData userData, LeagueData leagueData, INormalizer normalizer, ILogger<RosterData> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
-    private readonly UserState _userState = userState;
-    private readonly LeagueState _leagueState = leagueState;
+    private readonly UserData _userData = userData;
+    private readonly LeagueData _leagueData = leagueData;
     private readonly INormalizer _normalizer = normalizer;
-    private readonly ILogger<RosterState> _logger = logger;
+    private readonly ILogger<RosterData> _logger = logger;
     private Task? _loadTask;
     private Task? _lookupTask;
     private bool _dataLoaded = false;
@@ -82,8 +82,8 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
     {
         try
         {
-            await _leagueState.EnsureLoadedAsync();
-            var currentLeagueId = _leagueState.CurrentLeagueId;
+            await _leagueData.EnsureLoadedAsync();
+            var currentLeagueId = _leagueData.CurrentLeagueId;
 
             if (!IsLoaded || forceRefresh)
             {
@@ -116,13 +116,13 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
     {
         try
         {
-            await _userState.EnsureLoadedAsync();
+            await _userData.EnsureLoadedAsync();
             _teamNameByRosterId.Clear();
             _playerNicknameByRosterId.Clear();
             _rosterIdByUserId.Clear();
             _userIdByRosterId.Clear();
 
-            var userIds = (_userState.Users ?? [])
+            var userIds = (_userData.Users ?? [])
                 .Where(u => !string.IsNullOrWhiteSpace(u?.UserId))
                 .Select(u => u!.UserId)
                 .ToHashSet();
@@ -134,7 +134,7 @@ public sealed class RosterState(ISleeperAPI sleeperApi, UserState userState, Lea
 
                 if (!string.IsNullOrWhiteSpace(roster.OwnerId))
                 {
-                    var fromUser = await _userState.GetTeamNameByUserIdAsync(roster.OwnerId);
+                    var fromUser = await _userData.GetTeamNameByUserIdAsync(roster.OwnerId);
                     if (!string.IsNullOrWhiteSpace(fromUser))
                         teamName = fromUser;
                 }

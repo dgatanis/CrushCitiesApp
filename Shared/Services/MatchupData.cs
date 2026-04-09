@@ -7,13 +7,13 @@ namespace Shared.Services;
 /// Service that stores all-time matchup information.
 /// </summary>
 /// <param name="sleeperApi"></param>
-/// <param name="leagueState"></param>
+/// <param name="leagueData"></param>
 /// <param name="logger"></param>
-public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState, ILogger<MatchupState> logger)
+public sealed class MatchupData(ISleeperAPI sleeperApi, LeagueData leagueData, ILogger<MatchupData> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
-    private readonly LeagueState _leagueState = leagueState;
-    private readonly ILogger<MatchupState> _logger = logger;
+    private readonly LeagueData _leagueData = leagueData;
+    private readonly ILogger<MatchupData> _logger = logger;
     private sealed record PlayoffKey(string LeagueId, string Week, int MatchupId);
     private Task? _loadTask;
     private bool _dataLoaded = false;
@@ -43,13 +43,13 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
             if(!IsLoaded || forceRefresh)
             {
                 ClearAllMatchups();
-                await _leagueState.EnsureLoadedAsync();
+                await _leagueData.EnsureLoadedAsync();
 
                 var playoffKeys = new HashSet<PlayoffKey>();
                 var playoffStartsByLeague = new Dictionary<string, int>();
                 
                 // Creates keys for playoff matchups based on the playoff brackets for each league
-                foreach (var league in _leagueState.AllLeagues)
+                foreach (var league in _leagueData.AllLeagues)
                 {
                     if (league.LeagueId is null) continue;
                     if (league.Settings?.PlayoffWeekStart is int playoffStart)
@@ -87,7 +87,7 @@ public sealed class MatchupState(ISleeperAPI sleeperApi, LeagueState leagueState
                 }
 
                 // Loops through each league and adds the matchups
-                foreach(var league in _leagueState.AllLeagues)
+                foreach(var league in _leagueData.AllLeagues)
                 {
                     if (league.Settings?.LastScoredLeg is not null &&
                         league.LeagueId is not null)

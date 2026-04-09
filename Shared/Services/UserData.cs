@@ -8,15 +8,15 @@ namespace Shared.Services;
 /// Service that stores the users for the current league and builds lookups for frequently accessed data. 
 /// </summary>
 /// <param name="sleeperApi"></param>
-/// <param name="leagueState"></param>
+/// <param name="leagueData"></param>
 /// <param name="normalizer"></param>
 /// <param name="logger"></param>
-public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, INormalizer normalizer, ILogger<UserState> logger)
+public sealed class UserData(ISleeperAPI sleeperApi, LeagueData leagueData, INormalizer normalizer, ILogger<UserData> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
-    private readonly LeagueState _leagueState = leagueState;
+    private readonly LeagueData _leagueData = leagueData;
     private readonly INormalizer _normalizer = normalizer;
-    private readonly ILogger<UserState> _logger = logger;
+    private readonly ILogger<UserData> _logger = logger;
     private Task? _loadTask;
     private Task? _lookupTask;
     private bool _dataLoaded = false;
@@ -64,8 +64,8 @@ public sealed class UserState(ISleeperAPI sleeperApi, LeagueState leagueState, I
     {
         try
         {
-            await _leagueState.EnsureLoadedAsync();
-            var currentLeagueId = _leagueState.CurrentLeagueId;
+            await _leagueData.EnsureLoadedAsync();
+            var currentLeagueId = _leagueData.CurrentLeagueId;
             if (!IsLoaded || forceRefresh)
             {
                 var users = await _sleeperApi.GetUsersForLeagueAsync(currentLeagueId);

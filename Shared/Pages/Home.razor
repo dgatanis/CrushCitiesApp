@@ -4,9 +4,9 @@
 @using Shared.Services
 @inject ILogger<Home> ILogger
 @inject NavigationManager Nav
-@inject RosterState RosterState 
-@inject UserState UserState
-@inject LeagueState LeagueState
+@inject RosterData RosterData 
+@inject UserData UserData
+@inject LeagueData LeagueData
 
 
 <PageTitle>Home | @Brand</PageTitle>
@@ -41,8 +41,8 @@ else
                 @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
                 {
                     <button type="button" title="View Roster" class="btn btn-outline-secondary common-container border-3" @onclick="@(() => Nav.NavigateTo($"/rosters?selectedRosterId={roster.RosterId}#roster_{roster.RosterId}"))">
-                    <img class="owner-avatar" src="@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")">
-                    <span class="team-name">@(UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : "Team Not Found")</span>
+                    <img class="owner-avatar" src="@(UserData.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")">
+                    <span class="team-name">@(UserData.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : "Team Not Found")</span>
                 </button>
                 }
             }
@@ -76,7 +76,7 @@ else
         try
         {
             await Task.Yield();
-            await UserState.EnsureLoadedAsync();
+            await UserData.EnsureLoadedAsync();
             await LoadRostersAsync();
         }
         catch (Exception ex)
@@ -93,8 +93,8 @@ else
 
     private async Task LoadRostersAsync()
     {
-        await RosterState.EnsureLoadedAsync();
-        _rosters = RosterState.Rosters?.ToList() ?? new List<RostersModel>();
+        await RosterData.EnsureLoadedAsync();
+        _rosters = RosterData.Rosters?.ToList() ?? new List<RostersModel>();
     }
 
 }

@@ -3,10 +3,10 @@
 @using Shared.Services
 @using Microsoft.Extensions.Logging
 @inject ILogger<Rosters> ILogger
-@inject UserState UserState
-@inject RosterState RosterState
-@inject PlayerState PlayerState
-@inject LeagueState LeagueState
+@inject UserData UserData
+@inject RosterData RosterData
+@inject PlayerData PlayerData
+@inject LeagueData LeagueData
 
 
 <PageTitle>Rosters | @Brand</PageTitle>
@@ -41,8 +41,8 @@ else
             @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
             {
                 <div class="owner-info d-flex flex-column align-items-center mb-1" @onclick="() => ToggleRoster(roster.RosterId)">
-                    <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
-                    <span class="team-name">@(UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : "")</span>
+                    <img class="owner-avatar" src=@(UserData.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
+                    <span class="team-name">@(UserData.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : "")</span>
                 </div>
             }
             <div class="accordion" id="@($"accordionStarters{roster.RosterId}")">
@@ -57,7 +57,7 @@ else
                         @foreach(var starter in roster.Starters ?? [])
                         {
                             _counter++;
-                            var player = PlayerState.PlayerById.TryGetValue(starter, out var p) ? p : null;
+                            var player = PlayerData.PlayerById.TryGetValue(starter, out var p) ? p : null;
                             if(player is not null)
                             {
                                 <div class="player-container border border-1 rounded-end" style="background-color:@(player?.Position is not null ? $"var(--{player?.Position.ToUpper()}-faded)" : "grey")">
@@ -71,7 +71,7 @@ else
                                     </div>
                                     <div class="player-name-container">
                                         <div class="player-name">@player?.Firstname @player?.Lastname</div>
-                                        <img class="player-team-logo" src=@(player?.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")>
+                                        <img class="player-team-logo" src=@(player?.Team is not null && PlayerData.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")>
                                     </div>
                                     <div class="player-details">
                                         <span class="player-number">#@player?.Number</span>
@@ -79,7 +79,7 @@ else
                                         <span class="player-height">@GetHeightString(player?.Height)</span>  
                                         <span class="player-weight">@player?.Weight lbs</span>  
                                     </div>
-                                    <div class="player-nickname">@(RosterState.PlayerNicknameByRosterId.TryGetValue((roster.RosterId, player?.PlayerId ?? ""), out var nickname) ? nickname : "")</div>
+                                    <div class="player-nickname">@(RosterData.PlayerNicknameByRosterId.TryGetValue((roster.RosterId, player?.PlayerId ?? ""), out var nickname) ? nickname : "")</div>
                                     <a title="View Player on Rotowire" target="_blank" href=@($"https://www.rotowire.com/football/player/{player?.Firstname?.ToLower()}-{player?.Lastname?.ToLower()}-{player?.RotowireId}")>
                                         <span class="bi-search-icon"></span>
                                     </a>
@@ -103,7 +103,7 @@ else
                         {
                             if(roster.Starters is not null && !roster.Starters.Contains(bench) && !roster.Taxi!.Contains(bench))
                             {
-                                var player = PlayerState.PlayerById.TryGetValue(bench, out var p) ? p : null;
+                                var player = PlayerData.PlayerById.TryGetValue(bench, out var p) ? p : null;
                                 <div class="player-container border border-1 rounded-end" style="background-color:#6e6e6eb5;">
                                     <div class="position-container">
                                         <div class="player-position">
@@ -115,7 +115,7 @@ else
                                     </div>
                                     <div class="player-name-container">
                                         <div class="player-name">@player?.Firstname @player?.Lastname</div>
-                                        <img class="player-team-logo" src=@(player?.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")>
+                                        <img class="player-team-logo" src=@(player?.Team is not null && PlayerData.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")>
                                     </div>
                                     <div class="player-details">
                                         <span class="player-number">#@player?.Number</span>
@@ -123,7 +123,7 @@ else
                                         <span class="player-height">@GetHeightString(player?.Height)</span>  
                                         <span class="player-weight">@player?.Weight lbs</span>  
                                     </div>
-                                    <div class="player-nickname">@(RosterState.PlayerNicknameByRosterId.TryGetValue((roster.RosterId, player?.PlayerId ?? ""), out var nickname) ? nickname : "")</div>
+                                    <div class="player-nickname">@(RosterData.PlayerNicknameByRosterId.TryGetValue((roster.RosterId, player?.PlayerId ?? ""), out var nickname) ? nickname : "")</div>
                                     <a title="View Player on Rotowire" target="_blank" href=@($"https://www.rotowire.com/football/player/{player?.Firstname?.ToLower()}-{player?.Lastname?.ToLower()}-{player?.RotowireId}")>
                                         <span class="bi-search-icon"></span>
                                     </a>
@@ -146,7 +146,7 @@ else
                     <div class="accordion-body">
                         @foreach(var taxi in roster.Taxi ?? [])
                         {
-                            var player = PlayerState.PlayerById.TryGetValue(taxi, out var p) ? p : null;
+                            var player = PlayerData.PlayerById.TryGetValue(taxi, out var p) ? p : null;
                             <div class="player-container border border-1 rounded-end" style="background-color:#6e6e6eb5;">
                                 <div class="position-container">
                                     <div class="player-position">
@@ -158,7 +158,7 @@ else
                                 </div>
                                 <div class="player-name-container">
                                     <div class="player-name">@player?.Firstname @player?.Lastname</div>
-                                    <img class="player-team-logo" src=@(player?.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")>
+                                    <img class="player-team-logo" src=@(player?.Team is not null && PlayerData.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")>
                                 </div>
                                 <div class="player-details">
                                     <span class="player-number">#@player?.Number</span>
@@ -166,7 +166,7 @@ else
                                     <span class="player-height">@GetHeightString(player?.Height)</span>  
                                     <span class="player-weight">@player?.Weight lbs</span>  
                                 </div>
-                                <div class="player-nickname">@(RosterState.PlayerNicknameByRosterId.TryGetValue((roster.RosterId, player?.PlayerId ?? ""), out var nickname) ? nickname : "")</div>
+                                <div class="player-nickname">@(RosterData.PlayerNicknameByRosterId.TryGetValue((roster.RosterId, player?.PlayerId ?? ""), out var nickname) ? nickname : "")</div>
                                 <a title="View Player on Rotowire" target="_blank" href=@($"https://www.rotowire.com/football/player/{player?.Firstname?.ToLower()}-{player?.Lastname?.ToLower()}-{player?.RotowireId}")>
                                     <span class="bi-search-icon"></span>
                                 </a>
@@ -210,8 +210,8 @@ else
     {
         try
         {
-            await PlayerState.EnsureLookupsLoadedAsync(); 
-            await UserState.EnsureLookupsLoadedAsync();
+            await PlayerData.EnsureLookupsLoadedAsync(); 
+            await UserData.EnsureLookupsLoadedAsync();
             await LoadRostersAsync();
         }
         catch (Exception ex)
@@ -237,8 +237,8 @@ else
 
     private async Task LoadRostersAsync()
     {
-        await RosterState.EnsureLoadedAsync();
-        _rosters = RosterState.Rosters?.ToList() ?? new List<RostersModel>();
+        await RosterData.EnsureLoadedAsync();
+        _rosters = RosterData.Rosters?.ToList() ?? new List<RostersModel>();
     }
 
     /// <summary>

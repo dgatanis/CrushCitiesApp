@@ -8,15 +8,15 @@ namespace Shared.Services;
 /// Service that stores the playoff brackets for the current league and builds lookups for frequently accessed data.
 /// </summary>
 /// <param name="sleeperApi"></param>
-/// <param name="leagueState"></param>
-/// <param name="matchupState"></param>
+/// <param name="leagueData"></param>
+/// <param name="matchupData"></param>
 /// <param name="logger"></param>
-public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState, MatchupState matchupState, ILogger<PlayoffState> logger)
+public sealed class PlayoffData(ISleeperAPI sleeperApi, LeagueData leagueData, MatchupData matchupData, ILogger<PlayoffData> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
-    private readonly LeagueState _leagueState = leagueState;
-    private readonly MatchupState _matchupState = matchupState;
-    private readonly ILogger<PlayoffState> _logger = logger;
+    private readonly LeagueData _leagueData = leagueData;
+    private readonly MatchupData _matchupData = matchupData;
+    private readonly ILogger<PlayoffData> _logger = logger;
     private Task? _loadTask;
     private Task? _lookupTask;
     private bool _dataLoaded = false;
@@ -75,7 +75,7 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
             {
                 _allWinnersBrackets.Clear();
                 _allLosersBrackets.Clear();
-                var league_id = await _leagueState.GetCurrentLeagueIdAsync();
+                var league_id = await _leagueData.GetCurrentLeagueIdAsync();
 
                 while (!string.IsNullOrWhiteSpace(league_id))
                 {
@@ -88,7 +88,7 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
                         _allLosersBrackets.Add(league_id, losersBracket);
                     }
 
-                    league_id = await _leagueState.GetPreviousLeagueIdAsync(league_id);
+                    league_id = await _leagueData.GetPreviousLeagueIdAsync(league_id);
                 }
             }
             _dataLoaded = true;
@@ -113,8 +113,8 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
     {
         try
         {
-            await _matchupState.EnsureLoadedAsync();
-            await _leagueState.EnsureLoadedAsync();
+            await _matchupData.EnsureLoadedAsync();
+            await _leagueData.EnsureLoadedAsync();
 
             _winnersBracketMatchups.Clear();
             _losersBracketMatchups.Clear();
@@ -125,13 +125,13 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
                 
                 foreach(var bracket in list.Value)
                 {
-                    if(_leagueState.AllLeagues.Count > 0)
+                    if(_leagueData.AllLeagues.Count > 0)
                     {
-                        var week = _leagueState.AllLeagues.FirstOrDefault(l => l.LeagueId == league_id)?.Settings?.PlayoffWeekStart is int start && bracket.Round is >= 1 and <= 3
+                        var week = _leagueData.AllLeagues.FirstOrDefault(l => l.LeagueId == league_id)?.Settings?.PlayoffWeekStart is int start && bracket.Round is >= 1 and <= 3
                                     ? (start + (bracket.Round - 1)).ToString()
                                     : "";
-                        var matchups = _matchupState.AllMatchups is not null 
-                                    ? _matchupState.AllMatchups.Where(m => m.Week == week && m.LeagueId == league_id && bracket.PlacementGame != 5 &&
+                        var matchups = _matchupData.AllMatchups is not null 
+                                    ? _matchupData.AllMatchups.Where(m => m.Week == week && m.LeagueId == league_id && bracket.PlacementGame != 5 &&
                                                                     (m.RosterId == bracket.Team1 || m.RosterId == bracket.Team2))
                                     : [];
 
@@ -153,13 +153,13 @@ public sealed class PlayoffState(ISleeperAPI sleeperApi, LeagueState leagueState
                 foreach(var bracket in list.Value)
                 {
                     
-                    if(_leagueState.AllLeagues.Count > 0)
+                    if(_leagueData.AllLeagues.Count > 0)
                     {
-                        var week = _leagueState.AllLeagues.FirstOrDefault(l => l.LeagueId == league_id)?.Settings?.PlayoffWeekStart is int start && bracket.Round is >= 1 and <= 3
+                        var week = _leagueData.AllLeagues.FirstOrDefault(l => l.LeagueId == league_id)?.Settings?.PlayoffWeekStart is int start && bracket.Round is >= 1 and <= 3
                                     ? (start + (bracket.Round - 1)).ToString()
                                     : "";
-                        var matchups = _matchupState.AllMatchups is not null 
-                                    ? _matchupState.AllMatchups.Where(m => m.Week == week && m.LeagueId == league_id && bracket.PlacementGame != 3 &&
+                        var matchups = _matchupData.AllMatchups is not null 
+                                    ? _matchupData.AllMatchups.Where(m => m.Week == week && m.LeagueId == league_id && bracket.PlacementGame != 3 &&
                                                                     (m.RosterId == bracket.Team1 || m.RosterId == bracket.Team2))
                                     : [];
 

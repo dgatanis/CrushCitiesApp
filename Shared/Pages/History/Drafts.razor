@@ -4,11 +4,11 @@
 @using Shared.Models
 @using Shared.Services
 @inject ILogger<Drafts> ILogger
-@inject LeagueState LeagueState
-@inject DraftState DraftState
-@inject PlayerState PlayerState
-@inject RosterState RosterState
-@inject UserState UserState
+@inject LeagueData LeagueData
+@inject DraftData DraftData
+@inject PlayerData PlayerData
+@inject RosterData RosterData
+@inject UserData UserData
 
 
 <PageTitle>Drafts | @Brand</PageTitle>
@@ -50,8 +50,8 @@ else
                         class=@($"row-item team-header {(IsSelectedTeam(draft.DraftId, team.Value) ? "team-header-selected" : "")}")
                         @onclick="() => SelectDraftTeam(draft.DraftId, team.Value)">
                             <div>
-                                <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(team.Value, out var name) ? name : $"Roster {team.Value}") />
-                                <div style="font-size: .9rem;">@(UserState.TeamNameByUserId.TryGetValue(team.Value, out var teamName) ? teamName : "Team Not Found")</div>
+                                <img class="owner-avatar" src=@(UserData.OwnerAvatarByUserId.TryGetValue(team.Value, out var name) ? name : $"Roster {team.Value}") />
+                                <div style="font-size: .9rem;">@(UserData.TeamNameByUserId.TryGetValue(team.Value, out var teamName) ? teamName : "Team Not Found")</div>
                             </div>
                     </th> 
                 }
@@ -65,10 +65,10 @@ else
                     {
                         @if(pick is not null && pick.PlayerId is not null)
                         {
-                            var pickedPlayer = PlayerState.PlayerById.TryGetValue(pick.PlayerId, out var p) ? p : null;
+                            var pickedPlayer = PlayerData.PlayerById.TryGetValue(pick.PlayerId, out var p) ? p : null;
                             var isOriginalOwner =   draft?.DraftOrder is not null 
                                                         ? draft.DraftOrder.TryGetValue(pick.DraftSlot, out var originalPickedByUserId)
-                                                        && RosterState.RosterIdByUserId.TryGetValue(originalPickedByUserId, out var originalRosterId)
+                                                        && RosterData.RosterIdByUserId.TryGetValue(originalPickedByUserId, out var originalRosterId)
                                                         && originalRosterId == pick.RosterId
                                                         : false;
                             <td scope="row" class="row-item">
@@ -77,19 +77,19 @@ else
                                     <div class="selection-label">@GetSelectionLabel(pick is not null ? pick : new DraftPicksModel(), draft ?? new DraftPickSeasonSummary())</div>
                                     @if (!isOriginalOwner)
                                     {
-                                        <img class="owner-avatar-xsmall" title="Drafted by @(UserState.TeamNameByUserId.TryGetValue(pick?.PickedBy ?? "", out var teamName) ? teamName : $"Team Not Found")" 
-                                            src=@(UserState.OwnerAvatarByUserId.TryGetValue(pick?.PickedBy ?? "", out var name) ? name : "") />
+                                        <img class="owner-avatar-xsmall" title="Drafted by @(UserData.TeamNameByUserId.TryGetValue(pick?.PickedBy ?? "", out var teamName) ? teamName : $"Team Not Found")" 
+                                            src=@(UserData.OwnerAvatarByUserId.TryGetValue(pick?.PickedBy ?? "", out var name) ? name : "") />
                                     }
                                     <div class="player-position">@pickedPlayer?.Position</div>
                                     <div class="player-name">@pickedPlayer?.Firstname @pickedPlayer?.Lastname</div>
                                     <div class="player-image-container">
                                         <div class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(pick?.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)" >
-                                            <img class="player-team-logo" src=@(pickedPlayer?.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(pickedPlayer.Team, out var img) ? img : "/images/question-mark.png")/>
+                                            <img class="player-team-logo" src=@(pickedPlayer?.Team is not null && PlayerData.PlayerNFLTeamImageByAbbr.TryGetValue(pickedPlayer.Team, out var img) ? img : "/images/question-mark.png")/>
                                         </div>
                                     </div>
                                     <div class="player-college">@pickedPlayer?.College</div>
                                     <div class="player-nickname">
-                                        @(RosterState.PlayerNicknameByRosterId.TryGetValue((RosterState.RosterIdByUserId.TryGetValue(pick?.PickedBy?.ToString() ?? "", out var rosterId) ? rosterId : 0, pick?.PlayerId ?? ""), out var nick) ? nick : "")
+                                        @(RosterData.PlayerNicknameByRosterId.TryGetValue((RosterData.RosterIdByUserId.TryGetValue(pick?.PickedBy?.ToString() ?? "", out var rosterId) ? rosterId : 0, pick?.PlayerId ?? ""), out var nick) ? nick : "")
                                     </div>
                                 </div>
                             </td>
@@ -162,10 +162,10 @@ else
         _draftPicks.Clear();
         try
         {       
-            await DraftState.EnsureLoadedAsync();
+            await DraftData.EnsureLoadedAsync();
             
-            _draftHistory = DraftState.DraftHistory?.ToList() ?? new List<DraftPickSeasonSummary>();
-            _draftPicks = DraftState.AllDraftPicks?.ToList() ?? new List<DraftPicksModel>();
+            _draftHistory = DraftData.DraftHistory?.ToList() ?? new List<DraftPickSeasonSummary>();
+            _draftPicks = DraftData.AllDraftPicks?.ToList() ?? new List<DraftPicksModel>();
         }
         finally
         {

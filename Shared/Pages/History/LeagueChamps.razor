@@ -3,11 +3,11 @@
 @using Shared.Models
 @using Shared.Services
 @inject ILogger<LeagueChamps> ILogger
-@inject PlayoffState PlayoffState 
-@inject RosterState RosterState
-@inject LeagueState LeagueState
-@inject PlayerState PlayerState
-@inject UserState UserState
+@inject PlayoffData PlayoffData 
+@inject RosterData RosterData
+@inject LeagueData LeagueData
+@inject PlayerData PlayerData
+@inject UserData UserData
 
 
 <PageTitle>League Champs</PageTitle>
@@ -36,9 +36,9 @@ else
                         <div class="row g-3 justify-content-center">
                             @foreach(var bracket in seasonBracket.Value)
                             {
-                                if(bracket.PlacementGame == 1 && LeagueState.AllLeagues is not null)
+                                if(bracket.PlacementGame == 1 && LeagueData.AllLeagues is not null)
                                 {
-                                    var league = LeagueState.AllLeagues.FirstOrDefault(x => x.LeagueId == leagueId);
+                                    var league = LeagueData.AllLeagues.FirstOrDefault(x => x.LeagueId == leagueId);
                                     var finalWeek = league is not null 
                                                             ? league.Settings?.LastScoredLeg.ToString() 
                                                             : "";
@@ -49,10 +49,10 @@ else
                                                                 .OrderByDescending(x => x.Value)
                                                                 .FirstOrDefault()
                                                             : default;
-                                    var highScorerPlayer = highScorer.Key is not null && PlayerState.PlayerById.TryGetValue(highScorer.Key, out var playerId)
+                                    var highScorerPlayer = highScorer.Key is not null && PlayerData.PlayerById.TryGetValue(highScorer.Key, out var playerId)
                                                             ? playerId
                                                             : null;
-                                    var userId = bracket.WinnerId is not null && RosterState.UserIdByRosterId.TryGetValue(bracket.WinnerId.ToString() ?? "", out var user_id)
+                                    var userId = bracket.WinnerId is not null && RosterData.UserIdByRosterId.TryGetValue(bracket.WinnerId.ToString() ?? "", out var user_id)
                                                             ? user_id
                                                             : null;
                                     if(winningMatchup is not null && league is not null && highScorerPlayer is not null)
@@ -62,10 +62,10 @@ else
                                                 <div class="card-body">
                                                     <div class="text-muted small mb-1" style="color:#bababa !important;">@league.Season</div>
                                                     <div>
-                                                        <img class="owner-avatar" src="@(UserState.OwnerAvatarByUserId.TryGetValue(userId ?? "", out var link) ? link : $"Not Found")">
+                                                        <img class="owner-avatar" src="@(UserData.OwnerAvatarByUserId.TryGetValue(userId ?? "", out var link) ? link : $"Not Found")">
                                                     </div>
                                                     <div class="fs-5 fw-semibold">
-                                                        @(bracket.WinnerId is int id && RosterState.TeamNameByRosterId.TryGetValue(id, out var name) ? name : "(unknown)")
+                                                        @(bracket.WinnerId is int id && RosterData.TeamNameByRosterId.TryGetValue(id, out var name) ? name : "(unknown)")
                                                     </div>
                                                     <div class="mt-4 medium">King of the Finals</div>
                                                     <div class="d-flex justify-content-center align-items-center mt-2">
@@ -84,7 +84,7 @@ else
                 }
                 @foreach(var season in _previousChamps)
                 {
-                    var userId = RosterState.UserIdByRosterId.TryGetValue(season.Value.ToString() ?? "", out var user_id)
+                    var userId = RosterData.UserIdByRosterId.TryGetValue(season.Value.ToString() ?? "", out var user_id)
                         ? user_id
                         : null;
 
@@ -96,10 +96,10 @@ else
                                     <div class="card-body">
                                         <div class="text-muted small mb-1" style="color:#bababa !important;">@season.Key</div>
                                         <div>
-                                            <img class="owner-avatar" src="@(UserState.OwnerAvatarByUserId.TryGetValue(userId ?? "", out var link) ? link : $"Not Found")">
+                                            <img class="owner-avatar" src="@(UserData.OwnerAvatarByUserId.TryGetValue(userId ?? "", out var link) ? link : $"Not Found")">
                                         </div>
                                         <div class="fs-5 fw-semibold">
-                                            @(RosterState.TeamNameByRosterId.TryGetValue(season.Value, out var name) ? name : "(unknown)")
+                                            @(RosterData.TeamNameByRosterId.TryGetValue(season.Value, out var name) ? name : "(unknown)")
                                         </div>
                                     </div>
                                 </div>
@@ -138,8 +138,8 @@ else
         try
         {
             await Task.Yield();
-            await RosterState.EnsureLoadedAsync();
-            await PlayerState.EnsureLookupsLoadedAsync();
+            await RosterData.EnsureLoadedAsync();
+            await PlayerData.EnsureLookupsLoadedAsync();
             await LoadPlayoffDataAsync();
             LoadPreviousChamps();
         }
@@ -158,11 +158,11 @@ else
 
     private async Task LoadPlayoffDataAsync()
     {
-        await PlayoffState.EnsureLoadedAsync();
-        _winnersMatchups = PlayoffState.WinnersBracketMatchups?.ToList() ?? new List<MatchupModel>();
-        _losersMatchups = PlayoffState.LosersBracketMatchups?.ToList() ?? new List<MatchupModel>();
-        _winnersBrackets = PlayoffState.AllWinnersBrackets?.ToDictionary() ?? new Dictionary<string, List<PlayoffBracketsModel>>();
-        _losersBrackets = PlayoffState.AllLosersBrackets?.ToDictionary() ?? new Dictionary<string, List<PlayoffBracketsModel>>();
+        await PlayoffData.EnsureLoadedAsync();
+        _winnersMatchups = PlayoffData.WinnersBracketMatchups?.ToList() ?? new List<MatchupModel>();
+        _losersMatchups = PlayoffData.LosersBracketMatchups?.ToList() ?? new List<MatchupModel>();
+        _winnersBrackets = PlayoffData.AllWinnersBrackets?.ToDictionary() ?? new Dictionary<string, List<PlayoffBracketsModel>>();
+        _losersBrackets = PlayoffData.AllLosersBrackets?.ToDictionary() ?? new Dictionary<string, List<PlayoffBracketsModel>>();
      }
 
 

@@ -10,15 +10,15 @@ namespace Shared.Services;
 /// Service that stores the transactions for the current league and allows filtering by type (["trade", "waiver", or "free_agent"]).
 /// </summary>
 /// <param name="sleeperApi"></param>
-/// <param name="leagueState"></param>
+/// <param name="leagueData"></param>
 /// <param name="http"></param>
 /// <param name="logger"></param>
-public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueState, HttpClient http, ILogger<TransactionState> logger)
+public sealed class TransactionData(ISleeperAPI sleeperApi, LeagueData leagueData, HttpClient http, ILogger<TransactionData> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
-    private readonly LeagueState _leagueState = leagueState;
+    private readonly LeagueData _leagueData = leagueData;
     private readonly HttpClient _http = http;
-    private readonly ILogger<TransactionState> _logger = logger;
+    private readonly ILogger<TransactionData> _logger = logger;
     private Task? _loadTask;
     private bool _dataLoaded = false;
     
@@ -51,9 +51,9 @@ public sealed class TransactionState(ISleeperAPI sleeperApi, LeagueState leagueS
             if (!IsLoaded || forceRefresh)
             {
                 _transactions.Clear();
-                await _leagueState.EnsureLoadedAsync();
+                await _leagueData.EnsureLoadedAsync();
                 
-                foreach(var league in _leagueState.AllLeagues)
+                foreach(var league in _leagueData.AllLeagues)
                 {
                     if (league.Settings?.LastScoredLeg is not null && league.LeagueId is not null)
                     {

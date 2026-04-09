@@ -9,10 +9,10 @@ namespace Shared.Services;
 /// </summary>
 /// <param name="sleeperApi"></param>
 /// <param name="logger"></param>
-public sealed class LeagueState(ISleeperAPI sleeperApi, ILogger<LeagueState> logger)
+public sealed class LeagueData(ISleeperAPI sleeperApi, ILogger<LeagueData> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
-    private readonly ILogger<LeagueState> _logger = logger;
+    private readonly ILogger<LeagueData> _logger = logger;
     private Task? _loadTask;
     private bool _dataLoaded = false;
     

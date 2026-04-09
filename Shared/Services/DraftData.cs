@@ -8,13 +8,13 @@ namespace Shared.Services;
 /// Service that stores all-time draft information and builds lookups for frequently accessed data.
 /// </summary>
 /// <param name="sleeperApi"></param>
-/// <param name="leagueState"></param>
+/// <param name="leagueData"></param>
 /// <param name="logger"></param>
-public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState, ILogger<DraftState> logger)
+public sealed class DraftData(ISleeperAPI sleeperApi, LeagueData leagueData, ILogger<DraftData> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
-    private readonly LeagueState _leagueState = leagueState;
-    private readonly ILogger<DraftState> _logger = logger;
+    private readonly LeagueData _leagueData = leagueData;
+    private readonly ILogger<DraftData> _logger = logger;
     private Task? _loadTask;
     private Task? _lookupTask;
     private bool _lookupsLoaded = false;
@@ -64,11 +64,11 @@ public sealed class DraftState(ISleeperAPI sleeperApi, LeagueState leagueState, 
         {
             if (!IsLoaded || forceRefresh)
             {
-                await _leagueState.EnsureLoadedAsync();
+                await _leagueData.EnsureLoadedAsync();
                 _allDrafts = new();
                 _allDraftPicks = new();
 
-                foreach(var league in _leagueState.AllLeagues)
+                foreach(var league in _leagueData.AllLeagues)
                 {
                     var drafts = await _sleeperApi.GetDraftsForLeagueAsync(league.LeagueId ?? "");
 

@@ -3,11 +3,11 @@
 @using Shared.Models
 @using Shared.Services
 @inject ILogger<Matchups> ILogger
-@inject MatchupState MatchupState
-@inject RosterState RosterState
-@inject UserState UserState
-@inject PlayerState PlayerState
-@inject StatsData StatsData
+@inject MatchupData MatchupData
+@inject RosterData RosterData
+@inject UserData UserData
+@inject PlayerData PlayerData
+@inject IStatsData StatsData
 
 
 <PageTitle>Matchups | @Brand</PageTitle>
@@ -43,7 +43,7 @@ else
                 {
                     <li>
                         <button class="dropdown-item" type="button" @onclick="() => _selectedRosterId1 = roster.RosterId">
-                            @(RosterState.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")
+                            @(RosterData.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")
                         </button>
                     </li>
                     <li><hr class="dropdown-divider"></li>
@@ -72,7 +72,7 @@ else
                 {
                     <li>
                         <button class="dropdown-item" type="button" @onclick="() => _selectedRosterId2 = roster.RosterId">
-                            @(RosterState.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")
+                            @(RosterData.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")
                         </button>
                     </li>
                     <li><hr class="dropdown-divider"></li>
@@ -133,7 +133,7 @@ else
                                                 .OrderBy(g => g.Key ?? int.MaxValue)
                                                 .Where(ShouldShowMatchup))
                                             {
-                                                var winnerRosterId = StatsData.GetWinnerRosterId(matchupPartition);
+                                                var winnerRosterId = Shared.Services.StatsData.GetWinnerRosterId(matchupPartition);
                                                 var matchupKey = matchupPartition.Key?.ToString() ?? "na";
                                                 var teams = matchupPartition.OrderBy(m => m.RosterId).ToList();
 
@@ -152,9 +152,9 @@ else
                                                                             <div class="matchup-team-header-left">
                                                                                 @if (roster is not null && !string.IsNullOrWhiteSpace(roster.OwnerId))
                                                                                 {
-                                                                                    <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
+                                                                                    <img class="owner-avatar" src=@(UserData.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
                                                                                 }
-                                                                                <div class="matchup-team-name">@(RosterState.TeamNameByRosterId.TryGetValue(team.RosterId, out var teamName) ? teamName : $"Roster {team.RosterId}")</div>
+                                                                                <div class="matchup-team-name">@(RosterData.TeamNameByRosterId.TryGetValue(team.RosterId, out var teamName) ? teamName : $"Roster {team.RosterId}")</div>
                                                                                 <div class="matchup-team-record badge text-warning border border-warning align-items-center text-nowrap">@GetRecordDisplay(season, week ?? "", team.RosterId)</div>
                                                                             </div>
                                                                             <div class="matchup-team-score" style="color: var(--@(winnerRosterId.HasValue && winnerRosterId.Value == team.RosterId ? "added" : "dropped"))">@team.Points</div>
@@ -167,7 +167,7 @@ else
                                                                         @foreach(var playerId in team.Starters ?? [])
                                                                         {
                                                                             slotIndex++;
-                                                                            var player = PlayerState.PlayerById.TryGetValue(playerId, out var p) ? p : null;
+                                                                            var player = PlayerData.PlayerById.TryGetValue(playerId, out var p) ? p : null;
                                                                             var positionLabel = slotIndex == 7 || slotIndex == 8 ? "FLEX" : slotIndex == 9 ? "SF" : player?.Position;
 
 
@@ -238,7 +238,7 @@ else
         {
             await Task.Yield(); 
             await LoadMatchupsAsync(); 
-            await PlayerState.EnsureLoadedAsync();
+            await PlayerData.EnsureLoadedAsync();
             await LoadRostersAsync();
             await LoadStatsDataAsync();
         }
@@ -261,8 +261,8 @@ else
     /// <returns></returns>
     private async Task LoadMatchupsAsync()
     {
-        await MatchupState.EnsureLoadedAsync();
-        _matchups = MatchupState.AllMatchups?.ToList() ?? new List<MatchupModel>();
+        await MatchupData.EnsureLoadedAsync();
+        _matchups = MatchupData.AllMatchups?.ToList() ?? new List<MatchupModel>();
     }
 
 
@@ -272,9 +272,9 @@ else
     /// <returns></returns>
     private async Task LoadRostersAsync()
     {
-        await RosterState.EnsureLoadedAsync();
-        await RosterState.EnsureLookupsLoadedAsync();
-        _rosters = RosterState.Rosters?.ToList() ?? new List<RostersModel>();
+        await RosterData.EnsureLoadedAsync();
+        await RosterData.EnsureLookupsLoadedAsync();
+        _rosters = RosterData.Rosters?.ToList() ?? new List<RostersModel>();
     }
 
 
@@ -284,8 +284,8 @@ else
     /// <returns></returns>
     private async Task  LoadStatsDataAsync()
     {
-        await StatsData.EnsureLookupsLoadedAsync();
-        _recordsBySeason = StatsData.RecordsBySeason?.ToDictionary() ?? new Dictionary<string, SeasonRecord>();
+        await StatsData.EnsureDataLoadedAsync();
+        _recordsBySeason = StatsData.GetRecordsBySeason().ToDictionary() ?? new Dictionary<string, SeasonRecord>();
     }
 
 
@@ -297,7 +297,7 @@ else
     private string GetDropdownLabel(int rosterId)
     {
         if (rosterId == -1) return "Filter by team";
-        return RosterState.TeamNameByRosterId.TryGetValue(rosterId, out var name)
+        return RosterData.TeamNameByRosterId.TryGetValue(rosterId, out var name)
             ? name
             : $"Roster {rosterId}";
     }
@@ -342,9 +342,9 @@ else
     private async Task ReloadMatchups()
     {
         _isLoading = true;
-        MatchupState.ClearAllMatchups();
+        MatchupData.ClearAllMatchups();
         await LoadMatchupsAsync();
-        _matchups = MatchupState.AllMatchups?.ToList() ?? new List<MatchupModel>();
+        _matchups = MatchupData.AllMatchups?.ToList() ?? new List<MatchupModel>();
         _isLoading = false;
     }
 

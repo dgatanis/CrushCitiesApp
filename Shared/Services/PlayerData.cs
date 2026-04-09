@@ -13,11 +13,11 @@ namespace Shared.Services;
 /// <param name="sleeperApi"></param>
 /// <param name="js"></param>
 /// <param name="logger"></param>
-public sealed class PlayerState(ISleeperAPI sleeperApi, IJSRuntime js, ILogger<PlayerState> logger)
+public sealed class PlayerData(ISleeperAPI sleeperApi, IJSRuntime js, ILogger<PlayerData> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly IJSRuntime _js = js;
-    private readonly ILogger<PlayerState> _logger = logger;
+    private readonly ILogger<PlayerData> _logger = logger;
     private const string NflPlayersCacheKey = "sleeper:nfl:players-lite:v1";
     private static readonly TimeSpan NflPlayersCacheTtl = TimeSpan.FromHours(6);
     private Dictionary<string, PlayerLiteModel>? _memoryPlayers;
