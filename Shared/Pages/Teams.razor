@@ -7,11 +7,11 @@
 @using Radzen.Blazor
 
 @inject ILogger<Teams> ILogger
-@inject LeagueState LeagueState
-@inject RosterState RosterState
-@inject UserState UserState
-@inject StatsData StatsData
-@inject PlayerState PlayerState
+@inject LeagueData LeagueData
+@inject RosterData RosterData
+@inject UserData UserData
+@inject IStatsData StatsData
+@inject PlayerData PlayerData
 
 
 <PageTitle>Teams | @Brand</PageTitle>
@@ -33,62 +33,62 @@ else
         @foreach (var roster in _rosters ?? [])
         {
             var statsCollapseId = $"teamStatsCollapse_{roster.RosterId}";
-            var teamName = roster.OwnerId is not null && UserState.TeamNameByUserId.TryGetValue(roster.OwnerId, out var name)
+            var teamName = roster.OwnerId is not null && UserData.TeamNameByUserId.TryGetValue(roster.OwnerId, out var name)
                 ? name
                 : $"Roster {roster.RosterId}";
 
-            var championships = StatsData.ChampionshipCountByRosterId.TryGetValue(roster.RosterId, out var champCount)
+            var championships = StatsData.GetChampionshipCountByRosterId().TryGetValue(roster.RosterId, out var champCount)
                 ? champCount
                 : 0;
 
-            var finalsAppearances = StatsData.FinalsAppearancesByRosterId.TryGetValue(roster.RosterId, out var finalsCount)
+            var finalsAppearances = StatsData.GetFinalsAppearancesByRosterId().TryGetValue(roster.RosterId, out var finalsCount)
                 ? finalsCount
                 : 0;
 
-            var playoffAppearances = StatsData.PlayoffAppearancesByRosterId.TryGetValue(roster.RosterId, out var playoffCount)
+            var playoffAppearances = StatsData.GetPlayoffAppearancesByRosterId().TryGetValue(roster.RosterId, out var playoffCount)
                 ? playoffCount
                 : 0;
 
-            var lastPlaceFinishes = StatsData.LastPlaceFinishesByRosterId.TryGetValue(roster.RosterId, out var lastPlaceCount)
+            var lastPlaceFinishes = StatsData.GetLastPlaceFinishesByRosterId().TryGetValue(roster.RosterId, out var lastPlaceCount)
                 ? lastPlaceCount
                 : 0;
 
-            var mostTradedWithRosterId = StatsData.MostTradedWithRosterId.TryGetValue(roster.RosterId, out var tradedWithRosterId)
+            var mostTradedWithRosterId = StatsData.GetMostTradedWithRosterId().TryGetValue(roster.RosterId, out var tradedWithRosterId)
                 ? tradedWithRosterId
                 : 0;
-            var mostTradedWithName = RosterState.TeamNameByRosterId.TryGetValue(mostTradedWithRosterId, out var mostTradedWithTeamName)
+            var mostTradedWithName = RosterData.TeamNameByRosterId.TryGetValue(mostTradedWithRosterId, out var mostTradedWithTeamName)
                 ? mostTradedWithTeamName
                 : "N/A";
 
-            var tradeCount = StatsData.TradeCountsByRosterId.TryGetValue(roster.RosterId, out var tradeCountValue)
+            var tradeCount = StatsData.GetTradeCountsByRosterId().TryGetValue(roster.RosterId, out var tradeCountValue)
                 ? tradeCountValue
                 : 0;
 
-            var lowScoringWeeks = StatsData.LowScoringWeeksByRosterId.TryGetValue(roster.RosterId, out var lowWeeksCount)
+            var lowScoringWeeks = StatsData.GetLowScoringWeeksByRosterId().TryGetValue(roster.RosterId, out var lowWeeksCount)
                 ? lowWeeksCount
                 : 0;
-
-            var highScoringWeeks = StatsData.HighScoringWeeksByRosterId.Values
+                
+            var highScoringWeeks = StatsData.GetHighScoringWeeksByRosterId().Values
                 .SelectMany(d => d)
                 .Where(kv => kv.Key == roster.RosterId)
                 .Select(kv => kv.Value)
                 .DefaultIfEmpty(0)
                 .Sum();
 
-            var mostLossesAgainstRosterId = StatsData.MostLossesAgainstRosterId.TryGetValue(roster.RosterId, out var lossesAgainstRosterId)
+            var mostLossesAgainstRosterId = StatsData.GetMostLossesAgainstRosterId().TryGetValue(roster.RosterId, out var lossesAgainstRosterId)
                 ? lossesAgainstRosterId
                 : 0;
-            var mostLossesAgainstName = RosterState.TeamNameByRosterId.TryGetValue(mostLossesAgainstRosterId, out var mostLossesAgainstTeamName)
+            var mostLossesAgainstName = RosterData.TeamNameByRosterId.TryGetValue(mostLossesAgainstRosterId, out var mostLossesAgainstTeamName)
                 ? mostLossesAgainstTeamName
                 : "N/A";
 
-            var mostWinsAgainstRosterId = StatsData.MostWinsAgainstRosterId.TryGetValue(roster.RosterId, out var winsAgainstRosterId)
+            var mostWinsAgainstRosterId = StatsData.GetMostWinsAgainstRosterId().TryGetValue(roster.RosterId, out var winsAgainstRosterId)
                 ? winsAgainstRosterId
                 : 0;
-            var mostWinsAgainstName = RosterState.TeamNameByRosterId.TryGetValue(mostWinsAgainstRosterId, out var mostWinsAgainstTeamName)
+            var mostWinsAgainstName = RosterData.TeamNameByRosterId.TryGetValue(mostWinsAgainstRosterId, out var mostWinsAgainstTeamName)
                 ? mostWinsAgainstTeamName
                 : "N/A";
-            var ownerImage = UserState.OwnerAvatarByUserId.TryGetValue(RosterState.UserIdByRosterId.TryGetValue(roster.RosterId.ToString() ?? "", out var userId) ? userId : "", out var url) 
+            var ownerImage = UserData.OwnerAvatarByUserId.TryGetValue(RosterData.UserIdByRosterId.TryGetValue(roster.RosterId.ToString() ?? "", out var userId) ? userId : "", out var url) 
                 ? url 
                 : "";
 
@@ -235,7 +235,7 @@ else
         try 
         {
             await Task.Yield(); 
-            await StatsData.EnsureLookupsLoadedAsync();
+            await StatsData.EnsureDataLoadedAsync();
             await LoadRosters();
             await LoadScatterPlot();
         }
@@ -254,8 +254,8 @@ else
 
     private async Task LoadRosters()
     {
-        await RosterState.EnsureLoadedAsync();
-        _rosters = RosterState.Rosters?.ToList() ?? new List<RostersModel>();
+        await RosterData.EnsureLoadedAsync();
+        _rosters = RosterData.Rosters?.ToList() ?? new List<RostersModel>();
         _maxRank = Math.Max(1, _rosters.Count);
     }
 
@@ -265,7 +265,7 @@ else
 
         foreach(var playerId in players)
         {
-            var player = PlayerState.PlayerById.TryGetValue(playerId, out var thisPlayer) ? thisPlayer : null;
+            var player = PlayerData.PlayerById.TryGetValue(playerId, out var thisPlayer) ? thisPlayer : null;
             if(player is null || player.Position is null) continue;
 
             var index = _rosterPlayers.FindIndex(x => x.Position == player.Position);
@@ -286,7 +286,7 @@ else
 
     private Task LoadScatterPlot()
     {
-        _endOfSeasonFinishes = StatsData.EndOfSeasonFinishes.ToList();
+        _endOfSeasonFinishes = StatsData.GetEndOfSeasonFinishes().ToList();
         BuildEndOfSeasonSeries();
         return Task.CompletedTask;   
     }
@@ -334,7 +334,7 @@ else
             var series = new RosterSeasonSeries
             {
                 RosterId = rosterId,
-                Name = RosterState.TeamNameByRosterId.TryGetValue(rosterId, out var name)
+                Name = RosterData.TeamNameByRosterId.TryGetValue(rosterId, out var name)
                     ? name
                     : $"Team {rosterId}",
                 Color = c.ToRgbString()

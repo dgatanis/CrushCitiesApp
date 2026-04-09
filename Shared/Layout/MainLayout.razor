@@ -5,9 +5,9 @@
 @using Radzen
 @inherits LayoutComponentBase
 @inject IJSRuntime JS
-@inject TransactionState TransactionState
-@inject RosterState RosterState
-@inject PlayerState PlayerState
+@inject TransactionData TransactionData
+@inject RosterData RosterData
+@inject PlayerData PlayerData
 
 <div class="page">
     <header class="top-nav">
@@ -61,7 +61,7 @@
                             <span class="small d-flex align-items-baseline gap-1">
                                     @foreach (var rosterId in transaction.ConsenterIds ?? Enumerable.Empty<int>())
                                     {
-                                        var ownerId = RosterState.Rosters?.FirstOrDefault(x => x.RosterId == rosterId)?.OwnerId;
+                                        var ownerId = RosterData.Rosters?.FirstOrDefault(x => x.RosterId == rosterId)?.OwnerId;
                                         var teamAdds = transaction.Adds?
                                             .Where(kvp => kvp.Value == rosterId)
                                             .Select(kvp => kvp.Key)
@@ -80,7 +80,7 @@
                                             .Where(w => w.Receiver == rosterId)
                                             .ToList() ?? new();
 
-                                        var team = RosterState.TeamNameByRosterId.TryGetValue(rosterId, out var name) ? name : "";
+                                        var team = RosterData.TeamNameByRosterId.TryGetValue(rosterId, out var name) ? name : "";
                                         var acquiredPlayers = teamAdds.Any() ? teamAdds.Count() : 0;
                                         var acquiredBudget = teamBudget.Any() ? teamBudget[0].Amount : 0;
                                         var acquiredPicks = teamPicks.Any() ? teamPicks.Count() : 0;
@@ -105,7 +105,7 @@
                                                 <text> </text>
                                                 @string.Join(", ",
                                                     teamAdds
-                                                        .Select(id => PlayerState.PlayerById.TryGetValue(id, out var p) ? $"{p.Firstname} {p.Lastname}" : null)
+                                                        .Select(id => PlayerData.PlayerById.TryGetValue(id, out var p) ? $"{p.Firstname} {p.Lastname}" : null)
                                                         .Where(name => !string.IsNullOrWhiteSpace(name)))
                                             }
 
@@ -116,7 +116,7 @@
                                                 <text> </text>
                                                 @string.Join(", ",
                                                     teamDrops
-                                                        .Select(id => PlayerState.PlayerById.TryGetValue(id, out var p) ? $"{p.Firstname} {p.Lastname}" : null)
+                                                        .Select(id => PlayerData.PlayerById.TryGetValue(id, out var p) ? $"{p.Firstname} {p.Lastname}" : null)
                                                         .Where(name => !string.IsNullOrWhiteSpace(name)))
                                             }
 
@@ -150,8 +150,8 @@
         }
 
         await JS.InvokeVoidAsync("theme.set", isDark ? "dark" : "light");
-        await TransactionState.EnsureLoadedAsync();
-        _latestTransactions = TransactionState.Transactions.OrderByDescending(x => x.Created).Take(50).ToList();
+        await TransactionData.EnsureLoadedAsync();
+        _latestTransactions = TransactionData.Transactions.OrderByDescending(x => x.Created).Take(50).ToList();
         _isTickerLoading = false;
     }
 

@@ -1,12 +1,12 @@
 ﻿@page "/trades"
 @using Shared.Models
 @using Shared.Services
-@inject RosterState RosterState 
-@inject UserState UserState
-@inject TransactionState TransactionState
-@inject PlayerState PlayerState
-@inject LeagueState LeagueState
-@inject DraftState DraftState
+@inject RosterData RosterData 
+@inject UserData UserData
+@inject TransactionData TransactionData
+@inject PlayerData PlayerData
+@inject LeagueData LeagueData
+@inject DraftData DraftData
 
 <PageTitle>Trades | @Brand</PageTitle>
 
@@ -39,7 +39,7 @@ else
                     {
                         <li>
                             <button class="dropdown-item" type="button" @onclick="() => {_selectedRosterId1 = roster.RosterId; _pageIndex = 0;}">
-                                @(RosterState.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")
+                                @(RosterData.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")
                             </button>
                         </li>
                         <li><hr class="dropdown-divider"></li>
@@ -69,7 +69,7 @@ else
                     {
                         <li>
                             <button class="dropdown-item" type="button" @onclick="() => {_selectedRosterId2 = roster.RosterId; _pageIndex = 0;}">
-                                @(RosterState.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")
+                                @(RosterData.TeamNameByRosterId.TryGetValue(roster.RosterId, out var name) ? name : $"Roster {roster.RosterId}")
                             </button>
                         </li>
                         <li><hr class="dropdown-divider"></li>
@@ -132,7 +132,7 @@ else
                     <div style="font-family: 'F1';" class="d-flex mt-3 justify-content-center">@(DateTimeOffset.FromUnixTimeMilliseconds(@trade.Created).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt"))</div>
                     @foreach (var team in trade.ConsenterIds ?? [])
                     {
-                        var ownerId = RosterState.Rosters?.FirstOrDefault(x => x.RosterId == team)?.OwnerId;
+                        var ownerId = RosterData.Rosters?.FirstOrDefault(x => x.RosterId == team)?.OwnerId;
                         var teamAdds = trade.Adds?
                             .Where(kvp => kvp.Value == team)
                             .Select(kvp => kvp.Key)
@@ -154,22 +154,22 @@ else
                         <div class="col-12 col-md-6">
                             <div class="p-2 w-100 h-100">
                                 <div class="d-flex justify-content-center">
-                                    <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(ownerId ?? "", out var teamimg) ? teamimg : "")>
+                                    <img class="owner-avatar" src=@(UserData.OwnerAvatarByUserId.TryGetValue(ownerId ?? "", out var teamimg) ? teamimg : "")>
                                 </div>
-                                <div class="d-flex justify-content-center" style="color:#d6d6d6;margin-bottom: 1rem;font-family: 'F1';">@(RosterState.TeamNameByRosterId.TryGetValue(team, out var name) ? name : "")</div>
+                                <div class="d-flex justify-content-center" style="color:#d6d6d6;margin-bottom: 1rem;font-family: 'F1';">@(RosterData.TeamNameByRosterId.TryGetValue(team, out var name) ? name : "")</div>
                                 <div class="d-flex flex-column gap-2 mt-2 align-items-center">
                                     @if (teamAdds.Any())
                                     {
                                         <div class="d-flex flex-wrap gap-2 justify-content-center w-100">
                                             @foreach (var playerId in teamAdds)
                                             {
-                                                var player = PlayerState.PlayerById.TryGetValue(playerId, out var p) ? p : null;
+                                                var player = PlayerData.PlayerById.TryGetValue(playerId, out var p) ? p : null;
                                                 if (player is not null)
                                                 {
                                                     <span class="badge text-success border border-success frosty-bg d-inline-flex align-items-center gap-1">
                                                         <span style="font-size: x-large;">+</span>
                                                         <span class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp);border-color:var(--@(player.Position?.ToUpper()))">
-                                                            <img class="player-team-logo" src="@(player.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")" />
+                                                            <img class="player-team-logo" src="@(player.Team is not null && PlayerData.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")" />
                                                         </span>
                                                         <span style="color: #d6d6d6;">@player.Firstname @player.Lastname</span>
                                                     </span>
@@ -183,13 +183,13 @@ else
                                         <div class="d-flex flex-wrap gap-2 justify-content-center w-100">
                                             @foreach (var playerId in (teamDrops ?? []).Where(id => !allTradeAdds.Contains(id)))
                                             {
-                                                var player = PlayerState.PlayerById.TryGetValue(playerId, out var p) ? p : null;
+                                                var player = PlayerData.PlayerById.TryGetValue(playerId, out var p) ? p : null;
                                                 if (player is not null)
                                                 {
                                                     <span class="badge frosty-bg text-danger border border-danger d-inline-flex align-items-center gap-1">
                                                     <span style="font-size: x-large;">-</span>
                                                         <span class="player-image" style="background-image: url(https://sleepercdn.com/content/nfl/players/thumb/@(player.PlayerId).jpg), url(https://sleepercdn.com/images/v2/icons/player_default.webp)">
-                                                            <img class="player-team-logo" src="@(player.Team is not null && PlayerState.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")" />
+                                                            <img class="player-team-logo" src="@(player.Team is not null && PlayerData.PlayerNFLTeamImageByAbbr.TryGetValue(player.Team, out var img) ? img : "/images/question-mark.png")" />
                                                         </span>
                                                         <span style="color: #d6d6d6;">@player.Firstname @player.Lastname</span>
                                                     </span>
@@ -212,7 +212,7 @@ else
                                                                 @if(pick.RosterId != pick.PreviousOwnerId && !_draftInfoBySeason.TryGetValue(pick.Season ?? "", out var info))
                                                                 {
                                                                     <span class="text-center">
-                                                                        @(RosterState.TeamNameByRosterId.TryGetValue(pick.RosterId, out var teamName) ? $"via {teamName}" : "")
+                                                                        @(RosterData.TeamNameByRosterId.TryGetValue(pick.RosterId, out var teamName) ? $"via {teamName}" : "")
                                                                     </span>
                                                                 }
                                                             </span>
@@ -304,9 +304,9 @@ else
     /// <returns></returns>
     private async Task LoadTransactions() 
     {
-        await TransactionState.EnsureLoadedAsync();
+        await TransactionData.EnsureLoadedAsync();
         
-        _trades = TransactionState.GetFilteredTransactionsData(["trade"]);
+        _trades = TransactionData.GetFilteredTransactionsData(["trade"]);
     }
 
 
@@ -316,8 +316,8 @@ else
     /// <returns></returns>
     private async Task LoadRosters()
     {
-        await RosterState.EnsureLoadedAsync();
-        _rosters = RosterState.Rosters?.ToList() ?? new List<RostersModel>();
+        await RosterData.EnsureLoadedAsync();
+        _rosters = RosterData.Rosters?.ToList() ?? new List<RostersModel>();
     }
 
 
@@ -328,14 +328,14 @@ else
     private async Task LoadDraftHistory()
     {
         _draftInfoBySeason.Clear();
-        await LeagueState.EnsureLoadedAsync();
-        await DraftState.EnsureLoadedAsync();
+        await LeagueData.EnsureLoadedAsync();
+        await DraftData.EnsureLoadedAsync();
         
-        foreach(var draft in DraftState.AllDrafts ?? [])
+        foreach(var draft in DraftData.AllDrafts ?? [])
         {
             if (draft is not null && !string.IsNullOrWhiteSpace(draft.Season))
             {
-                var rosterIdToSlot = DraftState.AllDraftPicks?
+                var rosterIdToSlot = DraftData.AllDraftPicks?
                     .Where(p => p is not null)
                     .GroupBy(p => p!.RosterId)
                     .ToDictionary(g => g.Key, g => g.First().DraftSlot)
@@ -360,7 +360,7 @@ else
     private string GetDropdownLabel(int rosterId)
     {
         if (rosterId == -1) return "Filter by team";
-        return RosterState.TeamNameByRosterId.TryGetValue(rosterId, out var name)
+        return RosterData.TeamNameByRosterId.TryGetValue(rosterId, out var name)
             ? name
             : $"Roster {rosterId}";
     }

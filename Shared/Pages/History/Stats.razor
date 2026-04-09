@@ -3,11 +3,11 @@
 @using Shared.Models
 @using Shared.Services
 @inject ILogger<Stats> ILogger
-@inject UserState UserState
-@inject RosterState RosterState
-@inject PlayerState PlayerState
-@inject LeagueState LeagueState
-@inject StatsData StatsData
+@inject UserData UserData
+@inject RosterData RosterData
+@inject PlayerData PlayerData
+@inject LeagueData LeagueData
+@inject IStatsData StatsData
 
 
 <PageTitle>Stats | @Brand</PageTitle>
@@ -41,7 +41,7 @@ else
                         @foreach(var t in _lowScoringTeams ?? [])
                         {
                             <tr>
-                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                <td>@(RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
                                 <td>@t.Points</td>
                             </tr>
                         }
@@ -63,7 +63,7 @@ else
                         @foreach(var t in _topScoringTeams ?? [])
                         {
                             <tr>
-                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                <td>@(RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
                                 <td>@t.Points</td>
                             </tr>
                         }
@@ -87,11 +87,11 @@ else
                                                                     .Where(kv => t.Starters != null && t.Starters.Contains(kv.Key))
                                                                     .OrderBy(kv => kv.Value)
                                                                     .FirstOrDefault();
-                            var player = PlayerState.PlayerById.TryGetValue(playerPoints.Key, out var p) ? p : null;
+                            var player = PlayerData.PlayerById.TryGetValue(playerPoints.Key, out var p) ? p : null;
                             if(player is not null)
                             {
                                 <tr>
-                                    <td>@(RosterState.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                    <td>@(RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
                                     <td>@player.Firstname @player.Lastname</td>
                                     <td>@playerPoints.Value</td>
                                 </tr>
@@ -118,11 +118,11 @@ else
                                                                         .Where(kv => t.Starters != null && t.Starters.Contains(kv.Key))
                                                                         .OrderByDescending(kv => kv.Value)
                                                                         .FirstOrDefault();
-                            var player = PlayerState.PlayerById.TryGetValue(playerPoints.Key, out var p) ? p : null;
+                            var player = PlayerData.PlayerById.TryGetValue(playerPoints.Key, out var p) ? p : null;
                             if(player is not null)
                             {
                                 <tr>
-                                    <td>@(RosterState.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                    <td>@(RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
                                     <td>@player.Firstname @player.Lastname</td>
                                     <td>@playerPoints.Value</td>
                                 </tr>
@@ -146,7 +146,7 @@ else
                             .ThenBy(kv => kv.Key))
                         {
                             <tr>
-                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(kv.Key, out var name) ? name : "")</td>
+                                <td>@(RosterData.TeamNameByRosterId.TryGetValue(kv.Key, out var name) ? name : "")</td>
                                 <td>@kv.Value</td>
                             </tr>
                         }
@@ -168,7 +168,7 @@ else
                             .ThenBy(kv => kv.Key))
                         {
                             <tr>
-                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(kv.Key, out var name) ? name : "")</td>
+                                <td>@(RosterData.TeamNameByRosterId.TryGetValue(kv.Key, out var name) ? name : "")</td>
                                 <td>@kv.Value</td>
                             </tr>
                         }
@@ -189,7 +189,7 @@ else
                         {
                             var t = kv.Key;
                             <tr>
-                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                <td>@(RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
                                 <td>@kv.Value.ToString("F2")</td>
                             </tr>
                         }
@@ -212,7 +212,7 @@ else
                         {
                             var t = kv.Key;
                             <tr>
-                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                <td>@(RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
                                 <td>@kv.Value.ToString("F2")</td>
                             </tr>
                         }
@@ -238,7 +238,7 @@ else
                             .ThenBy(kv => kv.Key))
                         {
                             <tr>
-                                <td>@(RosterState.TeamNameByRosterId.TryGetValue(kv.Key, out var name) ? name : "")</td>
+                                <td>@(RosterData.TeamNameByRosterId.TryGetValue(kv.Key, out var name) ? name : "")</td>
                                 <td>@kv.Value</td>
                             </tr>
                         }
@@ -283,18 +283,18 @@ else
         try
         {
             await Task.Yield();
-            await StatsData.EnsureLookupsLoadedAsync();
-            await LeagueState.EnsureLoadedAsync();
+            await StatsData.EnsureDataLoadedAsync();
+            await LeagueData.EnsureLoadedAsync();
 
-            _topScoringTeams = StatsData.TopScoringTeams.Take(10).ToList() ?? [];
-            _lowScoringTeams = StatsData.LowScoringTeams.Take(10).ToList() ?? [];
-            _topScoringPlayers = StatsData.TopScoringPlayers.Take(10).ToList() ?? [];
-            _lowScoringPlayers = StatsData.LowScoringPlayers.Take(10).ToList() ?? [];
-            _largestMarginOfVictory = StatsData.LargestMarginOfVictory.Take(10).ToList() ?? [];
-            _tightestMarginOfVictory = StatsData.TightestMarginOfVictory.Take(10).ToList() ?? [];
-            _recordByRosterId = StatsData.SumRecords(StatsData.RecordsBySeason.ToDictionary()) ?? new Dictionary<int, string>();
-            _highScoringWeeksByRosterId = StatsData.SumHighScoringWeeks(StatsData.HighScoringWeeksByRosterId.ToDictionary()) ?? new Dictionary<int, int>();
-            _lowScoringWeeksByRosterId = StatsData.LowScoringWeeksByRosterId?.ToDictionary() ?? new Dictionary<int, int>();
+            _topScoringTeams = StatsData.GetTopScoringTeams().Take(10).ToList() ?? [];
+            _lowScoringTeams = StatsData.GetLowScoringTeams().Take(10).ToList() ?? [];
+            _topScoringPlayers = StatsData.GetTopScoringPlayers().Take(10).ToList() ?? [];
+            _lowScoringPlayers = StatsData.GetLowScoringPlayers().Take(10).ToList() ?? [];
+            _largestMarginOfVictory = StatsData.GetLargestMarginOfVictory().Take(10).ToList() ?? [];
+            _tightestMarginOfVictory = StatsData.GetTightestMarginOfVictory().Take(10).ToList() ?? [];
+            _recordByRosterId = StatsData.SumRecords(StatsData.GetRecordsBySeason().ToDictionary()) ?? new Dictionary<int, string>();
+            _highScoringWeeksByRosterId = StatsData.SumHighScoringWeeks(StatsData.GetHighScoringWeeksByRosterId().ToDictionary()) ?? new Dictionary<int, int>();
+            _lowScoringWeeksByRosterId = StatsData.GetLowScoringWeeksByRosterId()?.ToDictionary() ?? new Dictionary<int, int>();
         }
         catch (Exception ex)
         {

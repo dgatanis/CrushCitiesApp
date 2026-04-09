@@ -3,10 +3,10 @@
 @using Shared.Models
 @using Shared.Services
 @inject ILogger<CurrentSeason> ILogger
-@inject LeagueState LeagueState
-@inject RosterState RosterState
-@inject UserState UserState
-@inject StatsData StatsData
+@inject LeagueData LeagueData
+@inject RosterData RosterData
+@inject UserData UserData
+@inject IStatsData StatsData
 
 
 <PageTitle>Current Season | @Brand</PageTitle>
@@ -48,8 +48,8 @@ else
                                 <td class="rank-col" style="--rank-pct:@rankPctCss">@row.Rank</td>
                                 <td>
                                     <div class="team-cell align-items-center">
-                                    <img class="owner-avatar" src=@(UserState.OwnerAvatarByUserId.TryGetValue(
-                                                                    RosterState.UserIdByRosterId.TryGetValue(
+                                    <img class="owner-avatar" src=@(UserData.OwnerAvatarByUserId.TryGetValue(
+                                                                    RosterData.UserIdByRosterId.TryGetValue(
                                                                         row.RosterId.ToString(), out var userId) ? userId : "" , out var name) 
                                                                         ? name 
                                                                         : $"Roster {row.RosterId}")>
@@ -119,8 +119,8 @@ else
     {
         try
         {
-            await RosterState.EnsureLoadedAsync();
-            await LeagueState.EnsureLoadedAsync();
+            await RosterData.EnsureLoadedAsync();
+            await LeagueData.EnsureLoadedAsync();
             await LoadStatsDataAsync(); 
             BuildCurrentSeasonRows();
             BuildHighScoringRows();
@@ -140,9 +140,9 @@ else
 
     private async Task LoadStatsDataAsync()
     {
-        await StatsData.EnsureLookupsLoadedAsync(); 
-        _recordsBySeason = StatsData.RecordsBySeason?.ToDictionary() ?? new Dictionary<string, SeasonRecord>();
-        _highScoringWeeksByRosterId = StatsData.HighScoringWeeksByRosterId?.ToDictionary() ?? new Dictionary<string, Dictionary<int, int>>();
+        await StatsData.EnsureDataLoadedAsync(); 
+        _recordsBySeason = StatsData.GetRecordsBySeason().ToDictionary() ?? new Dictionary<string, SeasonRecord>();
+        _highScoringWeeksByRosterId = StatsData.GetHighScoringWeeksByRosterId().ToDictionary() ?? new Dictionary<string, Dictionary<int, int>>();
     }
 
 
@@ -158,8 +158,8 @@ else
         if (!_recordsBySeason.TryGetValue(seasonKey, out var seasonRecord)) return;
 
 
-        var league = LeagueState.AllLeagues.FirstOrDefault(l => l.Season == seasonKey)
-                     ?? LeagueState.AllLeagues.FirstOrDefault(l => l.LeagueId == LeagueState.CurrentLeagueId);
+        var league = LeagueData.AllLeagues.FirstOrDefault(l => l.Season == seasonKey)
+                     ?? LeagueData.AllLeagues.FirstOrDefault(l => l.LeagueId == LeagueData.CurrentLeagueId);
         var playoffStart = league?.Settings?.PlayoffWeekStart ?? int.MaxValue;
         var lastScored = league?.Settings?.LastScoredLeg ?? 0;
 
@@ -185,7 +185,7 @@ else
             {
                 RosterId = kv.Key,
                 Record = kv.Value,
-                TeamName = RosterState.TeamNameByRosterId.TryGetValue(kv.Key, out var name)
+                TeamName = RosterData.TeamNameByRosterId.TryGetValue(kv.Key, out var name)
                     ? name
                     : $"Roster {kv.Key}"
             })
@@ -215,14 +215,14 @@ else
         seasonCounts ??= new Dictionary<int, int>();
 
 
-        var rosterIds = RosterState.TeamNameByRosterId.Keys
+        var rosterIds = RosterData.TeamNameByRosterId.Keys
             .Distinct()
             .ToList();
 
 
         foreach (var rosterId in rosterIds)
         {
-            var teamName = RosterState.TeamNameByRosterId.TryGetValue(rosterId, out var name)
+            var teamName = RosterData.TeamNameByRosterId.TryGetValue(rosterId, out var name)
                 ? name
                 : $"Roster {rosterId}";
             var count = seasonCounts.TryGetValue(rosterId, out var value) ? value : 0;
@@ -241,7 +241,7 @@ else
 
     private string GetSeasonKey()
     {
-        var currentSeason = LeagueState.CurrentLeagueSeason;
+        var currentSeason = LeagueData.CurrentLeagueSeason;
         if (!string.IsNullOrWhiteSpace(currentSeason) && _recordsBySeason.ContainsKey(currentSeason))
         {
             return currentSeason;
