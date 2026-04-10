@@ -11,6 +11,8 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped(sp => 
     new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) }
 );
+builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Warning);
+
 builder.Services.AddHttpClient<ISleeperAPI, SleeperAPI>(client =>
 {
     client.BaseAddress = new Uri("https://api.sleeper.app/v1/");

@@ -265,9 +265,11 @@ else
 
         foreach(var playerId in players)
         {
+            var rosterPositions = LeagueData.AllLeagues.FirstOrDefault()?.RosterPositions ?? new List<string>();
             var player = PlayerData.PlayerById.TryGetValue(playerId, out var thisPlayer) ? thisPlayer : null;
-            if(player is null || player.Position is null) continue;
-
+            
+            if(player is null || player.Position is null || !rosterPositions.Contains(player.Position ?? "")) continue;
+            
             var index = _rosterPlayers.FindIndex(x => x.Position == player.Position);
 
             if(index >= 0)
@@ -277,7 +279,7 @@ else
             }
             else
             {
-                _rosterPlayers.Add(new RosterPositions(player.Position,1));            
+                _rosterPlayers.Add(new RosterPositions(player.Position!,1));            
             }
         }
 
