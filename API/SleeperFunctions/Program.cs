@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 var builder = FunctionsApplication.CreateBuilder(args);
+var allowedOrigins = builder.Configuration["AllowedOrigins"]?.Split(",") ?? [];
 
 builder.ConfigureFunctionsWebApplication();
 
@@ -20,7 +21,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazor", policy =>
     {
-        policy.WithOrigins("http://localhost:5225")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
