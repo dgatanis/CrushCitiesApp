@@ -13,10 +13,12 @@ namespace Shared.Services;
 /// <param name="sleeperApi"></param>
 /// <param name="js"></param>
 /// <param name="logger"></param>
-public sealed class PlayerData(ISleeperAPI sleeperApi, IJSRuntime js, ILogger<PlayerData> logger)
+public sealed class PlayerData(ISleeperAPI sleeperApi, IJSRuntime js, LeagueData leagueData, ILogger<PlayerData> logger)
 {
     private readonly ISleeperAPI _sleeperApi = sleeperApi;
     private readonly IJSRuntime _js = js;
+    private readonly LeagueData _leagueData = leagueData;
+
     private readonly ILogger<PlayerData> _logger = logger;
     private const string NflPlayersCacheKey = "sleeper:nfl:players-lite:v1";
     private static readonly TimeSpan NflPlayersCacheTtl = TimeSpan.FromHours(6);
@@ -74,6 +76,16 @@ public sealed class PlayerData(ISleeperAPI sleeperApi, IJSRuntime js, ILogger<Pl
 
             if (!IsLoaded || forceRefresh) // Only force refresh if the data isn't there or its older than the TTL
             {
+                var allPositions = new HashSet<string>();
+                foreach(var league in _leagueData.AllLeagues ?? Enumerable.Empty<LeagueModel>())
+                {
+                    if(league.RosterPositions is null) continue;
+
+                    foreach(var rosterPosition in league.RosterPositions)
+                    {
+                        allPositions.Add(rosterPosition);
+                    }
+                }
                 var cachedJson = await _js.InvokeAsync<string?>("localStorage.getItem", NflPlayersCacheKey);
                 if (!string.IsNullOrWhiteSpace(cachedJson))
                 {
@@ -103,14 +115,15 @@ public sealed class PlayerData(ISleeperAPI sleeperApi, IJSRuntime js, ILogger<Pl
                         var fullData = await _sleeperApi.GetNFLPlayerDataAsync();
                         if (fullData is not null)
                         {
-                            var liteData = fullData.ToDictionary(
+                            var liteData = fullData.Where(x => x.Value.Position is not null && allPositions.Contains(x.Value.Position))
+                            .ToDictionary(
                             kvp => kvp.Key,
                             kvp => new PlayerLiteModel
                             {
                                 PlayerId = kvp.Value.PlayerId,
                                 Position = kvp.Value.Position,
-                                Firstname = kvp.Value.Firstname,
-                                Lastname = kvp.Value.Lastname,
+                                Firstname = kvp.Value.FirstName,
+                                Lastname = kvp.Value.LastName,
                                 Age = kvp.Value.Age,
                                 Team = kvp.Value.Team,
                                 Number = kvp.Value.Number,
@@ -143,14 +156,15 @@ public sealed class PlayerData(ISleeperAPI sleeperApi, IJSRuntime js, ILogger<Pl
                     var fullData = await _sleeperApi.GetNFLPlayerDataAsync();
                     if (fullData is not null)
                     {
-                        var liteData = fullData.ToDictionary(
+                        var liteData = fullData.Where(x => x.Value.Position is not null && allPositions.Contains(x.Value.Position))
+                        .ToDictionary(
                         kvp => kvp.Key,
                         kvp => new PlayerLiteModel
                         {
                             PlayerId = kvp.Value.PlayerId,
                             Position = kvp.Value.Position,
-                            Firstname = kvp.Value.Firstname,
-                            Lastname = kvp.Value.Lastname,
+                            Firstname = kvp.Value.FirstName,
+                            Lastname = kvp.Value.LastName,
                             Age = kvp.Value.Age,
                             Team = kvp.Value.Team,
                             Number = kvp.Value.Number,

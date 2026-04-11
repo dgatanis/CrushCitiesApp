@@ -13,9 +13,9 @@ builder.Services.AddScoped(sp =>
 );
 builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Warning);
 
-builder.Services.AddHttpClient<ISleeperAPI, SleeperAPI>(client =>
+builder.Services.AddHttpClient<ISleeperAPI, SleeperFunctionsAPI>(client =>
 {
-    client.BaseAddress = new Uri("https://api.sleeper.app/v1/");
+    client.BaseAddress = new Uri(builder.Configuration["SleeperFunctionsUrl"]!);
 });
 
 builder.Services.AddScoped<RosterData>();
