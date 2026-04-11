@@ -34,9 +34,6 @@ public sealed class PlayersModel
     [JsonPropertyName("depth_chart_order")]
     public int? DepthChartOrder { get; set; }
 
-    [JsonPropertyName("team")]
-    public string? TeamAbbr { get; set; }
-
     [JsonPropertyName("birth_state")]
     public string? BirthState { get; set; }
 
