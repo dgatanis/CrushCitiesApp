@@ -17,7 +17,6 @@ A fantasy football web application for viewing team rosters, league history, and
 ## Demo
 Live: [https://gentle-smoke-09287550f.2.azurestaticapps.net](https://gentle-smoke-09287550f.2.azurestaticapps.net)
 
-## Getting Started
 
 ## Prerequisites
 - .NET 10 SDK
