@@ -65,5 +65,4 @@ nunit-*.xml
 *.userosscache
 *.sln.docstates
 
-**/wwwroot/appsettings.json
 **/wwwroot/appsettings.*.json
