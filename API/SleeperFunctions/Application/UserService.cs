@@ -8,6 +8,12 @@ public sealed class UserService(ICacheService cache, IHttpClientFactory http) : 
     private readonly ICacheService _cache = cache;
     private readonly IHttpClientFactory _httpFactory = http;
 
+
+    /// <summary>
+    /// Gets the users for a given league_id.
+    /// </summary>
+    /// <param name="league_id"></param>
+    /// <returns>List<UsersModel></returns>
     public async Task<List<UsersModel>> GetUsersAsync(string league_id)
     {
         var cacheKey = $"sleeper-users-{league_id}";

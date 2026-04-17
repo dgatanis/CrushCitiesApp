@@ -3,11 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using SleeperFunctions.Application;
 
-namespace SleeperFunctions.UserFunctions;
+namespace SleeperFunctions.Functions;
 
 public class UserFunctions(IUserService userService)
 {
     private readonly IUserService _userService = userService;
+
 
     [Function("GetUsersAsync")]
     public async Task<IActionResult> GetUsersAsync(

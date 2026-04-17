@@ -3,11 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using SleeperFunctions.Application;
 
-namespace SleeperFunctions.DraftFunctions;
+namespace SleeperFunctions.Functions;
 
 public class DraftFunctions(IDraftService draftService)
 {
     private readonly IDraftService _draftService = draftService;
+    
 
     [Function("GetDraftsAsync")]
     public async Task<IActionResult> GetDraftsAsync(

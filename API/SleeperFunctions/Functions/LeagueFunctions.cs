@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using SleeperFunctions.Application;
 
-namespace SleeperFunctions.LeagueFunctions;
+namespace SleeperFunctions.Functions;
 
 public class LeagueFunctions(ILeagueService leagueService)
 {
@@ -17,7 +17,6 @@ public class LeagueFunctions(ILeagueService leagueService)
         var result = await _leagueService.GetLeagueByIdAsync(league_id);
         return new OkObjectResult(result);
     }
-
 
 
     [Function("GetLeagueBySeasonAsync")]

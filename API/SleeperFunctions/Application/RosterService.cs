@@ -8,6 +8,12 @@ public sealed class RosterService(IHttpClientFactory http, ICacheService cache) 
     private readonly IHttpClientFactory _httpFactory = http;
     private readonly ICacheService _cache = cache;
 
+
+    /// <summary>
+    /// Gets the rosters for a given league_id.
+    /// </summary>
+    /// <param name="league_id"></param>
+    /// <returns>List<RostersModel></returns>
     public async Task<List<RostersModel>> GetRostersAsync(string league_id)
     {
         var cacheKey = $"sleeper-rosters-{league_id}";

@@ -8,6 +8,13 @@ public sealed class TransactionService(ICacheService cache, IHttpClientFactory h
     private readonly IHttpClientFactory _httpFactory = http;
     private readonly ICacheService _cache = cache;
 
+
+    /// <summary>
+    /// Gets the transactions for a given league_id and week.
+    /// </summary>
+    /// <param name="league_id"></param>
+    /// <param name="week"></param>
+    /// <returns>TransactionsModel</returns>
     public async Task<List<TransactionsModel>> GetTransactionsAsync(string league_id, string week)
     {
         var cacheKey = $"sleeper-transactions-{league_id}-{week}";

@@ -8,6 +8,11 @@ public sealed class PlayerService(ICacheService cache, IHttpClientFactory http) 
     private readonly ICacheService _cache = cache;
     private readonly IHttpClientFactory _httpFactory = http;
 
+
+    /// <summary>
+    /// Gets the NFL players from Sleeper. Cached for 6 hours since the payload is large and data doesn't change often.
+    /// </summary>
+    /// <returns>Dictionary<string, PlayersModel></returns>
     public async Task<Dictionary<string, PlayersModel>> GetPlayersAsync()
     {
         var cacheKey = "sleeper-players";
