@@ -3,11 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using SleeperFunctions.Application;
 
-namespace SleeperFunctions.RosterFunctions;
+namespace SleeperFunctions.Functions;
 
 public class RosterFunctions(IRosterService rosterService)
 {
     private readonly IRosterService _rosterService = rosterService;
+    
     
     [Function("GetRostersAsync")]
     public async Task<IActionResult> GetRostersAsync(

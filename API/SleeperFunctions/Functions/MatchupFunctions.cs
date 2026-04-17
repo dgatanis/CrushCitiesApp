@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using SleeperFunctions.Application;
 
-namespace SleeperFunctions.MatchupFunctions;
+namespace SleeperFunctions.Functions;
 
 public class MatchupFunctions(IMatchupService matchupService)
 {
-
     private readonly IMatchupService _matchupService = matchupService;
+
 
     [Function("GetMatchupsAsync")]
     public async Task<IActionResult> GetMatchupsAsync(

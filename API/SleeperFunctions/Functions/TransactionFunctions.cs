@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using SleeperFunctions.Application;
 
-namespace SleeperFunctions.TransactionFunctions;
+namespace SleeperFunctions.Functions;
 
 public class TransactionFunctions(ITransactionService transactionService)
 {
     private readonly ITransactionService _transactionService = transactionService;
 
+    
     [Function("GetTransactionsAsync")]
     public async Task<IActionResult> GetTransactionsAsync(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "league/{league_id}/transactions/{week}")] HttpRequest req, string league_id, string week)

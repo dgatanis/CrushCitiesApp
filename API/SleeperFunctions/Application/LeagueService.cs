@@ -10,6 +10,12 @@ public sealed class LeagueService(IHttpClientFactory http, IConfiguration config
     private readonly string _userId = config["SleeperUserId"]!;
     private readonly ICacheService _cache = cache;
 
+
+    /// <summary>
+    /// Gets the league details for a given league_id.
+    /// </summary>
+    /// <param name="league_id"></param>
+    /// <returns>LeagueModel</returns>
     public async Task<LeagueModel> GetLeagueByIdAsync(string league_id)
     {
         var cacheKey = $"sleeper-leagues-{league_id}";
@@ -22,6 +28,11 @@ public sealed class LeagueService(IHttpClientFactory http, IConfiguration config
     }
 
 
+    /// <summary>
+    /// Returns all leagues for the user for a given season.
+    /// </summary>
+    /// <param name="season"></param>
+    /// <returns>List<LeagueModel></returns>
     public async Task<List<LeagueModel>> GetLeagueBySeasonAsync(string season)
     {
         var cacheKey = $"sleeper-leagues-by-season-{season}";
@@ -35,6 +46,10 @@ public sealed class LeagueService(IHttpClientFactory http, IConfiguration config
     }
 
 
+    /// <summary>
+    /// Gets the current state of the nfl season from sleeper.
+    /// </summary>
+    /// <returns>NFLStateModel</returns>
     public async Task<NFLStateModel> GetNFLStateAsync()
     {
         var cacheKey = "sleeper-nfl-state";

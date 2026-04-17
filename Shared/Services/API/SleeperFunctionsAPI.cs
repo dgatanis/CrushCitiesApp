@@ -55,7 +55,7 @@ public sealed class SleeperFunctionsAPI(HttpClient http) : ISleeperAPI
     /// <returns></returns>
     public async Task<LeagueModel> GetLeagueAsync(string league_id)
     {
-        return await _http.GetFromJsonAsync<LeagueModel>($"/api/league/{league_id}");
+        return await _http.GetFromJsonAsync<LeagueModel>($"/api/league/{league_id}") ?? new LeagueModel();
     }
         
 

@@ -8,14 +8,16 @@ public sealed class CacheService(IMemoryCache cache, ILogger<CacheService> logge
     private readonly IMemoryCache _cache = cache;
     private readonly ILogger<CacheService> _logger = logger;
 
+
     /// <summary>
     /// Checks the provided key in cache and returns if found. If not, execute deferred function and await results.
+    /// Function passed in is expected to make the API call if no cache is found.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="key"></param>
-    /// <param name="factory"></param>
-    /// <param name="ttl"></param>
-    /// <returns></returns>
+    /// <param name="key">Name of the cache key</param>
+    /// <param name="factory">Function to execute if cache missed</param>
+    /// <param name="ttl">How long to keep the cache entry</param>
+    /// <returns>Cached data or newly fetched data</returns>
     public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan ttl)
     {
         if (_cache.TryGetValue(key, out T? cached) && cached is not null)

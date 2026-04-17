@@ -8,6 +8,12 @@ public sealed class DraftService(IHttpClientFactory http, ICacheService cache) :
     private readonly IHttpClientFactory _httpFactory = http;
     private readonly ICacheService _cache = cache;
 
+
+    /// <summary>
+    /// Gets the draft for a given league_id.
+    /// </summary>
+    /// <param name="league_id"></param>
+    /// <returns></returns>
     public async Task<List<DraftsModel>> GetDraftsAsync(string league_id)
     {
         var cacheKey = $"sleeper-drafts-{league_id}";
@@ -21,6 +27,11 @@ public sealed class DraftService(IHttpClientFactory http, ICacheService cache) :
     }
 
 
+    /// <summary>
+    /// Gets the draft picks for a given draft_id. 
+    /// </summary>
+    /// <param name="draft_id"></param>
+    /// <returns></returns>
     public async Task<List<DraftPicksModel>> GetDraftPicksAsync(string draft_id)
     {
         var cacheKey = $"sleeper-draft-picks-{draft_id}";
