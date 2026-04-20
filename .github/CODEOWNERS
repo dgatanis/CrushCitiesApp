@@ -1,0 +1,12 @@
+# Default (everything)
+* @dgatanis
+
+# Azure Functions / backend
+/API/SleeperFunctions/ @dgatanis
+
+# Main app(s)
+/CrushCitiesFFL/ @dgatanis
+/PublicFFL/ @dgatanis
+
+# Shared code
+/Shared/ @dgatanis
