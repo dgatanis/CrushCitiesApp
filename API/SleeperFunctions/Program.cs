@@ -5,7 +5,6 @@ using Microsoft.Extensions.Hosting;
 using SleeperFunctions.Application;
 
 var builder = FunctionsApplication.CreateBuilder(args);
-var allowedOrigins = builder.Configuration["AllowedOrigins"]?.Split(",") ?? [];
 
 builder.ConfigureFunctionsWebApplication();
 
@@ -27,16 +26,6 @@ builder.Services.AddScoped<IMatchupService, MatchupService>();
 builder.Services.AddScoped<ILeagueService, LeagueService>();
 builder.Services.AddScoped<IDraftService, DraftService>();
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowBlazor", policy =>
-    {
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-
-});
 
 
 builder.Build().Run();

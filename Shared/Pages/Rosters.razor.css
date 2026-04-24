@@ -24,6 +24,11 @@
     color: #050505;
 }
 
+span.team-name {
+    font-family: 'F1';
+    font-size: 1rem;
+}
+
 .player-details {
     font-size: .7rem;
     grid-row: 3;
@@ -108,4 +113,12 @@
 
 .owner-info {
     cursor: pointer;
+}
+
+.owner-avatar {
+    box-shadow: unset !important;
+}
+
+.accordion-button::after {
+    background-image: unset !important;
 }

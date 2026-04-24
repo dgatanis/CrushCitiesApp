@@ -96,9 +96,9 @@ else
                 <div class="card shadow-sm common-container h-100 w-100">
                     <div class="card-body">
                         <button class="stats-team-toggle w-100" type="button" data-bs-toggle="collapse" data-bs-target="@($"#{statsCollapseId}")" aria-expanded="false" aria-controls="@statsCollapseId">
-                            <span style="color: grey; font-size:.6rem;">Click to open team details</span>
-                            <div class="d-flex flex-column flex-md-row justify-content-center align-items-md-center gap-2">
-                                <div class="d-flex flex-column align-items-center">
+                            <span class="team-hint">Click to open team details</span>
+                            <div class="d-flex flex-md-row justify-content-center align-items-md-center gap-2 mt-3">
+                                <div class="d-flex align-items-center gap-2">
                                     <img class="owner-avatar" src=@ownerImage>
                                     <div class="h5 mb-0 team-name">@teamName</div>
                                 </div>
@@ -108,69 +108,69 @@ else
                         <div id="@statsCollapseId" class="collapse" data-bs-parent="@($"#{statsCollapseId}")">
                             <div class="row row-cols-2 g-3 mt-3 justify-content-center text-center">
                             <div class="col d-flex">
-                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
-                                    <div class="text-muted-label small">Championships</div>
-                                    <div class="fw-semibold">@championships</div>
+                                <div class="border-stats d-flex flex-column align-items-center justify-content-center rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label">Championships</div>
+                                    <div class="stats-result fw-semibold">@championships</div>
                                 </div>
                             </div>
                             <div class="col d-flex">
-                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
-                                    <div class="text-muted-label small">Finals Appearances</div>
-                                    <div class="fw-semibold">@finalsAppearances</div>
+                                <div class="border-stats d-flex flex-column align-items-center justify-content-center rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label">Finals Appearances</div>
+                                    <div class="stats-result fw-semibold">@finalsAppearances</div>
                                 </div>
                             </div>
                             <div class="col d-flex">
-                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
-                                    <div class="text-muted-label small">Playoff Appearances</div>
-                                    <div class="fw-semibold">@playoffAppearances</div>
+                                <div class="border-stats d-flex flex-column align-items-center justify-content-center rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label">Playoff Appearances</div>
+                                    <div class="stats-result fw-semibold">@playoffAppearances</div>
                                 </div>
                             </div>
                             <div class="col d-flex">
-                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
-                                    <div class="text-muted-label small">Last Place Finishes</div>
-                                    <div class="fw-semibold">@lastPlaceFinishes</div>
+                                <div class="border-stats d-flex flex-column align-items-center justify-content-center rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label">Last Place Finishes</div>
+                                    <div class="stats-result fw-semibold">@lastPlaceFinishes</div>
                                 </div>
                             </div>
                             <div class="col d-flex">
-                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
-                                    <div class="text-muted-label small">Most Traded With</div>
-                                    <div class="fw-semibold">@mostTradedWithName</div>
+                                <div class="border-stats d-flex flex-column align-items-center justify-content-center rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label">Most Traded With</div>
+                                    <div class="stats-result fw-semibold">@mostTradedWithName</div>
                                 </div>
                             </div>
                             <div class="col d-flex">
-                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
-                                    <div class="text-muted-label small">Total Trades</div>
-                                    <div class="fw-semibold">@tradeCount</div>
+                                <div class="border-stats d-flex flex-column align-items-center justify-content-center rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label">Total Trades</div>
+                                    <div class="stats-result fw-semibold">@tradeCount</div>
                                 </div>
                             </div>
                             <div class="col d-flex">
-                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
-                                    <div class="text-muted-label small">Low Scoring Weeks</div>
-                                    <div class="fw-semibold">@lowScoringWeeks</div>
+                                <div class="border-stats d-flex flex-column align-items-center justify-content-center rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label">Low Scoring Weeks</div>
+                                    <div class="stats-result fw-semibold">@lowScoringWeeks</div>
                                 </div>
                             </div>
                             <div class="col d-flex">
-                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
-                                    <div class="text-muted-label small">High Scoring Weeks</div>
-                                    <div class="fw-semibold">@highScoringWeeks</div>
+                                <div class="border-stats d-flex flex-column align-items-center justify-content-center rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label">High Scoring Weeks</div>
+                                    <div class="stats-result fw-semibold">@highScoringWeeks</div>
                                 </div>
                             </div>
                             <div class="col d-flex">
-                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
-                                    <div class="text-muted-label small">Most L&apos;s</div>
-                                    <div class="fw-semibold">@mostLossesAgainstName</div>
+                                <div class="border-stats d-flex flex-column align-items-center justify-content-center rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label">Most L&apos;s</div>
+                                    <div class="stats-result fw-semibold">@mostLossesAgainstName</div>
                                 </div>
                             </div>
                             <div class="col d-flex">
-                                <div class="border-stats border-warning stats-section d-flex flex-column align-items-center justify-content-center border rounded-3 px-4 py-3 w-100 h-100">
-                                    <div class="text-muted-label small">Most W&apos;s</div>
-                                    <div class="fw-semibold">@mostWinsAgainstName</div>
+                                <div class="border-stats d-flex flex-column align-items-center justify-content-center rounded-3 px-4 py-3 w-100 h-100">
+                                    <div class="text-muted-label">Most W&apos;s</div>
+                                    <div class="stats-result fw-semibold">@mostWinsAgainstName</div>
                                 </div>
                             </div>
                             </div>
                         </div>
                         <div class="d-flex justify-content-center w-100 mt-4">
-                            <RadzenChart Style="width: 100%; max-width: 600px;">
+                            <RadzenChart Style="width: 100%; max-width: 100%;">
                                 <RadzenLegend Visible="false" />
                                 <RadzenPieSeries Data="@GetRosterPlayerCounts(roster.Players!)" Title="Amount" CategoryProperty="Position" ValueProperty="Count" ShowTooltipOnLegend="true" Radius="80" Fills="@pieColors" >
                                 </RadzenPieSeries>

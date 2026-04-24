@@ -1,15 +1,17 @@
 using Shared.Models;
+using Shared.Services;
 
-namespace Shared.Services;
+namespace PublicFFL.Services;
 
 public sealed class Normalizer : INormalizer
 {
     public List<UsersModel> NormalizeUsers(List<UsersModel> users)
     {
+        var counter = 0;
         foreach (var user in users)
         {
-            var rng = new Random();
-            user.Metadata!.TeamName = $"Team {rng.Next(1, 21)}";
+            counter++;
+            user.Metadata!.TeamName = $"Team {counter}";
             user.Metadata!.Avatar = $"https://sleepercdn.com/avatars/thumbs/{user.Avatar ?? "8eb8f8bf999945d523f2c4033f70473e"}";
         }
         return users;
