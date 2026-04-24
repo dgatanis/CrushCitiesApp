@@ -37,7 +37,8 @@ public sealed class LeagueService(IHttpClientFactory http, IConfiguration config
     {
         var cacheKey = $"sleeper-leagues-by-season-{season}";
         var client = _httpFactory.CreateClient("SleeperClient");
-
+        Console.WriteLine("_userId");
+        Console.WriteLine(_userId);
         return await _cache.GetOrSetAsync(cacheKey,
                                           async () => await client.GetFromJsonAsync<List<LeagueModel>>($"user/{_userId}/leagues/nfl/{season}")
                                                 ?? new List<LeagueModel>(),
