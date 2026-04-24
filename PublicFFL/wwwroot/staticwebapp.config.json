@@ -38,7 +38,7 @@
   },
   "routes": [
     {
-      "route": "/api/SleeperFunctions/*",
+      "route": "/api/*",
       "allowedRoles": ["anonymous"]
     },
     {
