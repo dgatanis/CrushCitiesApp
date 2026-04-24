@@ -2,5 +2,6 @@
   <Project Path="CrushCitiesFFL/CrushCitiesFFL.csproj" />
   <Project Path="PublicFFL/PublicFFL.csproj" />
   <Project Path="Shared/Shared.csproj" />
+  <Project Path="Common/Common.csproj" />
   <Project Path="API/SleeperFunctions/SleeperFunctions.csproj" />
 </Solution>
