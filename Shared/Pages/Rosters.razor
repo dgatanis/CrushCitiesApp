@@ -16,10 +16,10 @@
 </div>
 
 <div class="d-flex justify-content-center gap-2 mb-3">
-    <button type="button" class="btn btn-outline-secondary" @onclick="ExpandAll">
+    <button type="button" class="btn btn-secondary" @onclick="ExpandAll">
         Expand All
     </button>
-    <button type="button" class="btn btn-outline-secondary" @onclick="CollapseAll">
+    <button type="button" class="btn btn-secondary" @onclick="CollapseAll">
         Collapse All
     </button>
 </div>
@@ -37,19 +37,17 @@ else
     {
         _counter = 0;
         <div id="roster_@roster.RosterId" class="roster-container">
-        
-            @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
-            {
-                <div class="owner-info d-flex flex-column align-items-center mb-1" @onclick="() => ToggleRoster(roster.RosterId)">
-                    <img class="owner-avatar" src=@(UserData.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
-                    <span class="team-name">@(UserData.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : "")</span>
-                </div>
-            }
             <div class="accordion" id="@($"accordionStarters{roster.RosterId}")">
                 <div class="accordion-item">
                     <h2 class="accordion-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseStarters{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseStarters{roster.RosterId}")">
-                        Starters
+                    <button class="@GetButtonCollapseClass(roster.RosterId, defaultExpanded: true)" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseStarters{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseStarters{roster.RosterId}")">
+                    @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
+                    {
+                        <div class="owner-info d-flex flex-column align-items-center mb-1">
+                            <img class="owner-avatar" src=@(UserData.OwnerAvatarByUserId.TryGetValue(roster.OwnerId, out var name) ? name : $"Roster {roster.OwnerId}")>
+                            <span class="team-name">@(UserData.TeamNameByUserId.TryGetValue(roster.OwnerId, out var teamName) ? teamName : "")</span>
+                        </div>
+                    }
                     </button>
                     </h2>
                     <div id=@($"collapseStarters{roster.RosterId}") class="@GetCollapseClass(roster.RosterId, defaultExpanded: true)" data-bs-parent="@($"#accordionStarters{roster.RosterId}")">
@@ -93,13 +91,19 @@ else
             <div class="accordion" id="@($"accordionBench{roster.RosterId}")">
                 <div class="accordion-item">
                     <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseBench{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseBench{roster.RosterId}")">
+                    <button class="@GetButtonCollapseClass(roster.RosterId, defaultExpanded: false)" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseBench{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseBench{roster.RosterId}")">
                         Bench
                     </button>
                     </h2>
                     <div id=@($"collapseBench{roster.RosterId}") class="@GetCollapseClass(roster.RosterId, defaultExpanded: false)" data-bs-parent="@($"#accordionBench{roster.RosterId}")">
                     <div class="accordion-body">
-                        @foreach(var bench in roster.Players ?? [])
+                        @foreach(var bench in roster.Players is not null 
+                                    ? roster.Players.OrderBy(bench => 
+                                        {            
+                                            var player = PlayerData.PlayerById.TryGetValue(bench, out var p) ? p : null;
+                                            return GetPositionSortOrder(player?.Position); 
+                                        }) 
+                                    : Enumerable.Empty<string>())
                         {
                             if(roster.Starters is not null && !roster.Starters.Contains(bench) && !roster.Taxi!.Contains(bench))
                             {
@@ -138,13 +142,18 @@ else
             <div class="accordion" id="@($"accordionTaxi{roster.RosterId}")">
                 <div class="accordion-item">
                     <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseTaxi{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseTaxi{roster.RosterId}")">
+                    <button class="@GetButtonCollapseClass(roster.RosterId, defaultExpanded: false)" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseTaxi{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseTaxi{roster.RosterId}")">
                         Taxi
                     </button>
                     </h2>
                     <div id=@($"collapseTaxi{roster.RosterId}") class="@GetCollapseClass(roster.RosterId, defaultExpanded: false)" data-bs-parent="@($"#accordionTaxi{roster.RosterId}")">
                     <div class="accordion-body">
-                        @foreach(var taxi in roster.Taxi ?? [])
+                        @foreach(var taxi in roster.Taxi is not null ? roster.Taxi.OrderBy(taxi => 
+                                        {            
+                                            var player = PlayerData.PlayerById.TryGetValue(taxi, out var p) ? p : null;
+                                            return GetPositionSortOrder(player?.Position); 
+                                        }) 
+                                    : Enumerable.Empty<string>())
                         {
                             var player = PlayerData.PlayerById.TryGetValue(taxi, out var p) ? p : null;
                             <div class="player-container border border-1 rounded-end" style="background-color:#6e6e6eb5;">
@@ -266,10 +275,23 @@ else
         _selectedRosterId = null;
     }
 
-    private void ToggleRoster(int rosterId)
+    private string GetButtonCollapseClass(int rosterId, bool defaultExpanded)
     {
-        _selectedRosterId = _selectedRosterId == rosterId ? null : rosterId;
-        _collapseMode = CollapseMode.CollapseAll;
+        if (_selectedRosterId.HasValue)
+        {
+            return _selectedRosterId.Value == rosterId
+                ? "accordion-button"
+                : "accordion-button collapsed";
+        }
+
+        var expanded = _collapseMode switch
+        {
+            CollapseMode.ExpandAll => true,
+            CollapseMode.CollapseAll => false,
+            _ => defaultExpanded
+        };
+
+        return expanded ? "accordion-button" : "accordion-button collapsed";
     }
 
     private string GetCollapseClass(int rosterId, bool defaultExpanded)
@@ -290,6 +312,15 @@ else
 
         return expanded ? "accordion-collapse collapse show" : "accordion-collapse collapse";
     }
+
+    private static int GetPositionSortOrder(string? position) => position switch
+    {
+        "QB" => 0,
+        "RB" => 1,
+        "WR" => 2,
+        "TE" => 3,
+        _ => 99
+    };
 
     private enum CollapseMode
     {
