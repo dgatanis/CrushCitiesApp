@@ -1,7 +1,7 @@
-using System.Runtime.CompilerServices;
 using Shared.Models;
+using Shared.Services;
 
-namespace Shared.Services;
+namespace PublicFFL.Services;
 
 public sealed class Normalizer : INormalizer
 {

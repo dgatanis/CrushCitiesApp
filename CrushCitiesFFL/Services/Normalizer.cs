@@ -1,6 +1,7 @@
 using Shared.Models;
+using Shared.Services;
 
-namespace Shared.Services;
+namespace CrushCitiesFFL.Services;
 
 public sealed class Normalizer : INormalizer
 {
