@@ -22,10 +22,18 @@
       "/*.svg",
       "/*.ico",
       "/*.json",
-      "/*.wasm"
+      "/*.wasm",
+      "/*.woff",
+      "/*.woff2",
+      "/*.ttf",
+      "/*.otf"
     ]
   },
   "routes": [
+    {
+      "route": "/Fonts/*",
+      "allowedRoles": ["anonymous"]
+    },
     {
       "route": "/css/*",
       "allowedRoles": ["anonymous"]
@@ -63,11 +71,11 @@
       "allowedRoles": ["anonymous"]
     },
     {
-      "route": "/favicon.ico",
+      "route": "/favicon.webp",
       "allowedRoles": ["anonymous"]
     },
     {
-      "route": "/*",
+      "route": "/index.html",
       "allowedRoles": ["internal"]
     }
   ],
