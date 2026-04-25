@@ -1,27 +1,5 @@
 @page "/not-found"
-@using Microsoft.Extensions.Logging
-@using Radzen
-@using Radzen.Blazor
-@inject ILogger<NotFound> ILogger
-<RadzenChart Style="height: 380px;">
-    <RadzenChartTooltipOptions Visible="true" Shared="true" />
-    <RadzenLineSeries Data="@_series1" CategoryProperty="Season" ValueProperty="Rank" Title="Team A">
-        <RadzenMarkers MarkerType="MarkerType.Circle" Visible="true" />
-    </RadzenLineSeries>
-    <RadzenLineSeries Data="@_series2" CategoryProperty="Season" ValueProperty="Rank" Title="Team B">
-        <RadzenMarkers MarkerType="MarkerType.Circle" Visible="true" />
-    </RadzenLineSeries>
-</RadzenChart>
 
-@code {
-    record Point(string Season, int Rank);
-
-    List<Point> _series1 = new() {
-        new("2021", 1), new("2022", 3), new("2023", 2)
-    };
-
-    List<Point> _series2 = new() {
-        new("2021", 4), new("2022", 2), new("2023", 5)
-    };
-}
-
+<div class="d-flex justify-content-center">
+    <h1>Page Not Found</h1>
+</div>

@@ -114,17 +114,12 @@
     <h1>You are signed in, but you do not have access to this site.</h1>
     <p>
       Your account was authenticated successfully, but it is not assigned to the required role for this application.
-    </p>
-    <p>
-      If you believe this is a mistake, contact the site administrator or sign out and try a different account.
+      Contact your administrator if you believe this is an error.
     </p>
 
-    <div class="actions">
-      <a class="button" href="/.auth/logout?post_logout_redirect_uri=.referrer">Log Out</a>
-    </div>
-    <div class="actions">
-      <a class="button" href="/.auth/login/aad?post_login_redirect_uri=/">Login</a>
-    </div>
+    <a class="button" href="/.auth/logout?post_logout_redirect_uri=/.auth/login/aad?post_login_redirect_uri=/">
+        Sign in with a different account
+    </a>
 
     <div class="help">
       Still need access? Try localhost:8080 nerd.
