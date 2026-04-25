@@ -27,6 +27,46 @@
   },
   "routes": [
     {
+      "route": "/css/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/js/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/images/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/lib/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/_framework/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/*.css",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/*.js",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/*.json",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/*.wasm",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/favicon.ico",
+      "allowedRoles": ["anonymous"]
+    },
+    {
       "route": "/*",
       "allowedRoles": ["internal"]
     }
