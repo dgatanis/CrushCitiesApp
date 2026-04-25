@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Access Restricted</title>
+  <style>
+    :root {
+      --bg-top: #0b2430;
+      --bg-bottom: #030914;
+      --card: rgba(10, 22, 34, 0.92);
+      --border: rgba(110, 190, 210, 0.18);
+      --text: #e8eef5;
+      --muted: #9fb0c3;
+      --accent: #58a7ff;
+      --accent-hover: #7cb9ff;
+      --danger: #ff6b6b;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(120% 90% at 50% 110%, rgba(6, 30, 34, 1) 0%, rgba(8, 34, 44, 0.65) 50%, rgba(5, 0, 24, 0) 80%),
+        radial-gradient(95% 75% at 50% 100%, #0b2430 0%, #091d28 55%, #030914 95%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    }
+
+    .card {
+      width: 100%;
+      max-width: 560px;
+      padding: 40px 32px;
+      border-radius: 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-bottom: 18px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 107, 107, 0.12);
+      color: #ffd4d4;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.1;
+    }
+
+    p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .actions {
+      margin-top: 28px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 180px;
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #07131f;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+      cursor: pointer;
+    }
+
+    .button:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .help {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #8ea1b5;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="badge">Access Restricted</div>
+    <h1>You are signed in, but you do not have access to this site.</h1>
+    <p>
+      Your account was authenticated successfully, but it is not assigned to the required role for this application.
+    </p>
+    <p>
+      If you believe this is a mistake, contact the site administrator or sign out and try a different account.
+    </p>
+
+    <div class="actions">
+      <a class="button" href="/.auth/logout?post_logout_redirect_uri=.referrer">Log Out</a>
+    </div>
+    <div class="actions">
+      <a class="button" href="/.auth/login/aad?post_login_redirect_uri=/">Login</a>
+    </div>
+
+    <div class="help">
+      Still need access? Try localhost:8080 nerd.
+    </div>
+  </main>
+</body>
+</html>

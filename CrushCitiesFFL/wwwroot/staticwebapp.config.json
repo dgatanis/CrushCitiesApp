@@ -15,54 +15,46 @@
       "/images/*",
       "/lib/*",
       "/_framework/*",
+      "/_content/*",
+      "/Fonts/*",
       "/*.css",
       "/*.js",
+      "/*.json",
+      "/*.wasm",
       "/*.png",
       "/*.jpg",
       "/*.svg",
       "/*.ico",
-      "/*.json",
-      "/*.wasm",
+      "/*.webp",
       "/*.woff",
       "/*.woff2",
       "/*.ttf",
-      "/*.otf",
-      "/Fonts/*"
+      "/*.otf"
     ]
   },
   "routes": [
-    {
-      "route": "/Fonts/*",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/css/*",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/js/*",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/images/*",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/lib/*",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/_framework/*",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/favicon.webp",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/*",
-      "allowedRoles": ["internal"]
-    }
+    { "route": "/Fonts/*", "allowedRoles": ["anonymous"] },
+    { "route": "/css/*", "allowedRoles": ["anonymous"] },
+    { "route": "/js/*", "allowedRoles": ["anonymous"] },
+    { "route": "/images/*", "allowedRoles": ["anonymous"] },
+    { "route": "/lib/*", "allowedRoles": ["anonymous"] },
+    { "route": "/_framework/*", "allowedRoles": ["anonymous"] },
+    { "route": "/_content/*", "allowedRoles": ["anonymous"] },
+    { "route": "/*.css", "allowedRoles": ["anonymous"] },
+    { "route": "/*.js", "allowedRoles": ["anonymous"] },
+    { "route": "/*.json", "allowedRoles": ["anonymous"] },
+    { "route": "/*.wasm", "allowedRoles": ["anonymous"] },
+    { "route": "/*.png", "allowedRoles": ["anonymous"] },
+    { "route": "/*.jpg", "allowedRoles": ["anonymous"] },
+    { "route": "/*.svg", "allowedRoles": ["anonymous"] },
+    { "route": "/*.ico", "allowedRoles": ["anonymous"] },
+    { "route": "/*.webp", "allowedRoles": ["anonymous"] },
+    { "route": "/*.woff", "allowedRoles": ["anonymous"] },
+    { "route": "/*.woff2", "allowedRoles": ["anonymous"] },
+    { "route": "/*.ttf", "allowedRoles": ["anonymous"] },
+    { "route": "/*.otf", "allowedRoles": ["anonymous"] },
+    { "route": "/Unauthorized.html", "allowedRoles": ["anonymous"] },
+    { "route": "/*", "allowedRoles": ["internal"] }
   ],
   "responseOverrides": {
     "401": {
@@ -70,7 +62,7 @@
       "redirect": "/.auth/login/aad?post_login_redirect_uri=.referrer"
     },
     "403": {
-      "rewrite": "/unauthorized.html"
+      "rewrite": "/Unauthorized.html"
     }
   }
 }
