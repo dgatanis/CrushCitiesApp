@@ -53,6 +53,7 @@
     { "route": "/*.woff2", "allowedRoles": ["anonymous"] },
     { "route": "/*.ttf", "allowedRoles": ["anonymous"] },
     { "route": "/*.otf", "allowedRoles": ["anonymous"] },
+    { "route": "/Login.html", "allowedRoles": ["anonymous"] },
     { "route": "/Unauthorized.html", "allowedRoles": ["anonymous"] },
     { "route": "/*", "allowedRoles": ["internal"] }
   ],
