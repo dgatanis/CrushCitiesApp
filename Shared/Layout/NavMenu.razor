@@ -39,6 +39,10 @@
                     <NavLink class="nav-link" @onclick="ToggleNavMenu" href="teams">Teams</NavLink>
                 </li>
             </ul>
+            @if (@Brand == "Crush Cities FFL")
+            {
+                <a href="/.auth/logout?post_logout_redirect_uri=/">Log Out</a>
+            }
 
             @if (ChildContent is not null)
             {
