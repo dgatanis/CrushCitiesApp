@@ -6,16 +6,21 @@
   <title>Access Restricted</title>
   <style>
     :root {
-      --bg-top: #0b2430;
-      --bg-bottom: #030914;
-      --card: rgba(10, 22, 34, 0.92);
-      --border: rgba(110, 190, 210, 0.18);
-      --text: #e8eef5;
-      --muted: #9fb0c3;
+      --primary-site-color: #060029;
+      --secondary-site-color: #290a32;
+      --secondary-site-alt1: rgba(21, 15, 48, 0.3);
+      --secondary-site-alt2: #140d37;
       --accent: #58a7ff;
-      --accent-hover: #7cb9ff;
-      --danger: #ff6b6b;
-      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      --accent-hover: #7bb8ff;
+      --text: #e8ebff;
+      --muted: #aaa6c8;
+      --border: rgba(126, 160, 230, 0.22);
+      --card: linear-gradient(180deg, rgba(20, 13, 55, 0.96) 0%, rgba(10, 6, 31, 0.98) 100%);
+      --shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
+      --page-bg:
+        radial-gradient(95% 75% at 50% 100%, #120a3f 0%, #08021b 80%, #030011 95%),
+        radial-gradient(85% 65% at 50% 100%, #1a0a08 0%, #0f0406 60%, #030011 90%),
+        radial-gradient(140% 110% at 50% 100%, rgba(8, 4, 24, 0.9) 0%, rgba(3, 0, 17, 1) 70%);
     }
 
     * {
@@ -28,32 +33,43 @@
       display: grid;
       place-items: center;
       padding: 24px;
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       color: var(--text);
-      background:
-        radial-gradient(120% 90% at 50% 110%, rgba(6, 30, 34, 1) 0%, rgba(8, 34, 44, 0.65) 50%, rgba(5, 0, 24, 0) 80%),
-        radial-gradient(95% 75% at 50% 100%, #0b2430 0%, #091d28 55%, #030914 95%),
-        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      background: var(--page-bg);
     }
 
     .card {
       width: 100%;
-      max-width: 560px;
-      padding: 40px 32px;
-      border-radius: 20px;
+      max-width: 600px;
+      padding: 42px 34px;
+      border-radius: 22px;
       background: var(--card);
       border: 1px solid var(--border);
       box-shadow: var(--shadow);
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top center, rgba(88, 167, 255, 0.12), transparent 42%),
+        linear-gradient(135deg, rgba(88, 167, 255, 0.08), transparent 45%);
+      pointer-events: none;
     }
 
     .badge {
+      position: relative;
       display: inline-block;
       margin-bottom: 18px;
-      padding: 8px 12px;
+      padding: 8px 14px;
       border-radius: 999px;
-      background: rgba(255, 107, 107, 0.12);
-      color: #ffd4d4;
+      border: 1px solid rgba(88, 167, 255, 0.22);
+      background: rgba(88, 167, 255, 0.12);
+      color: #bad8ff;
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.08em;
@@ -61,50 +77,52 @@
     }
 
     h1 {
+      position: relative;
       margin: 0 0 12px;
       font-size: clamp(28px, 4vw, 40px);
       line-height: 1.1;
+      color: #f3f5ff;
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.2);
     }
 
     p {
+      position: relative;
       margin: 0 0 14px;
       color: var(--muted);
       font-size: 16px;
       line-height: 1.6;
     }
 
-    .actions {
-      margin-top: 28px;
-      display: flex;
-      justify-content: center;
-    }
-
     .button {
+      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       min-width: 180px;
+      margin-top: 28px;
       padding: 14px 18px;
-      border: 0;
+      border: 1px solid rgba(143, 190, 255, 0.28);
       border-radius: 12px;
-      background: var(--accent);
-      color: #07131f;
+      background: linear-gradient(180deg, #6cb5ff 0%, var(--accent) 100%);
+      color: #081122;
       font-size: 15px;
       font-weight: 700;
       text-decoration: none;
-      transition: background-color 0.2s ease, transform 0.2s ease;
+      transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
       cursor: pointer;
     }
 
     .button:hover {
       background: var(--accent-hover);
       transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(88, 167, 255, 0.3);
     }
 
     .help {
+      position: relative;
       margin-top: 20px;
       font-size: 14px;
-      color: #8ea1b5;
+      color: #8a84af;
     }
   </style>
 </head>
@@ -114,17 +132,12 @@
     <h1>You are signed in, but you do not have access to this site.</h1>
     <p>
       Your account was authenticated successfully, but it is not assigned to the required role for this application.
-    </p>
-    <p>
-      If you believe this is a mistake, contact the site administrator or sign out and try a different account.
+      Contact your administrator if you believe this is an error.
     </p>
 
-    <div class="actions">
-      <a class="button" href="/.auth/logout?post_logout_redirect_uri=.referrer">Log Out</a>
-    </div>
-    <div class="actions">
-      <a class="button" href="/.auth/login/aad?post_login_redirect_uri=/">Login</a>
-    </div>
+    <a class="button" href="/.auth/logout?post_logout_redirect_uri=/.auth/login/aad?post_login_redirect_uri=/">
+        Sign in with a different account
+    </a>
 
     <div class="help">
       Still need access? Try localhost:8080 nerd.
