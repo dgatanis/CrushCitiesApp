@@ -26,7 +26,8 @@
       "/*.woff",
       "/*.woff2",
       "/*.ttf",
-      "/*.otf"
+      "/*.otf",
+      "/Fonts/*"
     ]
   },
   "routes": [
@@ -55,27 +56,11 @@
       "allowedRoles": ["anonymous"]
     },
     {
-      "route": "/*.css",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/*.js",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/*.json",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/*.wasm",
-      "allowedRoles": ["anonymous"]
-    },
-    {
       "route": "/favicon.webp",
       "allowedRoles": ["anonymous"]
     },
     {
-      "route": "/index.html",
+      "route": "/*",
       "allowedRoles": ["internal"]
     }
   ],
