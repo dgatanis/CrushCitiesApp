@@ -22,7 +22,11 @@
       "/*.svg",
       "/*.ico",
       "/*.json",
-      "/*.wasm"
+      "/*.wasm",
+      "/*.woff",
+      "/*.woff2",
+      "/*.ttf",
+      "/*.otf"
     ]
   },
   "routes": [
