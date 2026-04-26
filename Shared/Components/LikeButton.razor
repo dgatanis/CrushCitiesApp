@@ -1,0 +1,10 @@
+<button @onclick="HandleLike">👍 @Count</button>
+
+@code {
+    private int Count = 0;
+
+    private void HandleLike()
+    {
+        Count++;
+    }
+}

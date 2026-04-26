@@ -3,7 +3,12 @@
     "SleeperFunctions": {
       "commandName": "Project",
       "commandLineArgs": "--port 7178",
-      "launchBrowser": false
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:7178",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
     }
   }
 }
