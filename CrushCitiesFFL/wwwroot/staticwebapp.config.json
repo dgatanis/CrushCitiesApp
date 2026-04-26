@@ -55,7 +55,7 @@
     { "route": "/*.otf", "allowedRoles": ["anonymous"] },
     { "route": "/Login.html", "allowedRoles": ["anonymous"] },
     { "route": "/Unauthorized.html", "allowedRoles": ["anonymous"] },
-    { "route": "/*", "allowedRoles": ["internal"] }
+    { "route": "/*", "allowedRoles": ["internal"], "headers": {"Cache-Control": "no-store"} }
   ],
   "responseOverrides": {
     "401": {
