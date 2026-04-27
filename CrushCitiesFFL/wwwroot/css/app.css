@@ -228,7 +228,7 @@ code {
 }
 
 .accordion-item {
-    border-color: var(--border-medium);
+    border-color: rgb(3 205 255 / 12%);
     box-shadow: var(--box-shadow);
 }
 
@@ -252,7 +252,7 @@ main {
 }
 
 ul.dropdown-menu.show {
-    background: var(--primary-site-color);
+    background: #959595ed;
     border: 1px solid #1b1b1bc0;
 }
 
@@ -261,7 +261,7 @@ ul.dropdown-menu.show li{
 }
 
 a.dropdown-item-nav-menu, .dropdown-item  {
-    color: #d6d6d6;
+    color: #313131;
 }
 
 .dropdown-item:hover {

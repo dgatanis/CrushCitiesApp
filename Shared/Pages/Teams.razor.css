@@ -22,6 +22,7 @@
 
 .stats-result {
     color: rgb(178 135 25 / 92%) !important;
+    margin-top: .3rem;
 }
 
 span.rz-legend-item-text {
