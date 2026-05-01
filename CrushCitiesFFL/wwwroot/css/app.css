@@ -159,6 +159,7 @@ code {
                                 radial-gradient(95% 75% at 50% 100%, #0b2430 0%, #091d28 55%, #030914 95%),
                                 radial-gradient(85% 65% at 50% 100%, #0b2430 0%, #0a1f2a 60%, #030914 90%),
                                 radial-gradient(140% 110% at 50% 100%, rgba(11, 36, 48, 0.9) 0%, rgba(3, 9, 20, 1) 70%);
+    --dark-background-alt: radial-gradient(140% 115% at 50% 112%, rgb(6 30 34) 0%, rgb(8 34 44) 6%, rgb(5 21 30) 32%, #030914 72%, #02050d 100%);
     --box-shadow: 0 0 12px rgb(0 0 0 / 32%); 
     --border-medium: rgba(110, 190, 210, 0.12);
     --dark-container: radial-gradient(1200px 600px at 20% -10%, #10191f 0%, #010305 55%, #000000 100%);

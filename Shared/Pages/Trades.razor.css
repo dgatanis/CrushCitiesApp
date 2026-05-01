@@ -60,6 +60,10 @@ span.text-center {
     align-self: end;
 }
 
+.common-container {
+    background: var(--dark-background-alt) !important;
+}
+
 @media (min-width: 768px) {
     .teams-container {
         width: 75%;

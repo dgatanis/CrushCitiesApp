@@ -119,6 +119,10 @@ button.accordion-button.collapsed {
     margin-bottom: .5rem;
 }
 
+.common-container {
+    background: var(--dark-background-alt) !important;
+}
+
 .matchup-row {
     margin-left: 0;
     margin-right: 0;
