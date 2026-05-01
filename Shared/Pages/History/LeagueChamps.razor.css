@@ -17,3 +17,7 @@ img.owner-avatar {
 .card.h-100.shadow-sm.w-100.text-center {
     color: #d6d6d6;
 }
+
+.common-container {
+    background: var(--dark-background-alt) !important;
+}

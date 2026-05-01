@@ -54,6 +54,10 @@ button.btn.btn-outline-secondary.common-container:focus-visible {
     outline-offset: 2px;
 }
 
+.common-container {
+    background: var(--dark-background-alt) !important;
+}
+
 .owner-avatar {
     width: 2.75rem;
     height: 2.75rem;
