@@ -155,7 +155,7 @@
 
         await JS.InvokeVoidAsync("theme.set", isDark ? "dark" : "light");
         await TransactionData.EnsureLoadedAsync();
-        _latestTransactions = TransactionData.Transactions.OrderByDescending(x => x.Created).Take(50).ToList();
+        _latestTransactions = TransactionData.Transactions.Where(t => t.Status != "failed").OrderByDescending(x => x.Created).Take(50).ToList();
         _isTickerLoading = false;
     }
 
