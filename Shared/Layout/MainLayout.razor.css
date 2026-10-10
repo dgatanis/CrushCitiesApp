@@ -45,7 +45,15 @@ span.me-5.small {
 }
 
 .ticker-type {
-    font-family: 'F2';
+  font-size: .7rem;
+}
+
+.ticker-dropped-details {
+  color: #dd7f7f;
+}
+
+.ticker-added-details {
+  color: #bbf7cfcc;
 }
 
 .ticker.fixed-bottom.bg-dark.text-light.py-1 {
@@ -56,10 +64,10 @@ span.me-5.small {
     border-right: none;
 }
 
-::deep .ticker-team { font-size: 1.05rem; font-family: 'F1'; }
+::deep .ticker-team { font-size: .85rem; font-family: 'F2'; }
 ::deep .ticker-details { font-size: .75rem !important; margin-right:.2rem; }
-::deep .ticker-added { color: var(--added);}
-::deep .ticker-dropped { color: var(--dropped);}
+::deep .ticker-added { color: var(--added); font-size: .8rem;}
+::deep .ticker-dropped { color: var(--dropped); font-size: .8rem;}
 
 .ticker-line {
   display: inline-flex;
