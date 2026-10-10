@@ -40,8 +40,18 @@ else
                     <tbody>
                         @foreach(var t in _lowScoringTeams ?? [])
                         {
+                            var teamName = RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "";
+                            var seasonWeekText = !string.IsNullOrWhiteSpace(t.Season) || !string.IsNullOrWhiteSpace(t.Week)
+                                ? $"({(!string.IsNullOrWhiteSpace(t.Season) ? t.Season : "N/A")}{(!string.IsNullOrWhiteSpace(t.Season) && !string.IsNullOrWhiteSpace(t.Week) ? ", " : "")}{(!string.IsNullOrWhiteSpace(t.Week) ? $"Week {t.Week}" : "")})"
+                                : "";
                             <tr>
-                                <td>@(RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                <td>
+                                    <span>@teamName</span>
+                                    @if (!string.IsNullOrWhiteSpace(seasonWeekText))
+                                    {
+                                        <span class="team-season-week">@seasonWeekText</span>
+                                    }
+                                </td>
                                 <td>@t.Points</td>
                             </tr>
                         }
@@ -62,8 +72,18 @@ else
                     <tbody>
                         @foreach(var t in _topScoringTeams ?? [])
                         {
+                            var teamName = RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "";
+                            var seasonWeekText = !string.IsNullOrWhiteSpace(t.Season) || !string.IsNullOrWhiteSpace(t.Week)
+                                ? $"({(!string.IsNullOrWhiteSpace(t.Season) ? t.Season : "N/A")}{(!string.IsNullOrWhiteSpace(t.Season) && !string.IsNullOrWhiteSpace(t.Week) ? ", " : "")}{(!string.IsNullOrWhiteSpace(t.Week) ? $"Week {t.Week}" : "")})"
+                                : "";
                             <tr>
-                                <td>@(RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                <td>
+                                    <span>@teamName</span>
+                                    @if (!string.IsNullOrWhiteSpace(seasonWeekText))
+                                    {
+                                        <span class="team-season-week">@seasonWeekText</span>
+                                    }
+                                </td>
                                 <td>@t.Points</td>
                             </tr>
                         }
@@ -90,8 +110,18 @@ else
                             var player = PlayerData.PlayerById.TryGetValue(playerPoints.Key, out var p) ? p : null;
                             if(player is not null)
                             {
+                                var teamName = RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "";
+                                var seasonWeekText = !string.IsNullOrWhiteSpace(t.Season) || !string.IsNullOrWhiteSpace(t.Week)
+                                    ? $"({(!string.IsNullOrWhiteSpace(t.Season) ? t.Season : "N/A")}{(!string.IsNullOrWhiteSpace(t.Season) && !string.IsNullOrWhiteSpace(t.Week) ? ", " : "")}{(!string.IsNullOrWhiteSpace(t.Week) ? $"Week {t.Week}" : "")})"
+                                    : "";
                                 <tr>
-                                    <td>@(RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                    <td>
+                                        <span>@teamName</span>
+                                        @if (!string.IsNullOrWhiteSpace(seasonWeekText))
+                                        {
+                                            <span class="team-season-week">@seasonWeekText</span>
+                                        }
+                                    </td>
                                     <td>@player.Firstname @player.Lastname</td>
                                     <td>@playerPoints.Value</td>
                                 </tr>
@@ -121,8 +151,18 @@ else
                             var player = PlayerData.PlayerById.TryGetValue(playerPoints.Key, out var p) ? p : null;
                             if(player is not null)
                             {
+                                var teamName = RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "";
+                                var seasonWeekText = !string.IsNullOrWhiteSpace(t.Season) || !string.IsNullOrWhiteSpace(t.Week)
+                                    ? $"({(!string.IsNullOrWhiteSpace(t.Season) ? t.Season : "N/A")}{(!string.IsNullOrWhiteSpace(t.Season) && !string.IsNullOrWhiteSpace(t.Week) ? ", " : "")}{(!string.IsNullOrWhiteSpace(t.Week) ? $"Week {t.Week}" : "")})"
+                                    : "";
                                 <tr>
-                                    <td>@(RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                    <td>
+                                        <span>@teamName</span>
+                                        @if (!string.IsNullOrWhiteSpace(seasonWeekText))
+                                        {
+                                            <span class="team-season-week">@seasonWeekText</span>
+                                        }
+                                    </td>
                                     <td>@player.Firstname @player.Lastname</td>
                                     <td>@playerPoints.Value</td>
                                 </tr>
@@ -188,8 +228,18 @@ else
                         @foreach (var kv in _largestMarginOfVictory ?? [])
                         {
                             var t = kv.Key;
+                            var teamName = RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "";
+                            var seasonWeekText = !string.IsNullOrWhiteSpace(t.Season) || !string.IsNullOrWhiteSpace(t.Week)
+                                ? $"({(!string.IsNullOrWhiteSpace(t.Season) ? t.Season : "N/A")}{(!string.IsNullOrWhiteSpace(t.Season) && !string.IsNullOrWhiteSpace(t.Week) ? ", " : "")}{(!string.IsNullOrWhiteSpace(t.Week) ? $"Week {t.Week}" : "")})"
+                                : "";
                             <tr>
-                                <td>@(RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                <td>
+                                    <span>@teamName</span>
+                                    @if (!string.IsNullOrWhiteSpace(seasonWeekText))
+                                    {
+                                        <span class="team-season-week">@seasonWeekText</span>
+                                    }
+                                </td>
                                 <td>@kv.Value.ToString("F2")</td>
                             </tr>
                         }
@@ -211,8 +261,18 @@ else
                         @foreach (var kv in _tightestMarginOfVictory ?? [])
                         {
                             var t = kv.Key;
+                            var teamName = RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "";
+                            var seasonWeekText = !string.IsNullOrWhiteSpace(t.Season) || !string.IsNullOrWhiteSpace(t.Week)
+                                ? $"({(!string.IsNullOrWhiteSpace(t.Season) ? t.Season : "N/A")}{(!string.IsNullOrWhiteSpace(t.Season) && !string.IsNullOrWhiteSpace(t.Week) ? ", " : "")}{(!string.IsNullOrWhiteSpace(t.Week) ? $"Week {t.Week}" : "")})"
+                                : "";
                             <tr>
-                                <td>@(RosterData.TeamNameByRosterId.TryGetValue(t.RosterId, out var name) ? name : "")</td>
+                                <td>
+                                    <span>@teamName</span>
+                                    @if (!string.IsNullOrWhiteSpace(seasonWeekText))
+                                    {
+                                        <span class="team-season-week">@seasonWeekText</span>
+                                    }
+                                </td>
                                 <td>@kv.Value.ToString("F2")</td>
                             </tr>
                         }

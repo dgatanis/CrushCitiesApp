@@ -40,7 +40,7 @@ else
             <div class="accordion" id="@($"accordionStarters{roster.RosterId}")">
                 <div class="accordion-item">
                     <h2 class="accordion-header">
-                    <button class="@GetButtonCollapseClass(roster.RosterId, defaultExpanded: true)" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseStarters{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseStarters{roster.RosterId}")">
+                    <button class="@GetButtonCollapseClass(roster.RosterId, defaultExpanded: true)" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseStarters{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseStarters{roster.RosterId}")" @onclick="() => _selectedRosterId.Add(roster.RosterId)">
                     @if (!string.IsNullOrWhiteSpace(roster.OwnerId))
                     {
                         <div class="owner-info d-flex flex-column align-items-center mb-1">
@@ -91,7 +91,7 @@ else
             <div class="accordion" id="@($"accordionBench{roster.RosterId}")">
                 <div class="accordion-item">
                     <h2 class="accordion-header">
-                    <button class="@GetButtonCollapseClass(roster.RosterId, defaultExpanded: false)" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseBench{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseBench{roster.RosterId}")">
+                    <button class="@GetButtonCollapseClass(roster.RosterId, defaultExpanded: false)" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseBench{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseBench{roster.RosterId}")" @onclick="() => _selectedRosterId.Add(roster.RosterId)">
                         Bench
                     </button>
                     </h2>
@@ -142,7 +142,7 @@ else
             <div class="accordion" id="@($"accordionTaxi{roster.RosterId}")">
                 <div class="accordion-item">
                     <h2 class="accordion-header">
-                    <button class="@GetButtonCollapseClass(roster.RosterId, defaultExpanded: false)" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseTaxi{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseTaxi{roster.RosterId}")">
+                    <button class="@GetButtonCollapseClass(roster.RosterId, defaultExpanded: false)" type="button" data-bs-toggle="collapse" data-bs-target="@($"#collapseTaxi{roster.RosterId}")" aria-expanded="true" aria-controls="@($"collapseTaxi{roster.RosterId}")" @onclick="() => _selectedRosterId.Add(roster.RosterId)">
                         Taxi
                     </button>
                     </h2>
@@ -195,7 +195,7 @@ else
 
 @code {
     [Parameter, SupplyParameterFromQuery] public int? selectedRosterId { get; set; }
-    private int? _selectedRosterId;
+    private List<int?> _selectedRosterId = new List<int?>();
     [CascadingParameter(Name = "AppBrand")]
     private string? AppBrand { get; set; }
     private string Brand => string.IsNullOrWhiteSpace(AppBrand) ? "FFL" : AppBrand;
@@ -240,7 +240,7 @@ else
         // Only take URL value when it exists
         if (selectedRosterId.HasValue)
         {
-            _selectedRosterId = selectedRosterId.Value;
+            _selectedRosterId = new List<int?> { selectedRosterId.Value };
         }
     }
 
@@ -266,20 +266,21 @@ else
     private void ExpandAll()
     {
         _collapseMode = CollapseMode.ExpandAll;
-        _selectedRosterId = null;
+        _selectedRosterId = new List<int?>();
     }
 
     private void CollapseAll()
     {
+        _selectedRosterId = new List<int?>();
         _collapseMode = CollapseMode.CollapseAll;
-        _selectedRosterId = null;
+        
     }
 
     private string GetButtonCollapseClass(int rosterId, bool defaultExpanded)
     {
-        if (_selectedRosterId.HasValue)
+        if (_selectedRosterId.Count > 0)
         {
-            return _selectedRosterId.Value == rosterId
+            return _selectedRosterId.Contains(rosterId)
                 ? "accordion-button"
                 : "accordion-button collapsed";
         }
@@ -296,9 +297,9 @@ else
 
     private string GetCollapseClass(int rosterId, bool defaultExpanded)
     {
-        if (_selectedRosterId.HasValue)
+        if (_selectedRosterId.Count > 0)
         {
-            return _selectedRosterId.Value == rosterId
+            return _selectedRosterId.Contains(rosterId)
                 ? "accordion-collapse collapse show"
                 : "accordion-collapse collapse";
         }

@@ -413,7 +413,7 @@ public sealed class MatchupStats(LeagueData leagueData, MatchupData matchupData)
 
     public IReadOnlyList<MatchupModel> GetTopScoringPlayers()
     {
-        return matchupData.AllMatchups ?? Enumerable.Empty<MatchupModel>()
+        return (matchupData.AllMatchups ?? Enumerable.Empty<MatchupModel>())
                         .Select(m => new
                             {
                                 Matchup = m,
@@ -433,7 +433,7 @@ public sealed class MatchupStats(LeagueData leagueData, MatchupData matchupData)
 
     public IReadOnlyList<MatchupModel> GetLowScoringPlayers()
     {
-        return matchupData.AllMatchups ?? Enumerable.Empty<MatchupModel>()
+        return (matchupData.AllMatchups ?? Enumerable.Empty<MatchupModel>())
                         .Select(m => new
                             {
                                 Matchup = m,
@@ -442,7 +442,7 @@ public sealed class MatchupStats(LeagueData leagueData, MatchupData matchupData)
                                     : m.PlayersPoints
                                         .Where(kv => m.Starters.Contains(kv.Key))
                                         .Select(kv => kv.Value)
-                                        .DefaultIfEmpty(0)
+                                        .DefaultIfEmpty(0.0)
                                         .Min()
                             })
                         .OrderBy(x => x.LowestStarterPoints)

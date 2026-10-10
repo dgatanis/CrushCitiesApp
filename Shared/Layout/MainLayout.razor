@@ -101,23 +101,27 @@
                                             if (teamAdds.Any())
                                             {
                                                 <text> </text>
-                                                <span class="ticker-added small">added</span>
+                                                <span class="ticker-added">+</span>
                                                 <text> </text>
+                                                <span class ="ticker-added-details">
                                                 @string.Join(", ",
                                                     teamAdds
                                                         .Select(id => PlayerData.PlayerById.TryGetValue(id, out var p) ? $"{p.Firstname} {p.Lastname}" : null)
                                                         .Where(name => !string.IsNullOrWhiteSpace(name)))
+                                                </span>
                                             }
 
                                             if (teamDrops.Any())
                                             {
                                                 <text> </text>
-                                                <span class="ticker-dropped small">dropped</span>
+                                                <span class="ticker-dropped">-</span>
                                                 <text> </text>
+                                                <span class ="ticker-dropped-details">
                                                 @string.Join(", ",
                                                     teamDrops
                                                         .Select(id => PlayerData.PlayerById.TryGetValue(id, out var p) ? $"{p.Firstname} {p.Lastname}" : null)
                                                         .Where(name => !string.IsNullOrWhiteSpace(name)))
+                                                </span>
                                             }
 
                                             if (acquiredBudget > 0)
