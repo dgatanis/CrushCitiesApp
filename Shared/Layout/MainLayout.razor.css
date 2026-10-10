@@ -66,8 +66,8 @@ span.me-5.small {
 
 ::deep .ticker-team { font-size: .85rem; font-family: 'F2'; }
 ::deep .ticker-details { font-size: .75rem !important; margin-right:.2rem; }
-::deep .ticker-added { color: var(--added); font-size: .8rem;}
-::deep .ticker-dropped { color: var(--dropped); font-size: .8rem;}
+::deep .ticker-added { color: var(--added); font-size: .8rem; margin-right: -.2rem;}
+::deep .ticker-dropped { color: var(--dropped); font-size: .8rem; margin-right: -.2rem;}
 
 .ticker-line {
   display: inline-flex;
